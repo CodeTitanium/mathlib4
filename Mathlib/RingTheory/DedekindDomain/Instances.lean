@@ -1,4 +1,9 @@
-import Mathlib
+import Mathlib.Algebra.GroupWithZero.Action.Faithful
+import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.Order.CompletePartialOrder
+import Mathlib.RingTheory.DedekindDomain.Dvr
+import Mathlib.RingTheory.DedekindDomain.IntegralClosure
+import Mathlib.RingTheory.RingHom.Finite
 
 open nonZeroDivisors IsLocalization Algebra IsFractionRing
 
@@ -102,15 +107,10 @@ instance : IsDomain Sₚ :=
   IsLocalization.isDomain_localization <| map_le_nonZeroDivisors_of_faithfulSMul _
     P.primeCompl_le_nonZeroDivisors
 
-instance [IsDedekindDomain R] [IsDedekindDomain S] :
-    IsDedekindDomain Sₚ :=
+instance [IsDedekindDomain S] : IsDedekindDomain Sₚ :=
   IsLocalization.isDedekindDomain S
     (map_le_nonZeroDivisors_of_faithfulSMul _ P.primeCompl_le_nonZeroDivisors) _
 
-def foo : Algebra (FractionRing Rₚ) (FractionRing Sₚ) := by
-  exact?
-  sorry
-
 instance [Algebra.IsSeparable K L] :
-  Algebra.IsSeparable (FractionRing Rₚ) (FractionRing Sₚ) :=
+    Algebra.IsSeparable (FractionRing Rₚ) (FractionRing Sₚ) :=
   FractionRing.isSeparable_of_isLocalization S _ _ P.primeCompl_le_nonZeroDivisors
