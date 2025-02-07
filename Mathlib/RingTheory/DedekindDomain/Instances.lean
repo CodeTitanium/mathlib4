@@ -2,18 +2,56 @@ import Mathlib
 
 open nonZeroDivisors IsLocalization Algebra IsFractionRing
 
+attribute [local instance] FractionRing.liftAlgebra
+
+variable {R : Type*} (S : Type*) [CommRing R] [CommRing S] [IsDomain R] [IsDomain S] [Algebra R S]
+
+local notation3 "K" => FractionRing R
+local notation3 "L" => FractionRing S
+section
+
 theorem map_le_nonZeroDivisors_of_faithfulSMul {A : Type*} (B : Type*) [CommSemiring A]
     [CommSemiring B] [Algebra A B] [NoZeroDivisors B] [FaithfulSMul A B] {S : Submonoid A}
     (hS : S ≤ A⁰) : Algebra.algebraMapSubmonoid B S ≤ B⁰ :=
   map_le_nonZeroDivisors_of_injective _ (FaithfulSMul.algebraMap_injective A B) hS
 
-variable {R S : Type*} [CommRing R] [IsDomain R] [CommRing S] [IsDomain S] [Algebra R S]
-  {P : Ideal R} [P.IsPrime]
+variable (Rₘ Sₘ : Type*) [CommRing Rₘ] [CommRing Sₘ] [Algebra R Rₘ] [NoZeroSMulDivisors R S]
+    [Algebra.IsSeparable (FractionRing R) (FractionRing S)] {M : Submonoid R} [IsLocalization M Rₘ]
+    [Algebra Rₘ Sₘ] [Algebra S Sₘ] [Algebra R Sₘ] [IsScalarTower R Rₘ Sₘ]
+    [IsScalarTower R S Sₘ] [IsLocalization (Algebra.algebraMapSubmonoid S M) Sₘ]
+    [Algebra (FractionRing Rₘ) (FractionRing Sₘ)]
+    [IsScalarTower Rₘ (FractionRing Rₘ) (FractionRing Sₘ)]
 
-attribute [local instance] FractionRing.liftAlgebra
+include R S in
+theorem FractionRing.isSeparable_of_isLocalization (hM : M ≤ R⁰) :
+    Algebra.IsSeparable (FractionRing Rₘ) (FractionRing Sₘ) := by
+  let M' := algebraMapSubmonoid S M
+  have hM' : algebraMapSubmonoid S M ≤ S⁰ := map_le_nonZeroDivisors_of_faithfulSMul _ hM
+  let f₁ : Rₘ →+* K := map _ (T := R⁰) (RingHom.id R) hM
+  let f₂ : Sₘ →+* L := map _ (T := S⁰) (RingHom.id S) hM'
+  algebraize [f₁, f₂]
+  have := localization_isScalarTower_of_submonoid_le Rₘ K _ _ hM
+  have := localization_isScalarTower_of_submonoid_le Sₘ L _ _ hM'
+  have := isFractionRing_of_isDomain_of_isLocalization M Rₘ K
+  have := isFractionRing_of_isDomain_of_isLocalization M' Sₘ L
+  have : IsDomain Rₘ := isDomain_of_le_nonZeroDivisors _ hM
+  apply Algebra.IsSeparable.of_equiv_equiv (FractionRing.algEquiv Rₘ K).symm.toRingEquiv
+    (FractionRing.algEquiv Sₘ L).symm.toRingEquiv
+  apply ringHom_ext R⁰
+  ext
+  simp only [AlgEquiv.toRingEquiv_eq_coe, RingHom.coe_comp,
+      RingHom.coe_coe, Function.comp_apply, ← IsScalarTower.algebraMap_apply]
+  rw [IsScalarTower.algebraMap_apply R Rₘ (FractionRing R), AlgEquiv.coe_ringEquiv,
+      AlgEquiv.commutes, IsScalarTower.algebraMap_apply R S L,
+      IsScalarTower.algebraMap_apply S Sₘ L, AlgEquiv.coe_ringEquiv, AlgEquiv.commutes]
+  simp only [← IsScalarTower.algebraMap_apply]
+  rw [IsScalarTower.algebraMap_apply R Rₘ (FractionRing Rₘ), ← IsScalarTower.algebraMap_apply Rₘ,
+      ← IsScalarTower.algebraMap_apply]
 
-local notation3 "K" => FractionRing R
-local notation3 "L" => FractionRing S
+end
+
+variable {S} {P : Ideal R} [P.IsPrime]
+
 local notation3 "P'" => Algebra.algebraMapSubmonoid S P.primeCompl
 local notation3 "Rₚ" => Localization.AtPrime P
 local notation3 "Sₚ" => Localization P'
@@ -45,3 +83,34 @@ instance : IsFractionRing Sₚ L :=
 noncomputable instance : Algebra Rₚ L :=
   (IsLocalization.lift (M := P.primeCompl) (g := algebraMap R L) <|
     fun ⟨x, hx⟩ ↦ by simpa using fun h ↦ hx <| by simp [h]).toAlgebra
+
+-- Make sure there are no diamonds in the case `R = S`.
+example : instAlgebraLocalizationAtPrime P = instAlgebraAtPrimeFractionRing (S := R) := by
+  with_reducible_and_instances rfl
+
+instance : IsScalarTower Rₚ K L :=
+  IsScalarTower.of_algebraMap_eq' (IsLocalization.ringHom_ext P.primeCompl
+    (RingHom.ext fun x ↦ by simp [RingHom.algebraMap_toAlgebra]))
+
+instance : IsScalarTower R Rₚ K :=
+  IsScalarTower.of_algebraMap_eq' (RingHom.ext fun x ↦ by simp [RingHom.algebraMap_toAlgebra])
+
+instance : IsScalarTower Rₚ Sₚ L :=
+  IsLocalization.localization_localization_isScalarTower S _ _ K _ P.primeCompl
+
+instance : IsDomain Sₚ :=
+  IsLocalization.isDomain_localization <| map_le_nonZeroDivisors_of_faithfulSMul _
+    P.primeCompl_le_nonZeroDivisors
+
+instance [IsDedekindDomain R] [IsDedekindDomain S] :
+    IsDedekindDomain Sₚ :=
+  IsLocalization.isDedekindDomain S
+    (map_le_nonZeroDivisors_of_faithfulSMul _ P.primeCompl_le_nonZeroDivisors) _
+
+def foo : Algebra (FractionRing Rₚ) (FractionRing Sₚ) := by
+  exact?
+  sorry
+
+instance [Algebra.IsSeparable K L] :
+  Algebra.IsSeparable (FractionRing Rₚ) (FractionRing Sₚ) :=
+  FractionRing.isSeparable_of_isLocalization S _ _ P.primeCompl_le_nonZeroDivisors
