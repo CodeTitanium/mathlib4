@@ -188,7 +188,7 @@ theorem localization_localization_isScalarTower (Rₚ Sₚ K L : Type*) [CommRin
     RingHom.comp_assoc, ← IsScalarTower.algebraMap_eq, ← IsScalarTower.algebraMap_eq,
     ← IsScalarTower.algebraMap_eq]
 
-noncomputable instance (x : Ideal R) [H : x.IsPrime] [IsDomain R] :
+noncomputable instance instAlgebraLocalizationAtPrime (x : Ideal R) [H : x.IsPrime] [IsDomain R] :
     Algebra (Localization.AtPrime x) (Localization (nonZeroDivisors R)) :=
   localizationAlgebraOfSubmonoidLe _ _ x.primeCompl (nonZeroDivisors R)
     (by
