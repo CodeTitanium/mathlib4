@@ -5,7 +5,7 @@ import Mathlib.RingTheory.DedekindDomain.Dvr
 import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 import Mathlib.RingTheory.RingHom.Finite
 
-open nonZeroDivisors IsLocalization Algebra IsFractionRing
+open nonZeroDivisors IsLocalization Algebra IsFractionRing IsScalarTower
 
 attribute [local instance] FractionRing.liftAlgebra
 
@@ -17,13 +17,13 @@ section
 
 theorem map_le_nonZeroDivisors_of_faithfulSMul {A : Type*} (B : Type*) [CommSemiring A]
     [CommSemiring B] [Algebra A B] [NoZeroDivisors B] [FaithfulSMul A B] {S : Submonoid A}
-    (hS : S ≤ A⁰) : Algebra.algebraMapSubmonoid B S ≤ B⁰ :=
+    (hS : S ≤ A⁰) : algebraMapSubmonoid B S ≤ B⁰ :=
   map_le_nonZeroDivisors_of_injective _ (FaithfulSMul.algebraMap_injective A B) hS
 
 variable (Rₘ Sₘ : Type*) [CommRing Rₘ] [CommRing Sₘ] [Algebra R Rₘ] [NoZeroSMulDivisors R S]
     [Algebra.IsSeparable (FractionRing R) (FractionRing S)] {M : Submonoid R} [IsLocalization M Rₘ]
     [Algebra Rₘ Sₘ] [Algebra S Sₘ] [Algebra R Sₘ] [IsScalarTower R Rₘ Sₘ]
-    [IsScalarTower R S Sₘ] [IsLocalization (Algebra.algebraMapSubmonoid S M) Sₘ]
+    [IsScalarTower R S Sₘ] [IsLocalization (algebraMapSubmonoid S M) Sₘ]
     [Algebra (FractionRing Rₘ) (FractionRing Sₘ)]
     [IsScalarTower Rₘ (FractionRing Rₘ) (FractionRing Sₘ)]
 
@@ -45,19 +45,17 @@ theorem FractionRing.isSeparable_of_isLocalization (hM : M ≤ R⁰) :
   apply ringHom_ext R⁰
   ext
   simp only [AlgEquiv.toRingEquiv_eq_coe, RingHom.coe_comp,
-      RingHom.coe_coe, Function.comp_apply, ← IsScalarTower.algebraMap_apply]
-  rw [IsScalarTower.algebraMap_apply R Rₘ (FractionRing R), AlgEquiv.coe_ringEquiv,
-      AlgEquiv.commutes, IsScalarTower.algebraMap_apply R S L,
-      IsScalarTower.algebraMap_apply S Sₘ L, AlgEquiv.coe_ringEquiv, AlgEquiv.commutes]
-  simp only [← IsScalarTower.algebraMap_apply]
-  rw [IsScalarTower.algebraMap_apply R Rₘ (FractionRing Rₘ), ← IsScalarTower.algebraMap_apply Rₘ,
-      ← IsScalarTower.algebraMap_apply]
+      RingHom.coe_coe, Function.comp_apply, ← algebraMap_apply]
+  rw [algebraMap_apply R Rₘ (FractionRing R), AlgEquiv.coe_ringEquiv, AlgEquiv.commutes,
+    algebraMap_apply R S L, algebraMap_apply S Sₘ L, AlgEquiv.coe_ringEquiv, AlgEquiv.commutes]
+  simp only [← algebraMap_apply]
+  rw [algebraMap_apply R Rₘ (FractionRing Rₘ), ← algebraMap_apply Rₘ, ← algebraMap_apply]
 
 end
 
 variable {S} {P : Ideal R} [P.IsPrime]
 
-local notation3 "P'" => Algebra.algebraMapSubmonoid S P.primeCompl
+local notation3 "P'" => algebraMapSubmonoid S P.primeCompl
 local notation3 "Rₚ" => Localization.AtPrime P
 local notation3 "Sₚ" => Localization P'
 
@@ -86,7 +84,7 @@ instance : IsFractionRing Sₚ L :=
   isFractionRing_of_isDomain_of_isLocalization P' _ _
 
 noncomputable instance : Algebra Rₚ L :=
-  (IsLocalization.lift (M := P.primeCompl) (g := algebraMap R L) <|
+  (lift (M := P.primeCompl) (g := algebraMap R L) <|
     fun ⟨x, hx⟩ ↦ by simpa using fun h ↦ hx <| by simp [h]).toAlgebra
 
 -- Make sure there are no diamonds in the case `R = S`.
@@ -94,21 +92,21 @@ example : instAlgebraLocalizationAtPrime P = instAlgebraAtPrimeFractionRing (S :
   with_reducible_and_instances rfl
 
 instance : IsScalarTower Rₚ K L :=
-  IsScalarTower.of_algebraMap_eq' (IsLocalization.ringHom_ext P.primeCompl
+  of_algebraMap_eq' (ringHom_ext P.primeCompl
     (RingHom.ext fun x ↦ by simp [RingHom.algebraMap_toAlgebra]))
 
 instance : IsScalarTower R Rₚ K :=
-  IsScalarTower.of_algebraMap_eq' (RingHom.ext fun x ↦ by simp [RingHom.algebraMap_toAlgebra])
+  of_algebraMap_eq' (RingHom.ext fun x ↦ by simp [RingHom.algebraMap_toAlgebra])
 
 instance : IsScalarTower Rₚ Sₚ L :=
-  IsLocalization.localization_localization_isScalarTower S _ _ K _ P.primeCompl
+  localization_localization_isScalarTower S _ _ K _ P.primeCompl
 
 instance : IsDomain Sₚ :=
-  IsLocalization.isDomain_localization <| map_le_nonZeroDivisors_of_faithfulSMul _
+  isDomain_localization <| map_le_nonZeroDivisors_of_faithfulSMul _
     P.primeCompl_le_nonZeroDivisors
 
 instance [IsDedekindDomain S] : IsDedekindDomain Sₚ :=
-  IsLocalization.isDedekindDomain S
+  isDedekindDomain S
     (map_le_nonZeroDivisors_of_faithfulSMul _ P.primeCompl_le_nonZeroDivisors) _
 
 instance [Algebra.IsSeparable K L] :
