@@ -7,6 +7,7 @@ import Mathlib.Combinatorics.SimpleGraph.Circulant
 import Mathlib.Combinatorics.SimpleGraph.Coloring
 import Mathlib.Combinatorics.SimpleGraph.Hasse
 import Mathlib.Data.Fin.Parity
+import Mathlib.SetTheory.Ordinal.Arithmetic
 
 /-!
 # Concrete colorings of common graphs
@@ -158,90 +159,77 @@ theorem chromaticNumber_cycleGraph_of_odd (n : ℕ) (h : 2 ≤ n) (hOdd : Odd n)
 
 
 --------- Greedy colorings
+open Finset
 section degreeLT
-variable {α : Type*} [LinearOrder α] (G : SimpleGraph α) (b : α)
 
-def neighborSetLT  : Set α := {a | a < b ∧ G.Adj b a  }
 
-variable [Fintype (G.neighborSetLT b)]
+variable {α : Type*} [LT α] (G : SimpleGraph α)
 
-def neighborFinsetLT : Finset α := (G.neighborSetLT b).toFinset
+def neighborSetLT (b : α) : Set α := {a | a < b ∧ G.Adj b a}
 
-def degreeLT : ℕ := (G.neighborFinsetLT b).card
+def neighborFinsetLT (b : α)  [Fintype (G.neighborSetLT b)] : Finset α :=
+    (G.neighborSetLT b).toFinset
 
-lemma mem_neighborFinsetLT  (a : α) : a ∈ G.neighborFinsetLT b ↔ a < b ∧ G.Adj b a :=
-    Set.mem_toFinset
+def degreeLT (b : α) [Fintype (G.neighborSetLT b)] : ℕ := #(G.neighborFinsetLT b)
+
+lemma mem_neighborFinsetLT  {a b : α} [Fintype (G.neighborSetLT b)] :
+    a ∈ G.neighborFinsetLT b ↔ a < b ∧ G.Adj b a := Set.mem_toFinset
+
+
+/-- A graph is locally finite lt if every vertex has a finite neighbor set lt. -/
+abbrev LocallyFiniteLT :=
+  ∀ v : α, Fintype (G.neighborSetLT v)
 
 end degreeLT
 
 variable (G : SimpleGraph ℕ) [DecidableRel G.Adj]
 
-instance instFintypeNeighborLT: ∀ n, Fintype (G.neighborSetLT n) := by
+instance instFintypeNeighborLT : ∀ n, Fintype (G.neighborSetLT n) := by
   intro n
-  apply Fintype.ofFinset ((Finset.range n).filter (G.Adj n))
-  intro m; simp only [Finset.mem_filter, Finset.mem_range]
+  apply Fintype.ofFinset ((range n).filter (G.Adj n))
+  intro m; simp only [mem_filter, mem_range]
   rfl
 
-open Finset
-section DeltaLT
-variable {Δ : ℕ} (hdeglt : ∀ n, G.degreeLT n ≤ Δ)
-include hdeglt
-lemma exists_col_unused (c : ℕ → Fin (Δ + 1)) (n : ℕ) :
-    ((G.neighborFinsetLT n).image c)ᶜ.Nonempty := by
-  apply (card_compl_lt_iff_nonempty _).1
-  rw [compl_compl,Fintype.card_fin]
-  apply Nat.succ_le_succ <| card_image_le.trans <| hdeglt _
+lemma degreeLT_lt (n : ℕ) : G.degreeLT n < n + 1 := by
+  apply Nat.lt_of_succ_le
+  apply Nat.succ_le_succ
+  rw [degreeLT, ← card_range n]
+  apply card_le_card
+  intro m hm; rw [mem_neighborFinsetLT] at *
+  rw [mem_range,card_range] at *
+  exact hm.1
 
+lemma unused (c : ℕ → ℕ) (n : ℕ) :
+    (range (G.degreeLT n + 1) \ ((G.neighborFinsetLT n).image c)).Nonempty := by
+  apply card_pos.1
+  apply lt_of_lt_of_le _ <| le_card_sdiff _ _
+  rw [card_range]
+  apply Nat.sub_pos_of_lt
+  apply lt_of_le_of_lt  <| card_image_le
+  apply Nat.lt_succ_of_le le_rfl
 
-private def col_unused (c : ℕ → Fin (Δ + 1)) (n : ℕ) : Fin (Δ + 1) :=
-  min' _ (G.exists_col_unused hdeglt c n)
+abbrev greedy (n : ℕ) : ℕ := min' _
+  <| G.unused (fun m ↦ ite (m < n) (greedy m) 0) n
 
-@[simp]
-lemma col_unused_eq (c : ℕ → Fin (Δ + 1)) (n : ℕ) :
-  G.col_unused hdeglt c n = min' _ (G.exists_col_unused hdeglt c n) := rfl
-
-abbrev greedy (n : ℕ) : Fin (Δ + 1) :=
-  G.col_unused hdeglt ((fun m ↦ ite (m < n) (greedy m) 0)) n
-
-lemma greedy_def (n : ℕ) : G.greedy hdeglt n = min' _ (G.exists_col_unused hdeglt
-  (fun m ↦ ite (m < n) (G.greedy hdeglt m) 0) n) := by rw [greedy]; simp
-
-lemma greedy_not_mem (n : ℕ): G.greedy hdeglt n ∉ ((G.neighborFinsetLT n).image (fun m ↦ ite (m < n)
-    (G.greedy hdeglt m) 0)) := by
-  rw [greedy_def, ← mem_compl]
-  exact min'_mem _ (G.exists_col_unused hdeglt (fun m ↦ ite (m < n) (G.greedy hdeglt m) 0) n)
+lemma greedy_def (n : ℕ) : G.greedy n = min' _ (G.unused
+  (fun m ↦ ite (m < n) (G.greedy m) 0) n) := by rw [greedy]
 
 lemma greedy_valid {m n : ℕ} (h : m < n) (hadj : G.Adj n m) :
-    G.greedy hdeglt m ≠ G.greedy hdeglt n := by
+    G.greedy m ≠ G.greedy n := by
   intro heq
-  apply G.greedy_not_mem hdeglt n
-  rw [mem_image]
-  use m; rw [neighborFinsetLT,Set.mem_toFinset]
-  use ⟨h,hadj⟩, if_pos h ▸ heq
+  apply G.greedy_def n ▸
+      (mem_sdiff.mp <| min'_mem _ (G.unused (fun m ↦ ite (m < n) (G.greedy m) 0) n)).2
+  simp_rw [mem_image,neighborFinsetLT, Set.mem_toFinset]
+  use m, ⟨h,hadj⟩, if_pos h ▸ heq
 
-def greedy_coloring : G.Coloring (Fin (Δ + 1)) :=by
-  use (greedy G hdeglt)
-  intro m n hadj
-  by_cases h : m < n
-  · apply G.greedy_valid hdeglt h hadj.symm
-  · push_neg at h
-    cases h.lt_or_eq with
-    | inl hlt => rw [adj_comm]; apply G.greedy_valid hdeglt hlt hadj
-    | inr heq => exfalso; apply G.loopless _ (heq ▸ hadj)
+lemma greedy_bdd (n : ℕ) : G.greedy n ≤ G.degreeLT n  := by
+  rw [greedy_def]
+  have :=min'_mem _ (G.unused (fun m ↦ ite (m < n) (G.greedy m) 0) n)
+  rw [mem_sdiff, mem_range] at this
+  apply Nat.succ_le_succ_iff.1 this.1
 
-end DeltaLT
-section bdddeg
-variable {G} {Δ : ℕ} [LocallyFinite G] (hdeg : ∀ n, G.degree n ≤ Δ)
-lemma degLT_le_degree (v : ℕ) : G.degreeLT v ≤ G.degree v := by
-  rw [← card_neighborFinset_eq_degree, degreeLT]
-  apply card_le_card
-  intro m hm; rw [mem_neighborFinsetLT, mem_neighborFinset] at *
-  exact hm.2
-
-/-- If G is locally finite and all degrees are bounded above by Δ it is Δ + 1 colorable -/
-def greedy_coloring_of_bdd_degree : G.Coloring (Fin (Δ + 1)) :=
-  G.greedy_coloring (fun n ↦ (degLT_le_degree n).trans <| hdeg n)
-
-end bdddeg
+lemma greedy_bdd_degLT {Δ : ℕ} (h : ∀ v, G.degreeLT v ≤ Δ) : ∀ m, G.greedy m < Δ + 1 := by
+  intro m; apply lt_of_le_of_lt (G.greedy_bdd m)
+  apply Nat.succ_le_succ (h m)
 
 end SimpleGraph
