@@ -178,31 +178,23 @@ lemma mem_neighborFinsetLT  {a b : α} [Fintype (G.neighborSetLT b)] :
 abbrev LocallyFiniteLT :=
   ∀ v : α, Fintype (G.neighborSetLT v)
 
-end degreeLT
-section Greedy
-variable (G : SimpleGraph ℕ) [DecidableRel G.Adj]
 
-instance instFintypeNeighborLT : ∀ n, Fintype (G.neighborSetLT n) := by
-  intro n
-  apply Fintype.ofFinset ((range n).filter (G.Adj n))
-  intro m; simp only [mem_filter, mem_range]
-  rfl
+-- lemma degreeLT_lt (n : ℕ) : G.degreeLT n < n + 1 := by
+--   apply Nat.lt_succ_of_le
+--   rw [degreeLT, ← card_range n]
+--   apply card_le_card
+--   intro m hm; rw [mem_neighborFinsetLT] at *
+--   rw [mem_range,card_range] at *
+--   exact hm.1
 
-lemma degreeLT_lt (n : ℕ) : G.degreeLT n < n + 1 := by
-  apply Nat.lt_succ_of_le
-  rw [degreeLT, ← card_range n]
-  apply card_le_card
-  intro m hm; rw [mem_neighborFinsetLT] at *
-  rw [mem_range,card_range] at *
-  exact hm.1
-
-lemma degreeLT_le_degree (n : ℕ) [Fintype (G.neighborSet n)] : G.degreeLT n ≤ G.degree n := by
+lemma degreeLT_le_degree (n : α) [Fintype (G.neighborSetLT n)] [Fintype (G.neighborSet n)] :
+    G.degreeLT n ≤ G.degree n := by
   rw [degreeLT,degree]
   apply card_le_card
   intro m hm; simp only [mem_neighborFinsetLT,mem_neighborFinset] at *
   exact hm.2
 
-lemma unused (c : ℕ → ℕ) (n : ℕ) :
+lemma unused (c : α → ℕ) (n : α) [Fintype (G.neighborSetLT n)] :
     (range (G.degreeLT n + 1) \ ((G.neighborFinsetLT n).image c)).Nonempty := by
   apply card_pos.1
   apply lt_of_lt_of_le _ <| le_card_sdiff _ _
@@ -211,54 +203,61 @@ lemma unused (c : ℕ → ℕ) (n : ℕ) :
   apply lt_of_le_of_lt  <| card_image_le
   apply Nat.lt_succ_of_le le_rfl
 
-abbrev greedy (n : ℕ) : ℕ := min' _
-  <| G.unused (fun m ↦ ite (m < n) (greedy m) 0) n
+variable (H : SimpleGraph ℕ) [DecidableRel H.Adj]
 
-lemma greedy_def (n : ℕ) : G.greedy n = min' _ (G.unused
-  (fun m ↦ ite (m < n) (G.greedy m) 0) n) := by rw [greedy]
+instance instFintypeNeighborLT : ∀ n, Fintype (H.neighborSetLT n) := by
+  intro n
+  apply Fintype.ofFinset ((range n).filter (H.Adj n))
+  intro m; simp only [mem_filter, mem_range]
+  rfl
 
-lemma greedy_valid {m n : ℕ} (h : m < n) (hadj : G.Adj n m) :
-    G.greedy m ≠ G.greedy n := by
+abbrev greedy (n : ℕ) : ℕ := min' _ <| H.unused (fun m ↦ ite (m < n) (greedy m) 0) n
+
+lemma greedy_def (n : ℕ) : H.greedy n = min' _ (H.unused
+  (fun m ↦ ite (m < n) (H.greedy m) 0) n) := by rw [greedy]
+
+lemma greedy_valid {m n : ℕ} (h : m < n) (hadj : H.Adj n m) :
+    H.greedy m ≠ H.greedy n := by
   intro heq
-  apply G.greedy_def n ▸
-      (mem_sdiff.mp <| min'_mem _ (G.unused (fun m ↦ ite (m < n) (G.greedy m) 0) n)).2
+  apply H.greedy_def n ▸
+      (mem_sdiff.mp <| min'_mem _ (H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n)).2
   simp_rw [mem_image,neighborFinsetLT, Set.mem_toFinset]
   use m, ⟨h,hadj⟩, if_pos h ▸ heq
 
-lemma greedy_bdd (n : ℕ) : G.greedy n ≤ G.degreeLT n  := by
+lemma greedy_bdd (n : ℕ) : H.greedy n ≤ H.degreeLT n  := by
   rw [greedy_def]
-  have h := min'_mem _ (G.unused (fun m ↦ ite (m < n) (G.greedy m) 0) n)
+  have h := min'_mem _ (H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n)
   rw [mem_sdiff, mem_range] at h
   apply Nat.succ_le_succ_iff.1 h.1
 
-lemma greedy_bdd_degLT {Δ : ℕ} (h : ∀ v, G.degreeLT v ≤ Δ) : ∀ m, G.greedy m < Δ + 1 := by
-  intro m; apply lt_of_le_of_lt (G.greedy_bdd m)
+lemma greedy_bdd_degLT {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : ∀ m, H.greedy m < Δ + 1 := by
+  intro m; apply lt_of_le_of_lt (H.greedy_bdd m)
   apply Nat.succ_le_succ (h m)
 
-def GreedyColoring : G.Coloring ℕ := by
-  apply Coloring.mk G.greedy
+def GreedyColoring : H.Coloring ℕ := by
+  apply Coloring.mk H.greedy
   intro u v hadj
   cases lt_or_gt_of_ne hadj.ne with
-  | inl h =>  apply G.greedy_valid h hadj.symm
-  | inr h =>  rw [ne_comm]; apply G.greedy_valid h hadj
+  | inl h =>  apply H.greedy_valid h hadj.symm
+  | inr h =>  rw [ne_comm]; apply H.greedy_valid h hadj
 
-lemma colorable_bdd_degLT {Δ : ℕ} (h : ∀ v, G.degreeLT v ≤ Δ) : G.Colorable (Δ + 1) :=
+lemma colorable_bdd_degLT {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : H.Colorable (Δ + 1) :=
   colorable_iff_exists_bdd_nat_coloring (Δ + 1)|>.2
-        ⟨G.GreedyColoring, fun v ↦ G.greedy_bdd_degLT h v⟩
+        ⟨H.GreedyColoring, fun v ↦ H.greedy_bdd_degLT h v⟩
 
-lemma colorable_bdd_deg {Δ : ℕ} [LocallyFinite G] (h : ∀ v, G.degree v ≤ Δ) :
-    G.Colorable (Δ + 1) := G.colorable_bdd_degLT fun v ↦ (G.degreeLT_le_degree v).trans (h v)
+lemma colorable_bdd_deg {Δ : ℕ} [LocallyFinite H] (h : ∀ v, H.degree v ≤ Δ) :
+    H.Colorable (Δ + 1) := H.colorable_bdd_degLT fun v ↦ (H.degreeLT_le_degree v).trans (h v)
 
-def GreedyColoringFinBddDegLt {Δ : ℕ} (h : ∀ v, G.degreeLT v ≤ Δ) : G.Coloring (Fin (Δ + 1)) := by
-  apply Coloring.mk (fun v ↦ ⟨G.greedy v, G.greedy_bdd_degLT h v⟩)
+def GreedyColoringFinBddDegLt {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : H.Coloring (Fin (Δ + 1)) := by
+  apply Coloring.mk (fun v ↦ ⟨H.greedy v, H.greedy_bdd_degLT h v⟩)
   intro u v hadj
   cases lt_or_gt_of_ne hadj.ne with
-  | inl h =>  simp only [ne_eq, Fin.mk.injEq]; apply G.greedy_valid h hadj.symm
-  | inr h =>  rw [ne_comm]; simp only [ne_eq, Fin.mk.injEq]; apply G.greedy_valid h hadj
+  | inl h =>  simp only [ne_eq, Fin.mk.injEq]; apply H.greedy_valid h hadj.symm
+  | inr h =>  rw [ne_comm]; simp only [ne_eq, Fin.mk.injEq]; apply H.greedy_valid h hadj
 
-def GreedyColoringFinBddDeg {Δ : ℕ} [LocallyFinite G] (h : ∀ v, G.degree v ≤ Δ) :
-    G.Coloring (Fin (Δ + 1)) :=
-      G.GreedyColoringFinBddDegLt fun v ↦ (G.degreeLT_le_degree v).trans (h v)
+def GreedyColoringFinBddDeg {Δ : ℕ} [LocallyFinite H] (h : ∀ v, H.degree v ≤ Δ) :
+    H.Coloring (Fin (Δ + 1)) :=
+      H.GreedyColoringFinBddDegLt fun v ↦ (H.degreeLT_le_degree v).trans (h v)
 
-end Greedy
+end degreeLT
 end SimpleGraph
