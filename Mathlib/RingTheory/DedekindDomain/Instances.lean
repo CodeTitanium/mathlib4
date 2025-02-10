@@ -7,7 +7,7 @@ Authors: Riccardo Brasca
 import Mathlib.Algebra.GroupWithZero.Action.Faithful
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Order.CompletePartialOrder
-import Mathlib.RingTheory.DedekindDomain.Dvr
+import Mathlib.RingTheory.DedekindDomain.PID
 import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 import Mathlib.RingTheory.RingHom.Finite
 
@@ -128,6 +128,10 @@ instance : IsDomain Sₚ :=
 instance [IsDedekindDomain S] : IsDedekindDomain Sₚ :=
   isDedekindDomain S
     (map_le_nonZeroDivisors_of_faithfulSMul _ P.primeCompl_le_nonZeroDivisors) _
+
+instance [IsDedekindDomain R] [IsDedekindDomain S] [Module.Finite R S] [hP : NeZero P] :
+    IsPrincipalIdealRing Sₚ :=
+  IsDedekindDomain.isPrincipalIdealRing_localization_over_prime S P (fun h ↦ hP.1 h)
 
 instance [Algebra.IsSeparable K L] :
     Algebra.IsSeparable (FractionRing Rₚ) (FractionRing Sₚ) :=
