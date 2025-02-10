@@ -1,9 +1,32 @@
+/-
+Copyright (c) 2025 Riccardo Brasca. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Riccardo Brasca
+-/
+
 import Mathlib.Algebra.GroupWithZero.Action.Faithful
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Order.CompletePartialOrder
 import Mathlib.RingTheory.DedekindDomain.Dvr
 import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 import Mathlib.RingTheory.RingHom.Finite
+
+/-!
+# Instances for Dedekind domains
+This file contains various instances to work with Dedekind domains.
+
+Very often one has an extension of Dedekind domains `R` and `S`, and to prove a property of this
+extension is useful to consider the localization `Rₚ` of `R` at `P`, a prime ideal of `R`. One also
+works with the corresponding localization `Sₚ` of `S` and the fraction fields `K` and `L` of `R` and
+`S`. In this situation there are many compatible algebra structures and various properties of the
+rings involved. This file is a collection of such instances.
+
+## Implementation details
+In general one wants all the results below for any algebra satisfyng `IsLocalization`, but those
+cannot be instances (since Lean has no way of guessing the submonoid). Having the instances in the
+special case of *the* localization at a prime ideal is useful in working with Dedekind domains.
+
+-/
 
 open nonZeroDivisors IsLocalization Algebra IsFractionRing IsScalarTower
 
