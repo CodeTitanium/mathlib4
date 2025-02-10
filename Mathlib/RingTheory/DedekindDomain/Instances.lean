@@ -83,9 +83,11 @@ local notation3 "P'" => algebraMapSubmonoid S P.primeCompl
 local notation3 "Rₚ" => Localization.AtPrime P
 local notation3 "Sₚ" => Localization P'
 
-instance [Module.Finite R S] [IsIntegrallyClosed S] [NoZeroSMulDivisors R S] :
+theorem foo [Module.Finite R S] [IsIntegrallyClosed S] [NoZeroSMulDivisors R S] :
     FiniteDimensional K L :=
   Module.Finite_of_isLocalization R S _ _ R⁰
+
+
 
 variable [FaithfulSMul R S]
 
