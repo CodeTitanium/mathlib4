@@ -13,13 +13,14 @@ import Mathlib.RingTheory.RingHom.Finite
 
 /-!
 # Instances for Dedekind domains
-This file contains various instances to work with Dedekind domains.
+This file contains various instances to work with localization of a ring extension.
 
-Very often one has an extension of Dedekind domains `R` and `S`, and to prove a property of this
-extension is useful to consider the localization `Rₚ` of `R` at `P`, a prime ideal of `R`. One also
-works with the corresponding localization `Sₚ` of `S` and the fraction fields `K` and `L` of `R` and
-`S`. In this situation there are many compatible algebra structures and various properties of the
-rings involved. This file is a collection of such instances.
+A very common situation in number theory is to have an extension of (say) Dedekind domains `R` and
+`S`, and to prove a property of this extension is useful to consider the localization `Rₚ` of `R` at
+`P`, a prime ideal of `R`. One also works with the corresponding localization `Sₚ` of `S` and the
+fraction fields `K` and `L` of `R` and `S`. In this situation there are many compatible algebra
+structures and various properties of the rings involved. This file contains a collection of such
+instances.
 
 ## Implementation details
 In general one wants all the results below for any algebra satisfyng `IsLocalization`, but those
