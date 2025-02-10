@@ -226,7 +226,7 @@ lemma greedy_valid {m n : ℕ} (h : m < n) (hadj : H.Adj n m) :
 
 lemma greedy_bdd (n : ℕ) : H.greedy n ≤ H.degreeLT n  := by
   rw [greedy_def]
-  have h := min'_mem _ (H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n)
+  have h := min'_mem _ <| H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n
   rw [mem_sdiff, mem_range] at h
   apply Nat.succ_le_succ_iff.1 h.1
 
@@ -236,18 +236,11 @@ lemma greedy_bdd_degLT {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : ∀ m, H.gr
 
 def GreedyColoring : H.Coloring ℕ := by
   apply Coloring.mk H.greedy
-  intro u v hadj
+  intro _ _ hadj
   cases lt_or_gt_of_ne hadj.ne with
   | inl h =>  apply H.greedy_valid h hadj.symm
   | inr h =>  rw [ne_comm]; apply H.greedy_valid h hadj
-
-lemma colorable_bdd_degLT {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : H.Colorable (Δ + 1) :=
-  colorable_iff_exists_bdd_nat_coloring (Δ + 1)|>.2
-        ⟨H.GreedyColoring, fun v ↦ H.greedy_bdd_degLT h v⟩
-
-lemma colorable_bdd_deg {Δ : ℕ} [LocallyFinite H] (h : ∀ v, H.degree v ≤ Δ) :
-    H.Colorable (Δ + 1) := H.colorable_bdd_degLT fun v ↦ (H.degreeLT_le_degree v).trans (h v)
-
+  
 def GreedyColoringFinBddDegLt {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : H.Coloring (Fin (Δ + 1)) := by
   apply Coloring.mk (fun v ↦ ⟨H.greedy v, H.greedy_bdd_degLT h v⟩)
   intro u v hadj
