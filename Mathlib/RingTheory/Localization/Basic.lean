@@ -462,7 +462,7 @@ noncomputable instance : Algebra (Localization M)
 
 instance : IsScalarTower R (Localization M) (Localization (Algebra.algebraMapSubmonoid S M)) :=
   IsScalarTower.of_algebraMap_eq (fun x ↦
-      (IsLocalization.map_eq (T := (Algebra.algebraMapSubmonoid S M)) M.le_comap_map x).symm)
+    (IsLocalization.map_eq (T := (Algebra.algebraMapSubmonoid S M)) M.le_comap_map x).symm)
 
 end
 
