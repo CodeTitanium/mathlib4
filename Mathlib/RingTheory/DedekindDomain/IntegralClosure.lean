@@ -268,9 +268,9 @@ instance [NoZeroSMulDivisors A C] [Module.Finite A C] :
       instIsScalarTowerLocalizationAlgebraMapSubmonoid A⁰ C
     have : Module.Finite (FractionRing A) B := Module.Finite_of_isLocalization A C _ B A⁰
     let _ : Algebra B (FractionRing C) :=
-    (map _ (M := (algebraMapSubmonoid C A⁰)) (T := C⁰) (RingHom.id C) <|
-      le_nonZeroDivisors_of_noZeroDivisors <| fun ⟨r, hr0, hr⟩ ↦
-      by simp [(FaithfulSMul.algebraMap_eq_zero_iff _ _).mp hr] at hr0).toAlgebra
+      (map _ (M := (algebraMapSubmonoid C A⁰)) (T := C⁰) (RingHom.id C) <|
+        le_nonZeroDivisors_of_noZeroDivisors <| fun ⟨r, hr0, hr⟩ ↦
+        by simp [(FaithfulSMul.algebraMap_eq_zero_iff _ _).mp hr] at hr0).toAlgebra
     let hB := fieldOfFiniteDimensional (FractionRing A) B
     have : IsScalarTower C B (FractionRing C) := by
       refine localization_isScalarTower_of_submonoid_le B _ _ C⁰ (fun s hs ↦
