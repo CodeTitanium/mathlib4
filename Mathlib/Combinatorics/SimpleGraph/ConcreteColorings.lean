@@ -260,35 +260,22 @@ instance instDecidableRelMapEncodable : ∀ a b, Decidable
     set v := decode₂ β b with hv
     match u with
     | none =>
-      apply isFalse
-      intro hf
-      obtain ⟨_, _, _,ha,_⟩:= hf
-      apply decode₂_ne_none_iff.2 ⟨_, ha⟩
-      exact hu.symm
+      exact isFalse <| fun ⟨_, _, _,ha,_⟩ ↦ decode₂_ne_none_iff.2 ⟨_, ha⟩ hu.symm
     | some u =>
       match v with
       | none =>
-        apply isFalse
-        intro hf
-        obtain ⟨_, _, _,_,hb⟩:= hf
-        apply decode₂_ne_none_iff.2 ⟨_, hb⟩
-        exact hv.symm
+        exact isFalse <| fun ⟨_, _, _,_,hb⟩ ↦ decode₂_ne_none_iff.2 ⟨_, hb⟩ hv.symm
       | some v =>
         exact if hadj : (G'.Adj u v) then isTrue (by
           use u,v,hadj
           constructor <;> rw [encode'] <;> dsimp <;> rw [ ← mem_decode₂]
           · exact hu.symm
           · exact hv.symm) else isFalse (by
-            intro hf
+            intro ⟨x, y, h, ha, hb⟩
             apply hadj
-            obtain ⟨x, y, h, ha, hb⟩:= hf
             rw [encode'] at ha hb; dsimp at ha hb
             rw [← mem_decode₂] at ha hb
-            convert h
-            · apply decode₂_inj _ ha
-              exact hu.symm
-            · apply decode₂_inj _ hb
-              exact hv.symm)
+            exact decode₂_inj hu.symm ha ▸ decode₂_inj hv.symm hb ▸ h)
 
 def GreedyColoring' : G'.Coloring ℕ := by
   apply Coloring.mk
