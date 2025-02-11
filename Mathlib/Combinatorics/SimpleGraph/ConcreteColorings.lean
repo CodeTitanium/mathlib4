@@ -277,30 +277,63 @@ section Encodable
 variable {β : Type*} [Encodable β] (H : SimpleGraph β) [DecidableRel H.Adj]
 
 open Encodable
-instance instDecidableRelMapEncodable : ∀ a b, Decidable
-  (Relation.Map H.Adj (encode' β) (encode' β) a b) :=by
-    intro a b
-    set u := decode₂ β a with hu
-    set v := decode₂ β b with hv
-    match u with
+-- instance instDecidableRelMapEncodable : ∀ a b, Decidable
+--   (Relation.Map H.Adj (encode' β) (encode' β) a b) :=by
+--     intro a b
+--     set u := decode₂ β a with hu
+--     set v := decode₂ β b with hv
+--     match u with
+--     | none =>
+--       exact isFalse <| fun ⟨_, _, _,ha,_⟩ ↦ decode₂_ne_none_iff.2 ⟨_, ha⟩ hu.symm
+--     | some u =>
+--       match v with
+--       | none =>
+--         exact isFalse <| fun ⟨_, _, _,_,hb⟩ ↦ decode₂_ne_none_iff.2 ⟨_, hb⟩ hv.symm
+--       | some v =>
+--         exact if hadj : (H.Adj u v) then isTrue (by
+--           use u, v, hadj
+--           constructor <;> rw [encode'] <;> dsimp <;> rw [ ← mem_decode₂]
+--           · exact hu.symm
+--           · exact hv.symm)
+--         else isFalse (by
+--           intro ⟨x, y, h, ha, hb⟩
+--           apply hadj
+--           rw [encode'] at ha hb; dsimp at ha hb
+--           rw [← mem_decode₂] at ha hb
+--           exact decode₂_inj hu.symm ha ▸ decode₂_inj hv.symm hb ▸ h)
+-- variable (e : β ≃ β)
+-- #check e.toEmbedding.trans (encode' β)
+
+instance instDecidableRelMapEncodableEquiv (e : β ≃ β): ∀ a b, Decidable
+  (Relation.Map H.Adj (e.toEmbedding.trans (encode' β)) (e.toEmbedding.trans (encode' β)) a b) :=by
+  intro a b
+  set u := decode₂ β a with hu
+  set v := decode₂ β b with hv
+  match u with
+  | none =>
+    exact isFalse <| fun ⟨_, _, _,ha,_⟩ ↦ decode₂_ne_none_iff.2 ⟨_, ha⟩ hu.symm
+  | some u =>
+    match v with
     | none =>
-      exact isFalse <| fun ⟨_, _, _,ha,_⟩ ↦ decode₂_ne_none_iff.2 ⟨_, ha⟩ hu.symm
-    | some u =>
-      match v with
-      | none =>
-        exact isFalse <| fun ⟨_, _, _,_,hb⟩ ↦ decode₂_ne_none_iff.2 ⟨_, hb⟩ hv.symm
-      | some v =>
-        exact if hadj : (H.Adj u v) then isTrue (by
-          use u, v, hadj
-          constructor <;> rw [encode'] <;> dsimp <;> rw [ ← mem_decode₂]
-          · exact hu.symm
-          · exact hv.symm)
-        else isFalse (by
-          intro ⟨x, y, h, ha, hb⟩
-          apply hadj
-          rw [encode'] at ha hb; dsimp at ha hb
-          rw [← mem_decode₂] at ha hb
-          exact decode₂_inj hu.symm ha ▸ decode₂_inj hv.symm hb ▸ h)
+      exact isFalse <| fun ⟨_, _, _,_,hb⟩ ↦ decode₂_ne_none_iff.2 ⟨_, hb⟩ hv.symm
+    | some v =>
+      exact if hadj : (H.Adj (e.symm u) (e.symm v)) then isTrue (by
+        use (e.symm u), (e.symm v), hadj
+        constructor <;> rw [encode'] <;> dsimp <;> rw [ ← mem_decode₂]
+        · simp only [Equiv.apply_symm_apply, Option.mem_def]
+          exact hu.symm
+        · simp only [Equiv.apply_symm_apply, Option.mem_def]
+          exact hv.symm)
+      else isFalse (by
+        intro ⟨x, y, h, ha, hb⟩
+        apply hadj
+        rw [encode'] at ha hb; dsimp at ha hb
+        rw [← mem_decode₂] at ha hb
+        rw [decode₂_inj hu.symm ha]
+        rw [decode₂_inj hv.symm hb]
+        simpa using h)
+
+
 
 -- instance instFintypeNeighborMapEncodable  [LocallyFinite H] :
 --   LocallyFinite (H.map (encode' β)) := by
@@ -333,16 +366,17 @@ instance instDecidableRelMapEncodable : ∀ a b, Decidable
 --       rw [encode']at h1; dsimp at h1 ; rw [← mem_decode₂] at h1
 --       apply decode₂_inj hu.symm h1
 
-def GreedyColoring' : H.Coloring ℕ := by
+def GreedyColoringEquivEncodable (e : β ≃ β): H.Coloring ℕ := by
   apply Coloring.mk
-    (fun v ↦ (H.map (encode' β)).GreedyColoring ((encode' β) v))
-    (fun hadj heq ↦ (H.map (encode' β)).GreedyColoring.valid
+    (fun v ↦ (H.map (e.toEmbedding.trans (encode' β))).GreedyColoring
+         ((e.toEmbedding.trans (encode' β)) v))
+    (fun hadj heq ↦ (H.map (e.toEmbedding.trans (encode' β))).GreedyColoring.valid
       (map_adj_apply.mpr hadj) heq)
 
 open Rat
 variable {k : ℕ} {K : SimpleGraph ℚ} [DecidableRel K.Adj]
 
-#check K.GreedyColoring'
+#check K.GreedyColoringEquivEncodable (Equiv.refl ℚ)
 
 instance instFintypeDegreeMap {V W : Type*} [DecidableEq V] [DecidableEq W] {G : SimpleGraph V}
     {v : V} [Fintype (G.neighborSet v)] {e : V ↪ W} : Fintype ((G.map e).neighborSet (e v)) := by
