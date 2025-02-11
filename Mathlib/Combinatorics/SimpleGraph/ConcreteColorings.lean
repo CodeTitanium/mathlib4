@@ -200,7 +200,7 @@ end degreeLT
 section withN
 
 variable (H : SimpleGraph ℕ) [DecidableRel H.Adj]
-/-- Any SimpleGraph ℕ is LocallyFiniteLT -/
+/-- Any SimpleGraph ℕ with Decidable Adj is LocallyFiniteLT -/
 instance instFintypeNeighborLTN : LocallyFiniteLT H := by
   intro n
   apply Fintype.ofFinset ((range n).filter (H.Adj n))
@@ -272,40 +272,14 @@ def GreedyColoringFinBddDegN {Δ : ℕ} [LocallyFinite H] (h : ∀ v, H.degree v
       H.GreedyColoringFinBddDegLtN fun v ↦ (H.degreeLT_le_degree v).trans (h v)
 
 end withN
-
 section Encodable
 variable {β : Type*} [Encodable β] (H : SimpleGraph β) [DecidableRel H.Adj]
-
 open Encodable
--- instance instDecidableRelMapEncodable : ∀ a b, Decidable
---   (Relation.Map H.Adj (encode' β) (encode' β) a b) :=by
---     intro a b
---     set u := decode₂ β a with hu
---     set v := decode₂ β b with hv
---     match u with
---     | none =>
---       exact isFalse <| fun ⟨_, _, _,ha,_⟩ ↦ decode₂_ne_none_iff.2 ⟨_, ha⟩ hu.symm
---     | some u =>
---       match v with
---       | none =>
---         exact isFalse <| fun ⟨_, _, _,_,hb⟩ ↦ decode₂_ne_none_iff.2 ⟨_, hb⟩ hv.symm
---       | some v =>
---         exact if hadj : (H.Adj u v) then isTrue (by
---           use u, v, hadj
---           constructor <;> rw [encode'] <;> dsimp <;> rw [ ← mem_decode₂]
---           · exact hu.symm
---           · exact hv.symm)
---         else isFalse (by
---           intro ⟨x, y, h, ha, hb⟩
---           apply hadj
---           rw [encode'] at ha hb; dsimp at ha hb
---           rw [← mem_decode₂] at ha hb
---           exact decode₂_inj hu.symm ha ▸ decode₂_inj hv.symm hb ▸ h)
--- variable (e : β ≃ β)
--- #check e.toEmbedding.trans (encode' β)
-
-instance instDecidableRelMapEncodableEquiv (e : β ≃ β): ∀ a b, Decidable
-  (Relation.Map H.Adj (e.toEmbedding.trans (encode' β)) (e.toEmbedding.trans (encode' β)) a b) :=by
+/- If H is graph on an Encodable type β with Decidable Adj and π : β ≃ β is a permutation of β
+then the graph on ℕ given by permuting β with π and then applying the encoding of β also
+has Decidable Adj -/
+instance instDecidableRelMapEncodableEquiv (π : β ≃ β) :
+    DecidableRel (H.map (π.toEmbedding.trans (encode' β))).Adj := by
   intro a b
   set u := decode₂ β a with hu
   set v := decode₂ β b with hv
@@ -317,64 +291,28 @@ instance instDecidableRelMapEncodableEquiv (e : β ≃ β): ∀ a b, Decidable
     | none =>
       exact isFalse <| fun ⟨_, _, _,_,hb⟩ ↦ decode₂_ne_none_iff.2 ⟨_, hb⟩ hv.symm
     | some v =>
-      exact if hadj : (H.Adj (e.symm u) (e.symm v)) then isTrue (by
-        use (e.symm u), (e.symm v), hadj
-        constructor <;> rw [encode'] <;> dsimp <;> rw [ ← mem_decode₂]
-        · simp only [Equiv.apply_symm_apply, Option.mem_def]
-          exact hu.symm
-        · simp only [Equiv.apply_symm_apply, Option.mem_def]
-          exact hv.symm)
+      exact if hadj : (H.Adj (π.symm u) (π.symm v)) then isTrue (by
+        use (π.symm u), (π.symm v), hadj
+        simpa [encode', ← mem_decode₂] using ⟨hu.symm, hv.symm⟩)
       else isFalse (by
-        intro ⟨x, y, h, ha, hb⟩
+        intro ⟨_, _, h, ha, hb⟩
         apply hadj
-        rw [encode'] at ha hb; dsimp at ha hb
-        rw [← mem_decode₂] at ha hb
-        rw [decode₂_inj hu.symm ha]
-        rw [decode₂_inj hv.symm hb]
-        simpa using h)
+        simp only [Function.Embedding.trans_apply, Equiv.coe_toEmbedding, encode',
+          Function.Embedding.coeFn_mk, ← mem_decode₂] at ha hb
+        simpa [decode₂_inj hu.symm ha, decode₂_inj hv.symm hb] using h)
 
-
-
--- instance instFintypeNeighborMapEncodable  [LocallyFinite H] :
---   LocallyFinite (H.map (encode' β)) := by
---   intro n
---   set u := decode₂ β n with hu
---   match u with
---   | none =>
---     apply Fintype.ofFinset ∅; simp only [not_mem_empty, mem_neighborSet, map_adj, false_iff,
---       not_exists, not_and]
---     intro n a b hadj h hf
---     rw [encode'] at *; dsimp at *; rw [← mem_decode₂,← hu] at h
---     contradiction
---   | some u' =>
---     let s :=(H.neighborFinset u')
---     apply Fintype.ofFinset  ((H.neighborFinset u').map (encode' β))
---     intro n
---     simp only [mem_map, mem_neighborSet, map_adj]
---     constructor
---     · intro ⟨a,ha1,ha2⟩
---       use u',a
---       rw [mem_neighborFinset] at ha1
---       refine ⟨ha1, ?_, ha2⟩
---       have : u' ∈ decode₂ β _:=  hu.symm
---       rwa [mem_decode₂] at this
---     · intro ⟨u',v',had,h1,h2⟩
---       use v'
---       simp only [mem_neighborFinset]
---       refine ⟨?_,h2⟩
---       convert had
---       rw [encode']at h1; dsimp at h1 ; rw [← mem_decode₂] at h1
---       apply decode₂_inj hu.symm h1
-
-def GreedyColoringEquivEncodable (e : β ≃ β): H.Coloring ℕ := by
+/-- Given a graph on an encodable type β and a permutation of β compute the corresponding
+greedy ℕ-coloring -/
+def GreedyColoringEquivEncodable (π : β ≃ β): H.Coloring ℕ := by
   apply Coloring.mk
-    (fun v ↦ (H.map (e.toEmbedding.trans (encode' β))).GreedyColoring
-         ((e.toEmbedding.trans (encode' β)) v))
-    (fun hadj heq ↦ (H.map (e.toEmbedding.trans (encode' β))).GreedyColoring.valid
-      (map_adj_apply.mpr hadj) heq)
+    (fun v ↦ (H.map (π.toEmbedding.trans (encode' β))).GreedyColoring _)
+    (fun hadj heq ↦ (H.map _).GreedyColoring.valid (map_adj_apply.mpr hadj) heq)
 
-open Rat
-variable {k : ℕ} {K : SimpleGraph ℚ} [DecidableRel K.Adj]
+-- TODO define  H.GreedyColorable n iff ∃ π : β ≃ β such that the greedy coloring is bdd above by n
+-- define H.GreedyChromaticNumber as the smallest such n (if at least one exists)
+
+
+variable {K : SimpleGraph ℚ} [DecidableRel K.Adj]
 
 #check K.GreedyColoringEquivEncodable (Equiv.refl ℚ)
 
