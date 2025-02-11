@@ -171,7 +171,7 @@ def neighborFinsetLT (b : α)  [Fintype (G.neighborSetLT b)] : Finset α :=
     (G.neighborSetLT b).toFinset
 
 /-- The number of neighbors less than a vertex -/
-def degreeLT (b : α) [Fintype (G.neighborSetLT b)] : ℕ := #(G.neighborFinsetLT b)
+abbrev degreeLT (b : α) [Fintype (G.neighborSetLT b)] : ℕ := #(G.neighborFinsetLT b)
 
 lemma mem_neighborFinsetLT  {a b : α} [Fintype (G.neighborSetLT b)] :
     a ∈ G.neighborFinsetLT b ↔ a < b ∧ G.Adj a b := Set.mem_toFinset
@@ -207,14 +207,26 @@ instance instFintypeNeighborLTN : LocallyFiniteLT H := by
   intro m; rw [mem_filter, mem_range, adj_comm]
   rfl
 
-/-- The function defining a greedy ℕ - coloring of a SimpleGraph ℕ -/
-private def greedy (n : ℕ) : ℕ := min' _ <| H.unused (fun m ↦ ite (m < n) (greedy m) 0) n
+@[simp]
+lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
+  ext; rw [mem_neighborFinsetLT]; simp
 
-private lemma greedy_def (n : ℕ) : H.greedy n = min' _
+@[simp]
+lemma degreeLT_zero : H.degreeLT 0 = 0 := by
+  simp
+
+/-- The function defining a greedy ℕ - coloring of a SimpleGraph ℕ -/
+def greedy (n : ℕ) : ℕ := min' _ <| H.unused (fun m ↦ ite (m < n) (greedy m) 0) n
+
+lemma greedy_def (n : ℕ) : H.greedy n = min' _
     (H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n) := by
   rw [greedy]
 
-private lemma greedy_valid {m n : ℕ} (hadj : H.Adj m n) :
+lemma greedy_zero : H.greedy 0 = 0:=by
+  rw [greedy_def]
+  simp
+
+lemma greedy_valid {m n : ℕ} (hadj : H.Adj m n) :
     H.greedy m ≠ H.greedy n := by
   intro heq
   wlog h : m < n
@@ -224,7 +236,7 @@ private lemma greedy_valid {m n : ℕ} (hadj : H.Adj m n) :
   simp_rw [mem_image,neighborFinsetLT, Set.mem_toFinset]
   use m, ⟨h, hadj⟩, if_pos h ▸ heq
 
-private lemma greedy_le (n : ℕ) : H.greedy n ≤ H.degreeLT n  := by
+lemma greedy_le (n : ℕ) : H.greedy n ≤ H.degreeLT n  := by
   rw [greedy_def]
   have h := min'_mem _ <| H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n
   rw [mem_sdiff, mem_range] at h
@@ -236,8 +248,19 @@ private lemma greedy_bdd_degLT {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : ∀
 /-- The greeding ℕ - coloring of a SimpleGraph ℕ -/
 def GreedyColoring : H.Coloring ℕ := Coloring.mk H.greedy (fun hadj ↦ H.greedy_valid hadj)
 
-#check Set.range H.greedy
-noncomputable def GreedyChromaticNumber : ℕ := max' (Set.range H.greedy)
+abbrev greedy_colors [Fintype (Set.range H.greedy)] : Finset ℕ := (Set.range H.greedy).toFinset
+
+lemma greedy_col_nonempty  [Fintype (Set.range H.greedy)] : H.greedy_colors.Nonempty :=
+⟨0, by rw [Set.mem_toFinset]; exact ⟨0,H.greedy_zero⟩⟩
+
+/-- The largest color used in the greedy coloring (assuming it exists)-/
+def GreedyMax [Fintype (Set.range H.greedy)] : ℕ := max' (Set.range H.greedy).toFinset
+    H.greedy_col_nonempty
+
+/-- We have a computable H.Coloring (Fin (H.GreedyMax + 1)) -/
+def GreedyColoringFinite  [Fintype (Set.range H.greedy)] : H.Coloring (Fin (H.GreedyMax + 1)) :=
+  Coloring.mk (fun v ↦ ⟨H.greedy v,  Nat.lt_succ_iff.mpr <| le_max' _ _ (by simp)⟩)
+              (by simp only [ne_eq, Fin.mk.injEq]; intro _ _ hadj; apply H.greedy_valid hadj)
 
 def GreedyColoringFinBddDegLtN {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) : H.Coloring (Fin (Δ + 1)) :=
   Coloring.mk (fun v ↦ ⟨H.greedy v, H.greedy_bdd_degLT h v⟩)
