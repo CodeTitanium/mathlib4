@@ -8,34 +8,74 @@ namespace SimpleGraph
 open Finset
 section degreeLT
 #check Encodable.decidableRangeEncode
-variable {α : Type*} [LT α] (G : SimpleGraph α)
-
+variable {α : Type*} [Encodable α] [Inhabited α] (G : SimpleGraph α) [DecidableRel G.Adj]
+open Encodable
 /-- The set of neighbors less than a vertex -/
-def neighborSetLT (b : α) : Set α := {a | a < b ∧ G.Adj a b}
+def neighborSetLT (b : α) : Set α := {a | encode a < encode b ∧ G.Adj a b}
+
+/-- Any SimpleGraph α with Encodable α and DecidableRel Adj is LocallyFiniteLT -/
+instance instFintypeNeighborLT (b : α): Fintype (G.neighborSetLT b) := by
+  have := decidableEqOfEncodable α
+  let s := @filter _ (fun x ↦ x ∈ Set.range encode) (decidableRangeEncode α) (range (encode b))
+  let t := image (fun x ↦ decode₂ α x) s
+  have : none ∉ t := by
+    intro h
+    rw [mem_image] at h
+    obtain ⟨a, ha, h⟩ := h
+    rw [@mem_filter] at ha
+    exact decode₂_ne_none_iff.2 ha.2 h
+  apply Fintype.ofFinset <| (t.image (fun x ↦ Option.getD x default)).filter (fun a ↦ G.Adj a b)
+  intro a
+  rw [mem_filter, mem_image]
+  constructor <;> intro h
+  · obtain ⟨c,hc⟩ := h.1
+    cases c with
+    | none => exfalso; exact this hc.1
+    | some val =>
+      simp only [Option.getD_some] at hc
+      refine ⟨?_,h.2⟩
+      rw [mem_image] at hc
+      obtain ⟨x,hx⟩:= hc.1
+      simp_all only
+      rw [@mem_filter, mem_range] at hx
+      convert hx.1.1
+      rw [decode₂_eq_some] at hx
+      exact hx.2
+  · obtain ⟨ha,hb⟩:= h
+    refine ⟨?_,hb⟩
+    use (some a)
+    simp only [Option.getD_some, and_true]
+    rw [mem_image]
+    simp_rw [decode₂_eq_some]
+    use (encode a)
+    simp only [mem_filter, mem_range]
+    rw [@mem_filter,mem_range]
+    simpa
 
 /-- The set of neighbors less than a vertex as a Finset -/
-def neighborFinsetLT (b : α) [Fintype (G.neighborSetLT b)] : Finset α :=
+def neighborFinsetLT (b : α) : Finset α :=
     (G.neighborSetLT b).toFinset
 
 /-- The number of neighbors less than a vertex -/
-abbrev degreeLT (b : α) [Fintype (G.neighborSetLT b)] : ℕ := #(G.neighborFinsetLT b)
+abbrev degreeLT (b : α) : ℕ := #(G.neighborFinsetLT b)
 
-lemma mem_neighborFinsetLT  {a b : α} [Fintype (G.neighborSetLT b)] :
-    a ∈ G.neighborFinsetLT b ↔ a < b ∧ G.Adj a b := Set.mem_toFinset
+lemma mem_neighborFinsetLT  {a b : α} :
+    a ∈ G.neighborFinsetLT b ↔ encode a < encode b ∧ G.Adj a b := Set.mem_toFinset
+
 
 /-- A graph is LocallyFiniteLT if every vertex has a finitely many neighbors less than it. -/
 abbrev LocallyFiniteLT :=
   ∀ v : α, Fintype (G.neighborSetLT v)
 
-lemma degreeLT_le_degree (n : α) [Fintype (G.neighborSetLT n)] [Fintype (G.neighborSet n)] :
-    G.degreeLT n ≤ G.degree n := by
+lemma degreeLT_le_degree (a : α) [Fintype (G.neighborSetLT a)] [Fintype (G.neighborSet a)] :
+    G.degreeLT a ≤ G.degree a := by
   rw [degreeLT, degree]
   apply card_le_card
   intro m hm
   simp only [mem_neighborFinsetLT, mem_neighborFinset] at *
   exact hm.2.symm
 
-lemma unused (c : α → ℕ) (n : α) [Fintype (G.neighborSetLT n)] :
+lemma unused (c : α → ℕ) (n : α)  :
     (range (G.degreeLT n + 1) \ ((G.neighborFinsetLT n).image c)).Nonempty := by
   apply card_pos.1
   apply lt_of_lt_of_le _ <| le_card_sdiff _ _
@@ -44,28 +84,18 @@ lemma unused (c : α → ℕ) (n : α) [Fintype (G.neighborSetLT n)] :
   apply lt_of_le_of_lt  <| card_image_le
   apply Nat.lt_succ_of_le le_rfl
 
-end degreeLT
-section withN
 
-variable (H : SimpleGraph ℕ) [DecidableRel H.Adj]
 
-/-- Any SimpleGraph ℕ with Decidable Adj is LocallyFiniteLT -/
-instance instFintypeNeighborLTN : LocallyFiniteLT H := by
-  intro n
-  apply Fintype.ofFinset ((range n).filter (H.Adj n))
-  intro m; rw [mem_filter, mem_range, adj_comm]
-  rfl
+-- @[simp]
+-- lemma neighborFinsetLT_zero : G.neighborFinsetLT 0 = ∅ := by
+--   ext; rw [mem_neighborFinsetLT]; simp
 
-@[simp]
-lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
-  ext; rw [mem_neighborFinsetLT]; simp
-
-@[simp]
-lemma degreeLT_zero : H.degreeLT 0 = 0 := by
-  simp
+-- @[simp]
+-- lemma degreeLT_zero : H.degreeLT 0 = 0 := by
+--   simp
 
 /-- The function defining a greedy ℕ - coloring of a SimpleGraph ℕ -/
-def greedy (n : ℕ) : ℕ := min' _ <| H.unused (fun m ↦ ite (m < n) (greedy m) 0) n
+def greedy (n : α) : ℕ := min' _ <| G.unused (fun m ↦ ite (encode m < encode n) (greedy m) 0) n
 
 lemma greedy_def (n : ℕ) : H.greedy n = min' _
     (H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n) := by
@@ -179,7 +209,7 @@ def GreedyOrder_ofColoring {n : ℕ} (C : H.Coloring (Fin n)) : β ≃ β where
 
 lemma colorable_iff_greedyColorable {n : ℕ} : H.Colorable n ↔ H.GreedyColorable n := by
   constructor <;> intro ⟨f,hf⟩
-  · 
+  ·
     sorry
   · apply (colorable_iff_exists_bdd_nat_coloring _).mpr
     use H.GreedyColoring f
