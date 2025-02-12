@@ -155,20 +155,20 @@ instance instDecidableRelMapEncodableEquiv [DecidableRel H.Adj] (π : β ≃ β)
               Function.Embedding.coeFn_mk, ← mem_decode₂] at ha hb
         simpa [decode₂_inj hu.symm ha, decode₂_inj hv.symm hb] using h)
 
---TODO make this work for π : β ≃ β  
+
 /-- Any SimpleGraph β with Encodable β and DecidableRel Adj is LocallyFiniteLT -/
-instance instFintypeNeighborLT [DecidableRel H.Adj] (b : β) :
-    Fintype ((H.map (encode' β)).neighborSetLT (encode b)) := by
-  have hi:= instDecidableRelMapEncodableEquiv H (Equiv.refl β)
-  let s := @filter _ (fun x ↦ x ∈ Set.range encode) (decidableRangeEncode β) (range (encode b))
-  apply Fintype.ofFinset <| @filter _ (fun n ↦ (H.map (encode' β)).Adj n (encode b))
-    (fun _ ↦ by apply hi) s
+instance instFintypeNeighborLTEquiv [DecidableRel H.Adj] (π : β ≃ β ) (b : β) :
+    Fintype ((H.map (π.toEmbedding.trans (encode' β))).neighborSetLT (encode (π b))) := by
+  let s := @filter _ (fun x ↦ x ∈ Set.range encode) (decidableRangeEncode β) (range (encode (π b)))
+  apply Fintype.ofFinset <| @filter _
+    (fun n ↦ (H.map (π.toEmbedding.trans (encode' β))).Adj n (encode (π b))) _ s
   intro a
   rw [@mem_filter, @mem_filter, mem_neighborSetLT, mem_range, map_adj, encode']
-  simp only [Set.mem_range, Function.Embedding.coeFn_mk, encode_inj, exists_eq_right_right,
-    and_congr_left_iff, and_iff_left_iff_imp, forall_exists_index, and_imp]
-  intro x hx h1 hlt
-  use x
+  simp only [Set.mem_range, Function.Embedding.trans_apply, Equiv.coe_toEmbedding,
+    Function.Embedding.coeFn_mk, encode_inj, and_congr_left_iff, and_iff_left_iff_imp,
+    forall_exists_index, and_imp]
+  intro x y h1 hlt heq h2
+  use (π x)
 
 
 
