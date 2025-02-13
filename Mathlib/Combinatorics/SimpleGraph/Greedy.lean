@@ -39,8 +39,8 @@ lemma degreeLT_le_degree (a : α) [Fintype (G.neighborSetLT a)] [Fintype (G.neig
 
 lemma unused (c : α → ℕ) (a : α) [Fintype (G.neighborSetLT a)] :
     (range (G.degreeLT a + 1) \ ((G.neighborFinsetLT a).image c)).Nonempty := by
-  apply card_pos.1 <| lt_of_lt_of_le (Nat.sub_pos_of_lt _) <| le_card_sdiff _ _
-  apply lt_of_le_of_lt  <| card_image_le
+  apply card_pos.1 <|  (Nat.sub_pos_of_lt _).trans_le <| le_card_sdiff _ _
+  apply card_image_le.trans_lt
   rw [← degreeLT, card_range]
   apply Nat.lt_succ_of_le le_rfl
 
@@ -67,20 +67,20 @@ lemma greedy_valid {m n : ℕ} (hadj : H.Adj m n) :
     H.greedy m ≠ H.greedy n := by
   intro heq
   wlog h : m < n
-  · rw [not_lt] at h; exact this H hadj.symm heq.symm <| lt_of_le_of_ne h hadj.ne.symm
+  · exact this H hadj.symm heq.symm <| hadj.ne.symm.lt_of_le <| not_lt.1 h
   apply H.greedy_def n ▸
     (mem_sdiff.mp <| min'_mem _ (H.unused (fun k ↦ ite (k < n) (H.greedy k) 0) n)).2
-  simp_rw [mem_image,neighborFinsetLT, Set.mem_toFinset]
+  simp_rw [mem_image, neighborFinsetLT, Set.mem_toFinset]
   use m, ⟨h, hadj⟩, if_pos h ▸ heq
 
 lemma greedy_le (n : ℕ) : H.greedy n ≤ H.degreeLT n  := by
   rw [greedy_def]
   have h := min'_mem _ <| H.unused (fun m ↦ ite (m < n) (H.greedy m) 0) n
   rw [mem_sdiff, mem_range] at h
-  apply Nat.succ_le_succ_iff.1 h.1
+  exact Nat.succ_le_succ_iff.1 h.1
 
 lemma greedy_bdd_degLT {Δ : ℕ} (h : ∀ v, H.degreeLT v ≤ Δ) (m : ℕ):  H.greedy m < Δ + 1 :=
-  lt_of_le_of_lt (H.greedy_le m) <| Nat.succ_le_succ (h m)
+  (H.greedy_le m).trans_lt <| Nat.succ_le_succ (h m)
 
 /-- If we used a color larger than c at vertex n then n must have an earlier neighbor that
 was already colored with c -/
@@ -88,21 +88,46 @@ lemma greedy_witness {c n : ℕ} (h : c < H.greedy n) : ∃ m < n, H.Adj m n ∧
   by_contra! hc
   have h2 : c ∉ ((H.neighborFinsetLT n).image (fun m ↦ ite (m < n) (H.greedy m) 0) ):= by
     intro hf
-    rw [mem_image] at hf
-    obtain ⟨a,ha⟩ := hf
+    obtain ⟨a,ha⟩ := mem_image.mp hf
     rw [mem_neighborFinsetLT, if_pos ha.1.1] at ha
     exact hc _ ha.1.1 ha.1.2 ha.2
   have := min'_le _ c <| mem_sdiff.mpr ⟨mem_range_succ_iff.2 <| h.le.trans (H.greedy_le n), h2⟩
-  exact Nat.not_lt.2 this (H.greedy_def _ ▸ h)
+  exact not_lt.2 this <| H.greedy_def _ ▸ h
+
+
+abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
+  ∀ a b, (π a) < (π b) → C a < C b
+
+
+
+@[simp]
+lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
+  ext; rw [mem_neighborFinsetLT]; simp
+
+@[simp]
+lemma degreeLT_zero : H.degreeLT 0 = 0 := by
+  simp
+
+/-- TODO in ℕ first -/
+lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ ≃ ℕ}
+    (h : H.ColorOrderN C π) (a : ℕ) : H.greedy a ≤ C (π a):= by
+  induction a with
+  | zero => rw [greedy_def]; simp
+  | succ n ih =>
+  by_contra! h'
+  obtain ⟨m, hlt, hadj, heq⟩ := H.greedy_witness h'
+  sorry
+
+
 
 end withN
-
 section withEncodable
 open Encodable
 
 /-- The SimpleGraph ℕ formed from a SimpleGraph β given by permuting β by π and then encoding in ℕ-/
 abbrev label {β : Type*} [Encodable β] (H : SimpleGraph β) (π : β ≃ β) : SimpleGraph ℕ :=
     H.map (π.toEmbedding.trans (encode' β))
+
 @[simp]
 lemma label_adj {β : Type*} [Encodable β] {H : SimpleGraph β} {π : β ≃ β} {a b : β} :
     (H.label π).Adj (encode (π a)) (encode (π b)) ↔ H.Adj a b :=
@@ -167,6 +192,20 @@ abbrev GreedyColorable [DecidableRel H.Adj] (n : ℕ) : Prop :=
     Nonempty ({π : β ≃ β // ∀ v, H.GreedyColoring π v < n})
 
 
+abbrev ColorOrder (C : H.Coloring ℕ) (π : β ≃ β) : Prop :=
+  ∀ a b, encode (π a) < encode (π b) → C a < C b
+
+
+/-- TODO in ℕ first -/
+lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β ≃ β}
+    (h : H.ColorOrder C π) (a : β) : H.GreedyColoring π a ≤ C a:= by
+  change (H.label π).greedy (encode (π a)) ≤ C a
+  by_contra! h'
+  obtain ⟨m, hlt, hadj, heq⟩ := (H.label π).greedy_witness h'
+
+  sorry
+
+
 def GreedyOrder_ofColoring (C : H.Coloring ℕ) : β ≃ β where
   toFun := fun v => sorry
   invFun := fun v => sorry
@@ -213,14 +252,6 @@ end withEncodable
 #check label
 end SimpleGraph
 
-
--- @[simp]
--- lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
---   ext; rw [mem_neighborFinsetLT]; simp
-
--- @[simp]
--- lemma degreeLT_zero : H.degreeLT 0 = 0 := by
---   simp
 
 
 -- abbrev col_le (C : ℕ → ℕ) (a b : ℕ) : Prop := Nat.lt (C a) (C b) ∨ C a = C b ∧ Nat.le a b
