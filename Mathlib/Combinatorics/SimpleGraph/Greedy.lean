@@ -94,12 +94,6 @@ lemma greedy_witness {c n : ℕ} (h : c < H.greedy n) : ∃ m < n, H.Adj m n ∧
   have := min'_le _ c <| mem_sdiff.mpr ⟨mem_range_succ_iff.2 <| h.le.trans (H.greedy_le n), h2⟩
   exact not_lt.2 this <| H.greedy_def _ ▸ h
 
-
-abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
-  ∀ a b, (π a) < (π b) → C a < C b
-
-
-
 @[simp]
 lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
   ext; rw [mem_neighborFinsetLT]; simp
@@ -108,14 +102,17 @@ lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
 lemma degreeLT_zero : H.degreeLT 0 = 0 := by
   simp
 
+abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
+  ∀ a b, (π a) < (π b) → C a < C b
+
 /-- TODO in ℕ first -/
 lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ ≃ ℕ}
     (h : H.ColorOrderN C π) (a : ℕ) : H.greedy a ≤ C (π a):= by
-  induction a with
-  | zero => rw [greedy_def]; simp
-  | succ n ih =>
+  induction a using Nat.strong_induction_on
+  rename_i n ih
   by_contra! h'
   obtain ⟨m, hlt, hadj, heq⟩ := H.greedy_witness h'
+  
   sorry
 
 
