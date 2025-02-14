@@ -103,17 +103,26 @@ lemma degreeLT_zero : H.degreeLT 0 = 0 := by
   simp
 
 abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
-  ∀ a b, (π a) < (π b) → C a < C b
+  ∀ a b, C a < C b → (π a) < (π b)
 
 /-- TODO in ℕ first -/
 lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ ≃ ℕ}
-    (h : H.ColorOrderN C π) (a : ℕ) : H.greedy a ≤ C (π a):= by
+    [DecidableRel (H.map π.toEmbedding).Adj] (h : H.ColorOrderN C π) (a : ℕ) :
+    (H.map π).greedy a ≤ C (π.symm a)  := by
   induction a using Nat.strong_induction_on
   rename_i n ih
   by_contra! h'
-  obtain ⟨m, hlt, hadj, heq⟩ := H.greedy_witness h'
-  
-  sorry
+  obtain ⟨m, hlt, hadj, heq⟩ := (H.map π.toEmbedding).greedy_witness h'
+  cases (ih m hlt).lt_or_eq with
+  | inl hl =>
+    have := h _ _ (heq ▸ hl)
+    simp_rw [Equiv.apply_symm_apply] at this
+    exact hlt.not_lt this
+  | inr he =>
+    apply C.valid _ (heq ▸ he).symm
+    obtain ⟨u,v,h1,h2,h3⟩ := (map_adj ..).mp hadj
+    rw [← h2,← h3]
+    simpa using h1
 
 
 
