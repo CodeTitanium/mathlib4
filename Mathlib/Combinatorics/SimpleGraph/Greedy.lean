@@ -105,7 +105,6 @@ lemma degreeLT_zero : H.degreeLT 0 = 0 := by
 abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
   ∀ a b, C a < C b → (π a) < (π b)
 
-/-- TODO in ℕ first -/
 lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ ≃ ℕ}
     [DecidableRel (H.map π.toEmbedding).Adj] (h : H.ColorOrderN C π) (a : ℕ) :
     (H.map π).greedy a ≤ C (π.symm a)  := by
@@ -120,9 +119,9 @@ lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ 
     exact hlt.not_lt this
   | inr he =>
     apply C.valid _ (heq ▸ he).symm
-    obtain ⟨u,v,h1,h2,h3⟩ := (map_adj ..).mp hadj
-    rw [← h2,← h3]
-    simpa using h1
+    obtain ⟨u, v, _, h2, h3⟩ := (map_adj ..).mp hadj
+    rw [← h2, ← h3]
+    simpa
 
 
 
@@ -138,6 +137,30 @@ abbrev label {β : Type*} [Encodable β] (H : SimpleGraph β) (π : β ≃ β) :
 lemma label_adj {β : Type*} [Encodable β] {H : SimpleGraph β} {π : β ≃ β} {a b : β} :
     (H.label π).Adj (encode (π a)) (encode (π b)) ↔ H.Adj a b :=
   ⟨fun _ ↦ by simp_all [encode'], fun h ↦ by use a, b, h; simp [encode']⟩
+
+lemma label_mem_decode₂_of_adj {β : Type*} [Encodable β] {H : SimpleGraph β} {π : β ≃ β} {m n : ℕ}
+  (ha : (H.label π).Adj m n) : ∃ c, c ∈ decode₂ β m   :=by
+  rw [map_adj] at ha
+  obtain ⟨a, b, h, ha, hb⟩ := ha
+  use (π a)
+  exact mem_decode₂.mpr ha
+
+@[simp]
+lemma label_adj' {β : Type*} [Encodable β] {H : SimpleGraph β} {π : β ≃ β} {m n : ℕ} {a b : β}
+(ha : a ∈ decode₂ β m ) (hb : b ∈ decode₂ β n) :
+    (H.label π).Adj m n ↔ H.Adj (π.symm a) (π.symm b) := by
+  simp only [map_adj, encode', Function.Embedding.trans_apply, Equiv.coe_toEmbedding,
+    Function.Embedding.coeFn_mk]
+  constructor
+  · intro ⟨u,v,hu⟩
+    rw [mem_decode₂] at ha hb
+    rw [← ha, ← hb ] at hu
+    rw [← encode_inj.1 hu.2.1, ← encode_inj.1  hu.2.2]
+    simpa using hu.1
+  · intro hadj
+    use (π.symm a), (π.symm b), hadj
+    rw [mem_decode₂] at ha hb
+    simpa using ⟨ha,hb⟩
 
 variable {β : Type*} [Encodable β] (H : SimpleGraph β)
 /- If H is graph on an Encodable type β with Decidable Adj and π : β ≃ β is a permutation of β
@@ -197,20 +220,41 @@ def GreedyColoringDegreeLT {Δ : ℕ} [DecidableRel H.Adj] (π : β ≃ β)
 abbrev GreedyColorable [DecidableRel H.Adj] (n : ℕ) : Prop :=
     Nonempty ({π : β ≃ β // ∀ v, H.GreedyColoring π v < n})
 
-
 abbrev ColorOrder (C : H.Coloring ℕ) (π : β ≃ β) : Prop :=
-  ∀ a b, encode (π a) < encode (π b) → C a < C b
+  ∀ a b, C a < C b → encode (π a) < encode (π b)
 
-
-/-- TODO in ℕ first -/
-lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β ≃ β}
-    (h : H.ColorOrder C π) (a : β) : H.GreedyColoring π a ≤ C a:= by
-  change (H.label π).greedy (encode (π a)) ≤ C a
+lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β ≃ β} {n : ℕ} {b : β}
+(h : H.ColorOrder C π) (hb : b ∈ decode₂ β n) :
+    (H.label π).greedy n ≤ C (π.symm b)  := by
+  induction n using Nat.strong_induction_on generalizing b
+  rename_i n ih
   by_contra! h'
   obtain ⟨m, hlt, hadj, heq⟩ := (H.label π).greedy_witness h'
-
-  sorry
-
+  obtain ⟨c, hc⟩:= label_mem_decode₂_of_adj hadj
+  cases (ih m hlt hc).lt_or_eq with
+  | inl hl =>
+    have := h _ _ (heq ▸ hl)
+    simp_rw [Equiv.apply_symm_apply] at this
+    rw [mem_decode₂] at hb hc
+    subst_vars
+    apply hlt.not_lt this
+  | inr he =>
+    apply C.valid _ (heq ▸ he).symm
+    obtain ⟨u, v, _, h2, h3⟩ := (map_adj ..).mp hadj
+    convert hadj using 1
+    simp only [map_adj, encode', Function.Embedding.trans_apply, Equiv.coe_toEmbedding,
+      Function.Embedding.coeFn_mk]
+    constructor
+    · intro h1
+      use (π.symm c),(π.symm b),h1
+      simp only [Equiv.apply_symm_apply]
+      rw [mem_decode₂] at hb hc
+      exact ⟨hc,hb⟩
+    · intro ⟨x,y,h1⟩
+      rw [mem_decode₂] at hb hc
+      rw [← hc, ← hb] at h1
+      rw [←encode_inj.1 h1.2.1,←encode_inj.1 h1.2.2]
+      simpa using h1.1
 
 def GreedyOrder_ofColoring (C : H.Coloring ℕ) : β ≃ β where
   toFun := fun v => sorry
