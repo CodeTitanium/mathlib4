@@ -145,6 +145,7 @@ lemma label_mem_decode₂_of_adj {β : Type*} [Encodable β] {H : SimpleGraph β
   use (π a)
   exact mem_decode₂.mpr ha
 
+
 @[simp]
 lemma label_adj' {β : Type*} [Encodable β] {H : SimpleGraph β} {π : β ≃ β} {m n : ℕ} {a b : β}
 (ha : a ∈ decode₂ β m ) (hb : b ∈ decode₂ β n) :
@@ -223,6 +224,11 @@ abbrev GreedyColorable [DecidableRel H.Adj] (n : ℕ) : Prop :=
 abbrev ColorOrder (C : H.Coloring ℕ) (π : β ≃ β) : Prop :=
   ∀ a b, C a < C b → encode (π a) < encode (π b)
 
+lemma exists_color_order  (C : H.Coloring ℕ) : Nonempty ({π : β ≃ β // H.ColorOrder C π}) := by
+  have e:=equivRangeEncode β
+  
+  sorry
+
 lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β ≃ β} {n : ℕ} {b : β}
 (h : H.ColorOrder C π) (hb : b ∈ decode₂ β n) :
     (H.label π).greedy n ≤ C (π.symm b)  := by
@@ -230,7 +236,7 @@ lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β �
   rename_i n ih
   by_contra! h'
   obtain ⟨m, hlt, hadj, heq⟩ := (H.label π).greedy_witness h'
-  obtain ⟨c, hc⟩:= label_mem_decode₂_of_adj hadj
+  obtain ⟨c, hc⟩ := label_mem_decode₂_of_adj hadj
   cases (ih m hlt hc).lt_or_eq with
   | inl hl =>
     have := h _ _ (heq ▸ hl)
@@ -242,19 +248,23 @@ lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β �
     apply C.valid _ (heq ▸ he).symm
     obtain ⟨u, v, _, h2, h3⟩ := (map_adj ..).mp hadj
     convert hadj using 1
-    simp only [map_adj, encode', Function.Embedding.trans_apply, Equiv.coe_toEmbedding,
-      Function.Embedding.coeFn_mk]
-    constructor
-    · intro h1
-      use (π.symm c),(π.symm b),h1
-      simp only [Equiv.apply_symm_apply]
-      rw [mem_decode₂] at hb hc
-      exact ⟨hc,hb⟩
-    · intro ⟨x,y,h1⟩
-      rw [mem_decode₂] at hb hc
-      rw [← hc, ← hb] at h1
-      rw [←encode_inj.1 h1.2.1,←encode_inj.1 h1.2.2]
-      simpa using h1.1
+    rw [label_adj' hc hb]
+
+
+lemma colorable_iff_greedyColorable [DecidableRel H.Adj] {n : ℕ} :
+    H.Colorable n ↔ H.GreedyColorable n := by
+  rw [colorable_iff_exists_bdd_nat_coloring]
+  constructor
+  · intro ⟨C, hC⟩
+    obtain ⟨π, hp⟩ := H.exists_color_order C
+    use π
+    intro v
+    rw [GreedyColoring]
+    apply (H.greedy_le_colorOrder hp _).trans_lt <| hC (π.symm (π v))
+    simp
+  · intro ⟨f ,_⟩
+    use H.GreedyColoring f
+
 
 def GreedyOrder_ofColoring (C : H.Coloring ℕ) : β ≃ β where
   toFun := fun v => sorry
@@ -262,46 +272,5 @@ def GreedyOrder_ofColoring (C : H.Coloring ℕ) : β ≃ β where
   left_inv := fun v => sorry
   right_inv := fun v => sorry
 
-lemma colorable_iff_greedyColorable [DecidableRel H.Adj] {n : ℕ} :
-    H.Colorable n ↔ H.GreedyColorable n := by
-  constructor <;> intro ⟨f,hf⟩
-  ·
-    sorry
-  · apply (colorable_iff_exists_bdd_nat_coloring _).mpr
-    use H.GreedyColoring f
-
-
--- abbrev GreedyColorFinset (π : β ≃ β) [DecidableRel H.Adj] [Fintype (GreedyColorSet H π)] :
---     Finset ℕ := (GreedyColorSet H π).toFinset
-
-instance instFintypeDegreeMap {V W : Type*} [DecidableEq V] [DecidableEq W] {G : SimpleGraph V}
-    {v : V} [Fintype (G.neighborSet v)] {e : V ↪ W} : Fintype ((G.map e).neighborSet (e v)) := by
-  apply Fintype.ofFinset ((G.neighborFinset v).image e)
-  intro x; simp only [mem_image, mem_neighborFinset, mem_neighborSet, map_adj,
-    EmbeddingLike.apply_eq_iff_eq]
-  constructor
-  · intro ⟨w, hw⟩
-    use v, w, hw.1, rfl, hw.2
-  · intro ⟨a, b, h⟩
-    use b, h.2.1 ▸ h.1, h.2.2
-
-lemma degree_eq_degree_map {V W : Type*} [DecidableEq V] [DecidableEq W] {G : SimpleGraph V}
-    {v : V} [Fintype (G.neighborSet v)] {e : V ↪ W} :
-    (G.map e).degree (e v) = G.degree v := by
-  rw [degree, degree]
-  convert  card_image_of_injective _ e.inj'
-  ext; simp only [mem_image, mem_neighborFinset, mem_neighborSet, map_adj,
-    EmbeddingLike.apply_eq_iff_eq]
-  constructor
-  · intro ⟨a, b, h⟩
-    use b, h.2.1 ▸ h.1, h.2.2
-  · intro ⟨w, hw⟩
-    use v, w, hw.1, rfl, hw.2
-
 end withEncodable
-#check label
 end SimpleGraph
-
-
-
--- abbrev col_le (C : ℕ → ℕ) (a b : ℕ) : Prop := Nat.lt (C a) (C b) ∨ C a = C b ∧ Nat.le a b
