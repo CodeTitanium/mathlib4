@@ -102,29 +102,6 @@ lemma neighborFinsetLT_zero : H.neighborFinsetLT 0 = ∅ := by
 lemma degreeLT_zero : H.degreeLT 0 = 0 := by
   simp
 
-abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
-  ∀ a b, C a < C b → (π a) < (π b)
-
-lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ ≃ ℕ}
-    [DecidableRel (H.map π.toEmbedding).Adj] (h : H.ColorOrderN C π) (a : ℕ) :
-    (H.map π).greedy a ≤ C (π.symm a)  := by
-  induction a using Nat.strong_induction_on
-  rename_i n ih
-  by_contra! h'
-  obtain ⟨m, hlt, hadj, heq⟩ := (H.map π.toEmbedding).greedy_witness h'
-  cases (ih m hlt).lt_or_eq with
-  | inl hl =>
-    have := h _ _ (heq ▸ hl)
-    simp_rw [Equiv.apply_symm_apply] at this
-    exact hlt.not_lt this
-  | inr he =>
-    apply C.valid _ (heq ▸ he).symm
-    obtain ⟨u, v, _, h2, h3⟩ := (map_adj ..).mp hadj
-    rw [← h2, ← h3]
-    simpa
-
-
-
 end withN
 section withEncodable
 open Encodable
@@ -144,7 +121,6 @@ lemma label_mem_decode₂_of_adj {β : Type*} [Encodable β] {H : SimpleGraph β
   obtain ⟨a, b, h, ha, hb⟩ := ha
   use (π a)
   exact mem_decode₂.mpr ha
-
 
 @[simp]
 lemma label_adj' {β : Type*} [Encodable β] {H : SimpleGraph β} {π : β ≃ β} {m n : ℕ} {a b : β}
@@ -226,29 +202,25 @@ abbrev ColorOrder (C : H.Coloring ℕ) (π : β ≃ β) : Prop :=
 
 lemma exists_color_order  (C : H.Coloring ℕ) : Nonempty ({π : β ≃ β // H.ColorOrder C π}) := by
   have e:=equivRangeEncode β
-  
   sorry
 
 lemma greedy_le_colorOrder [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : β ≃ β} {n : ℕ} {b : β}
 (h : H.ColorOrder C π) (hb : b ∈ decode₂ β n) :
     (H.label π).greedy n ≤ C (π.symm b)  := by
   induction n using Nat.strong_induction_on generalizing b
-  rename_i n ih
+  rename_i ih
   by_contra! h'
   obtain ⟨m, hlt, hadj, heq⟩ := (H.label π).greedy_witness h'
-  obtain ⟨c, hc⟩ := label_mem_decode₂_of_adj hadj
+  obtain ⟨_, hc⟩ := label_mem_decode₂_of_adj hadj
   cases (ih m hlt hc).lt_or_eq with
   | inl hl =>
     have := h _ _ (heq ▸ hl)
     simp_rw [Equiv.apply_symm_apply] at this
     rw [mem_decode₂] at hb hc
     subst_vars
-    apply hlt.not_lt this
+    exact hlt.not_lt this
   | inr he =>
-    apply C.valid _ (heq ▸ he).symm
-    obtain ⟨u, v, _, h2, h3⟩ := (map_adj ..).mp hadj
-    convert hadj using 1
-    rw [label_adj' hc hb]
+    exact C.valid ((label_adj' hc hb).1 hadj) (heq ▸ he).symm
 
 
 lemma colorable_iff_greedyColorable [DecidableRel H.Adj] {n : ℕ} :
@@ -265,7 +237,6 @@ lemma colorable_iff_greedyColorable [DecidableRel H.Adj] {n : ℕ} :
   · intro ⟨f ,_⟩
     use H.GreedyColoring f
 
-
 def GreedyOrder_ofColoring (C : H.Coloring ℕ) : β ≃ β where
   toFun := fun v => sorry
   invFun := fun v => sorry
@@ -274,3 +245,93 @@ def GreedyOrder_ofColoring (C : H.Coloring ℕ) : β ≃ β where
 
 end withEncodable
 end SimpleGraph
+
+
+-- abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
+--   ∀ a b, C a < C b → (π a) < (π b)
+
+-- lemma greedy_le_colorOrderN [DecidableRel H.Adj] {C : H.Coloring ℕ} {π : ℕ ≃ ℕ}
+--     [DecidableRel (H.map π.toEmbedding).Adj] (h : H.ColorOrderN C π) (a : ℕ) :
+--     (H.map π).greedy a ≤ C (π.symm a)  := by
+--   induction a using Nat.strong_induction_on
+--   rename_i n ih
+--   by_contra! h'
+--   obtain ⟨m, hlt, hadj, heq⟩ := (H.map π.toEmbedding).greedy_witness h'
+--   cases (ih m hlt).lt_or_eq with
+--   | inl hl =>
+--     have := h _ _ (heq ▸ hl)
+--     simp_rw [Equiv.apply_symm_apply] at this
+--     exact hlt.not_lt this
+--   | inr he =>
+--     apply C.valid _ (heq ▸ he).symm
+--     obtain ⟨u, v, _, h2, h3⟩ := (map_adj ..).mp hadj
+--     rw [← h2, ← h3]
+--     simpa
+
+open Encodable SimpleGraph Finset
+variable {β : Type*} [Encodable β]
+variable (H : SimpleGraph β) [DecidableRel H.Adj]
+private abbrev enlt : β → β → Prop :=
+  encode ⁻¹'o (· < ·)
+namespace SimpleGraph
+/-- The set of neighbors less than a vertex -/
+def neighborSetenlt (b : β) : Set β := {a | enlt a b ∧ H.Adj a b}
+
+lemma mem_neighborSetenlt  {a b : β} :
+    a ∈ H.neighborSetenlt b ↔ enlt a b ∧ H.Adj a b := Iff.rfl
+
+/-- The set of neighbors less than a vertex as a Finset -/
+def neighborFinsetenlt (b : β) [Fintype (H.neighborSetenlt b)] : Finset β :=
+    (H.neighborSetenlt b).toFinset
+
+/-- The number of neighbors less than a vertex (when finite) -/
+abbrev degreeenlt (b : β) [Fintype (H.neighborSetenlt b)] : ℕ := #(H.neighborFinsetenlt b)
+
+lemma mem_neighborFinsetenlt  {a b : β} [Fintype (H.neighborSetenlt b)] :
+    a ∈ H.neighborFinsetenlt b ↔ enlt a b ∧ H.Adj a b := Set.mem_toFinset
+
+/-- A graph is LocallyFiniteenlt if every vertex has a finitely many neighbors less than it. -/
+abbrev LocallyFiniteenlt :=
+  ∀ v : β, Fintype (H.neighborSetenlt v)
+
+lemma degreeenlt_le_degree (a : β) [Fintype (H.neighborSetenlt a)] [Fintype (H.neighborSet a)] :
+    H.degreeenlt a ≤ H.degree a := by
+  rw [degreeenlt, degree]
+  apply card_le_card
+  intro m hm
+  simp only [mem_neighborFinsetenlt, mem_neighborFinset] at *
+  exact hm.2.symm
+
+lemma unusedenlt (c : β → ℕ) (a : β) [Fintype (H.neighborSetenlt a)] :
+    (range (H.degreeenlt a + 1) \ ((H.neighborFinsetenlt a).image c)).Nonempty := by
+  apply card_pos.1 <|  (Nat.sub_pos_of_lt _).trans_le <| le_card_sdiff _ _
+  apply card_image_le.trans_lt
+  rw [← degreeenlt, card_range]
+  apply Nat.lt_succ_of_le le_rfl
+
+-- --
+-- --private def cenle (c : β → ℕ) : β → β → Prop :=
+-- #check Lex
+
+-- private abbrev cenle (C : β → ℕ) : β → β → Prop :=
+--   fun b c ↦ (C b < C c) ∨ (C b = C c) ∧ encode b ≤ encode c
+
+
+private theorem enlt.isWellOrder : IsWellOrder β enlt :=
+  (RelEmbedding.preimage ⟨encode, encode_injective⟩ (· < ·)).isWellOrder
+
+#check enlt.isWellOrder.wf.fix
+private def decidable_enlt (a b : β) : Decidable (enlt a b) := by
+  --unfold enle Order.Preimage
+  infer_instance
+#check enlt.isWellOrder.wf
+attribute [local instance] enlt.isWellOrder decidable_enlt
+variable [LocallyFiniteenlt H]
+/-- The function defining a greedy ℕ - coloring of a SimpleGraph ℕ -/
+def greedyenlt (x : β) : ℕ :=by
+  apply enlt.isWellOrder.wf.fix _ x
+  intro z ih
+  
+  sorry
+  --  min' _ <| H.unusedenlt (fun m ↦ ite (enlt m n) (greedyenlt m) 0) n
+  -- termination_by enlt.isWellOrder.wf (α := β)
