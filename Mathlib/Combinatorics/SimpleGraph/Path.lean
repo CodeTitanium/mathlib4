@@ -201,6 +201,18 @@ theorem cons_isPath_iff {u v w : V} (h : G.Adj u v) (p : G.Walk v w) :
     (cons h p).IsPath ↔ p.IsPath ∧ u ∉ p.support := by
   constructor <;> simp +contextual [isPath_def]
 
+@[simp]
+theorem concat_isPath_iff {u v w : V} (p : G.Walk u v) (h : G.Adj v w)  :
+    (p.concat h).IsPath ↔ p.IsPath ∧ w ∉ p.support := by
+  constructor
+  · intro h'; rw [isPath_def] at *; simp at h'
+    rw [List.nodup_append] at h'
+    exact ⟨h'.1, by intro hw; apply h'.2.2 hw; simp⟩
+  · intro h'; rw [isPath_def] at *;
+    simp only [support_concat, List.concat_eq_append]
+    apply List.nodup_append.2
+    aesop
+
 protected lemma IsPath.cons {p : Walk G v w} (hp : p.IsPath) (hu : u ∉ p.support) {h : G.Adj u v} :
     (cons h p).IsPath :=
   (cons_isPath_iff _ _).2 ⟨hp, hu⟩

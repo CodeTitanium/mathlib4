@@ -257,46 +257,134 @@ structure PartialColoring (s : Finset α)  where
 col : α → ℕ
 valid : ∀ ⦃v w⦄, v ∈ s → w ∈ s → G.Adj v w → col v ≠ col w
 
----- TODO a version of greedy coloring that works on Lists of vertices (given a partial coloring)
---- and so uses less that the degree # colors on paths.
-namespace PartialColoring
-open Walk
 
--- Do this all using degreeLT.
+namespace PartialColoring
+def ofEmpty : G.PartialColoring ∅ where
+  col := fun _ ↦ 0
+  valid := fun _ _ h  _ ↦ False.elim <| not_mem_empty _ h
+
+open Walk
 
 open Finset
 variable {β : Type*} {s : Finset α} {b : ℕ} {i : α}
 /-- A PartialColoring of `univ` is a Coloring  -/
-def toColoring (c : G.PartialColoring univ ) : G.Coloring ℕ :=
-    ⟨c.col, fun hab ↦ c.valid (mem_univ _) (mem_univ _) hab⟩
-#check Finset.eq_of_mem_insert_of_not_mem
+def toColoring (C : G.PartialColoring univ) : G.Coloring ℕ :=
+    ⟨C.col, fun hab ↦ C.valid (mem_univ _) (mem_univ _) hab⟩
 
-/-- Given a partial colouring up to i and a colour b not used in the nbhd of i + 1
-extend the coloring up to i.succ -/
-def extend (c : G.PartialColoring s) [DecidableEq α]
-    (hvb : ∀ ⦃x⦄, x ∈ s → G.Adj i x → c.col x ≠ b) : G.PartialColoring (insert i s) := by
-  use (fun j ↦ ite (j ∈ s) (c.col j) b)
-  intro x y hx hy hadj
-  split_ifs with hxi hyi hyi
-  · exact c.valid hxi hyi hadj
-  · exact hvb hxi <| (eq_of_mem_insert_of_not_mem hy hyi) ▸ hadj.symm
-  · exact (hvb hyi <| (eq_of_mem_insert_of_not_mem hx hxi) ▸ hadj).symm
-  · exact False.elim <| hadj.ne <|
-      (eq_of_mem_insert_of_not_mem hy hyi) ▸ (eq_of_mem_insert_of_not_mem hx hxi)
+variable [DecidableEq α]
 
-lemma unused' (c : G.PartialColoring s) (a : α) :
-    (range (G.degree a + 1) \ ((G.neighborFinset a).image c.col)).Nonempty := by
-  apply card_pos.1 <|  (Nat.sub_pos_of_lt _).trans_le <| le_card_sdiff _ _
+lemma next (C : G.PartialColoring s) (a : α)  :
+    (range (G.degree a + 1) \ (((G.neighborFinset a) ∩ s).image C.col)).Nonempty := by
+  apply card_pos.1 <| (Nat.sub_pos_of_lt _).trans_le <| le_card_sdiff _ _
   apply card_image_le.trans_lt
+  apply (card_le_card (inter_subset_left)).trans_lt
   rw [← degree, card_range]
   apply Nat.lt_succ_of_le le_rfl
 
+def greedy (C : G.PartialColoring s) (a : α) : ℕ := min' _ <| C.next a
 
-def greedy (C: G.PartialColoring s) (i : α) : ℕ := min' _ <| C.unused' i
+lemma greedy_def (C : G.PartialColoring s) (a : α) : C.greedy a =
+    (range (G.degree a + 1) \ (((G.neighborFinset a) ∩ s).image C.col)).min' (C.next a) := rfl
 
---TO DO prove C.greedy i ≤ G.degree i with equality iff
+lemma greedy_le_degree (C : G.PartialColoring s) (a : α)  : C.greedy a ≤ G.degree a := by
+  have ⟨h1, _⟩ := mem_sdiff.1 <| min'_mem _ <| C.next a
+  simpa [Nat.lt_succ] using h1
 
+lemma greedy_not_mem_image (C : G.PartialColoring s) (a : α) :
+    C.greedy a ∉ ((G.neighborFinset a) ∩ s).image C.col := by
+  have ⟨_, h2⟩ := mem_sdiff.1 <| min'_mem _ <| C.next a
+  exact h2
+
+def ofGreedy (C : G.PartialColoring s) (a : α) : G.PartialColoring (insert a s) where
+  col   := fun v ↦ ite (v = a) (C.greedy a) (C.col v)
+  valid := by
+    intro x y hx hy hadj
+    dsimp
+    split_ifs with hxi hyi hyi
+    · subst_vars; intro hf; apply G.loopless _ hadj
+    · intro hf; apply C.greedy_not_mem_image a
+      simp_rw [mem_image, mem_inter, mem_neighborFinset];
+      use y
+      exact ⟨⟨(hxi ▸ hadj), mem_of_mem_insert_of_ne hy hyi⟩,hf.symm⟩
+    · intro hf; apply C.greedy_not_mem_image a
+      simp_rw [mem_image, mem_inter, mem_neighborFinset];
+      use x
+      exact ⟨⟨(hyi ▸ hadj.symm),mem_of_mem_insert_of_ne hx hxi⟩, hf⟩
+    · exact C.valid (mem_of_mem_insert_of_ne hx hxi) (mem_of_mem_insert_of_ne hy hyi) hadj
+
+def ofWalk (C : G.PartialColoring s) {u v w : α} (p : G.Walk u v) (h : G.Adj v w)
+    : G.PartialColoring (s ∪ p.support.toFinset) :=
+  match p with
+   | nil  => by
+      convert C.ofGreedy u using 1; 
+      simp; rw [union_comm]; rfl
+   | Walk.cons h' p => by
+      convert (C.ofWalk p h).ofGreedy u using 1
+      simp
+
+
+lemma ofGreedy_lt_of_lt {k : ℕ} {C : G.PartialColoring s} {a : α} (h : ∀ v, v ∈ s → C.col v < k)
+    (hg : C.greedy a < k) {w : α} (hw : w ∈ insert a s) : (C.ofGreedy a).col w < k := by
+  rw [ofGreedy]; dsimp
+  by_cases ha : w = a
+  · rwa [if_pos ha]
+  · cases mem_insert.1 hw with
+    |inl hw => contradiction
+    |inr hw => rw [if_neg ha]; exact h w hw
+
+lemma next_eq_degree {C : G.PartialColoring s} {a : α} (h : C.greedy a = G.degree a) :
+     ((G.neighborFinset a) : Set α).InjOn C.col ∧ G.neighborFinset a ⊆ s:= by
+  let t := range (G.degree a + 1)
+  let u := ((G.neighborFinset a ∩ s).image C.col)
+  have hmax := max'_le _ (C.next a) _ <| fun y hy ↦ mem_range_succ_iff.1 <| (mem_sdiff.1 hy).1
+  have hs : ∀ i, i ∈ t \ u → i = G.degree a :=
+    fun i hi ↦ le_antisymm ((le_max' _ _ hi ).trans hmax)  (h ▸ min'_le _ _ hi)
+  have h1 := card_eq_one.2 ⟨_, eq_singleton_iff_nonempty_unique_mem.2 ⟨C.next a, hs⟩⟩
+  have : #t - #u ≤ 1 :=  (h1 ▸ le_card_sdiff _ _)
+  rw [card_range] at this
+  have h3 : G.degree a ≤ #u := by
+    rwa [Nat.sub_le_iff_le_add, add_comm 1, Nat.succ_le_succ_iff] at this
+  have hinj1: ((G.neighborFinset a ∩ s) : Set α).InjOn C.col := by
+    rw [← coe_inter]
+    apply injOn_of_card_image_eq <| le_antisymm card_image_le
+       <| (card_le_card inter_subset_left).trans h3
+  have hs : G.neighborFinset a ⊆ s:= by
+    have h3 := h3.trans (card_image_le (s := G.neighborFinset a ∩ s) (f := C.col))
+    rw [← coe_inter] at hinj1
+    have h4 :=card_image_of_injOn hinj1
+    have h5 := (le_antisymm (by rwa [degree] at h3)  (card_le_card inter_subset_left)).le
+    contrapose! h5
+    exact card_lt_card ⟨inter_subset_left,fun h ↦ h5 fun x hx ↦ (mem_of_mem_inter_right (h hx))⟩
+  exact ⟨by rwa [← coe_inter, inter_eq_left.mpr hs] at hinj1, hs⟩
+
+lemma greedy_lt_of_not_injOn {C : G.PartialColoring s} {a : α} {u v : α} (hu : G.Adj a u)
+    (hv : G.Adj a v) (hne : u ≠ v) (hc : C.col u = C.col v) : C.greedy a < G.degree a :=
+  lt_of_le_of_ne (C.greedy_le_degree _) fun hf ↦ hne <| (next_eq_degree hf).1
+    ((mem_neighborFinset ..).mpr hu) ((mem_neighborFinset ..).mpr hv) hc
+
+lemma greedy_lt_of_not_colored {C : G.PartialColoring s} {a : α} {u : α} (hu : G.Adj a u)
+    (h : u ∉ s) : C.greedy a < G.degree a := lt_of_le_of_ne (C.greedy_le_degree _)
+        fun hf ↦ h <| (next_eq_degree hf).2 <| (mem_neighborFinset ..).mpr hu
+
+variable {k : ℕ}
+theorem BrooksPartial (hk : 3 ≤ k) (hc : G.CliqueFree (k + 1)) (hbdd : ∀ v, G.degree v ≤ k)
+    (s : Finset α): ∃ (C : G.PartialColoring s), ∀ v, C.col v <  k := by
+  induction s using Finset.induction_on
+  case empty =>
+    use ofEmpty
+    intro v; simp only [ofEmpty] ; omega
+  case insert v s hs C' =>
+    wlog h : ∀ u, G.Adj v u → u ∈ s
+    · sorry
+
+    sorry
+theorem Brooks (hk : 3 ≤ k) (hc : G.CliqueFree (k + 1)) (hbdd : ∀ v, G.degree v ≤ k) :
+    G.Colorable k := by
+  rw [colorable_iff_exists_bdd_nat_coloring]
+  obtain ⟨C, hC⟩   := BrooksPartial hk hc hbdd (univ : Finset α)
+  use C.toColoring, hC
 
 end PartialColoring
+
 end Lists
 end SimpleGraph
