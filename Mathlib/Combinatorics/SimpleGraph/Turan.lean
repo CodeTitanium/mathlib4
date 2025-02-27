@@ -99,8 +99,7 @@ theorem turanGraph_cliqueFree (hr : 0 < r) : (turanGraph n r).CliqueFree (r + 1)
 if it can accommodate such a clique. -/
 theorem not_cliqueFree_of_isTuranMaximal (hn : r ≤ Fintype.card V) (hG : G.IsTuranMaximal r) :
     ¬G.CliqueFree r := by
-    classical
-    exact hG.maximalCliqueFree.not_cliqueFree_of_le_card_succ <| Nat.succ_le_succ_iff.2 hn
+    classical exact hG.maximalCliqueFree.not_cliqueFree_of_le_card hn
 
 lemma exists_isTuranMaximal (hr : 0 < r):
     ∃ H : SimpleGraph V, ∃ _ : DecidableRel H.Adj, H.IsTuranMaximal r := by
