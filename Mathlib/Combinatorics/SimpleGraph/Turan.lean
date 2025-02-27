@@ -60,6 +60,9 @@ lemma IsTuranMaximal.le_iff_eq (hG : G.IsTuranMaximal r) (hH : H.CliqueFree (r +
   classical exact ⟨fun hGH ↦ edgeFinset_inj.1 <| eq_of_subset_of_card_le
     (edgeFinset_subset_edgeFinset.2 hGH) (hG.2 _ hH), le_of_eq⟩
 
+lemma IsTuranMaximal.maximalCliqueFree (h : G.IsTuranMaximal n) : G.MaximalCliqueFree (n + 1) :=
+  ⟨h.1, fun _ hcf hle ↦ h.le_iff_eq hcf |>.1 hle |>.symm.le⟩
+
 /-- The canonical `r + 1`-cliquefree Turán graph on `n` vertices. -/
 def turanGraph (n r : ℕ) : SimpleGraph (Fin n) where Adj v w := v % r ≠ w % r
 
@@ -96,13 +99,8 @@ theorem turanGraph_cliqueFree (hr : 0 < r) : (turanGraph n r).CliqueFree (r + 1)
 if it can accommodate such a clique. -/
 theorem not_cliqueFree_of_isTuranMaximal (hn : r ≤ Fintype.card V) (hG : G.IsTuranMaximal r) :
     ¬G.CliqueFree r := by
-  rintro h
-  obtain ⟨K, _, rfl⟩ := exists_subset_card_eq hn
-  obtain ⟨a, -, b, -, hab, hGab⟩ : ∃ a ∈ K, ∃ b ∈ K, a ≠ b ∧ ¬ G.Adj a b := by
-    simpa only [isNClique_iff, IsClique, Set.Pairwise, mem_coe, ne_eq, and_true, not_forall,
-      exists_prop, exists_and_right] using h K
-  exact hGab <| le_sup_right.trans_eq ((hG.le_iff_eq <| h.sup_edge _ _).1 le_sup_left).symm <|
-    (edge_adj ..).2 ⟨Or.inl ⟨rfl, rfl⟩, hab⟩
+    classical
+    exact hG.maximalCliqueFree.not_cliqueFree_of_le_card_succ <| Nat.succ_le_succ_iff.2 hn
 
 lemma exists_isTuranMaximal (hr : 0 < r):
     ∃ H : SimpleGraph V, ∃ _ : DecidableRel H.Adj, H.IsTuranMaximal r := by

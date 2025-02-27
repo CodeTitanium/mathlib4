@@ -347,6 +347,11 @@ theorem completeGraph_eq_top (V : Type u) : completeGraph V = ⊤ :=
 theorem emptyGraph_eq_bot (V : Type u) : emptyGraph V = ⊥ :=
   rfl
 
+lemma ne_top_iff : G ≠ ⊤ ↔ ∃ x y, x ≠ y ∧ ¬ G.Adj x y := by
+  constructor <;> intro h <;> contrapose! h
+  · exact eq_top_iff.2 fun _ _ hxy ↦ h _ _ hxy.ne
+  · exact fun _ _ hne ↦ h ▸ hne
+
 @[simps]
 instance (V : Type u) : Inhabited (SimpleGraph V) :=
   ⟨⊥⟩
