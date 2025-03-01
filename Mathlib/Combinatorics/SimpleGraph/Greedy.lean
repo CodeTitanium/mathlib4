@@ -103,58 +103,6 @@ abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
   ∀ a b, C a < C b → (π a) < (π b)
 open Classical
 
-open scoped ENat
-
-abbrev colLE (C : ℕ → ℕ) : ℕ → ℕ  → Prop := fun a b ↦ (C a < C b) ∨ (C a = C b ∧ a ≤ b)
-
-
-instance (C : ℕ → ℕ) : Ord ℕ where
-  compare a b := (compare (C a) (C b)).then (compare a b)
-
-
-def colLinearOrder (C : ℕ → ℕ) : PartialOrder ℕ where
-  le := colLE C
-  lt := fun a b ↦ (colLE C a b) ∧ ¬ (colLE C b a)
-  le_refl := fun a ↦ by right; simp
-  le_trans := fun a b c hab hbc ↦ by
-    cases hab with
-    | inl h =>
-      cases hbc with
-      | inl h1 => left; exact h.trans h1
-      | inr h1 => left; exact h.trans_le h1.1.le
-    | inr h =>
-      cases hbc with
-      | inl h1 => left; exact lt_of_le_of_lt h.1.le h1
-      | inr h1 => right; exact ⟨h.1 ▸ h1.1,h.2.trans h1.2⟩
-  le_antisymm := fun a b hab hba => by
-    cases hab with
-    | inl h =>
-      cases hba with
-      | inl h1 => exact False.elim <| h.not_lt h1
-      | inr h1 => exact False.elim <| lt_irrefl _ (h1.1 ▸ h)
-    | inr h =>
-      cases hba with
-      | inl h1 => exact False.elim <| lt_irrefl _ (h.1 ▸ h1)
-      | inr h1 => exact le_antisymm h.2 h1.2
-  lt_iff_le_not_le := fun a b ↦ Iff.rfl
-  -- le_total := fun a b ↦ by
-  --   cases lt_trichotomy (C a) (C b) with
-  --   | inl h => left; left; exact h
-  --   | inr h =>
-  --     cases h with
-  --     | inl h1 =>
-  --       cases lt_trichotomy a b with
-  --       | inl h2 => left; right; exact ⟨h1, h2.le⟩
-  --       | inr h2 =>
-  --         cases h2 with
-  --         | inl h3 => left; right; exact ⟨h1, h3.le⟩
-  --         | inr h3 => right; right; exact ⟨h1.symm, h3.le⟩
-  --     | inr h1 => right; left; exact h1
-  -- decidableLE := fun a b ↦ instDecidableOr
-  -- min := fun a b => if (colLE C a b) then a else b
-  -- max := fun a b => if (colLE C a b) then b else a
-  -- compare_eq_compareOfLessAndEq := sorry
-
 abbrev colLT (C : ℕ → ℕ) : ℕ → ℕ  → Prop := fun a b ↦ (C a < C b) ∨ (C a = C b ∧ a < b)
 
 instance colWellOrder (C : ℕ → ℕ) : IsWellOrder ℕ (colLT C) where
@@ -183,24 +131,39 @@ instance colWellOrder (C : ℕ → ℕ) : IsWellOrder ℕ (colLT C) where
       | inl h1 => left; exact lt_of_le_of_lt h.1.le h1
       | inr h1 => right; exact ⟨h.1 ▸ h1.1,h.2.trans h1.2⟩
   wf := by
-    
-    sorry
-
-
-noncomputable def next (c : ℕ∞ → ℕ∞) : ℕ∞ := sInf (c ⁻¹' {sInf (Set.range c)})
-noncomputable def next_col (c : ℕ∞ → ℕ∞) : ℕ∞ → ℕ∞ :=
-  fun n ↦ if (n = next c) then ⊤ else (c n)
-
-
-
-noncomputable def ColortoFun (c : ℕ → ℕ) (n : ℕ) : ℕ :=
-  sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
-    (fun m ↦ ite (m < n) (ColortoFun c m) 0)))})
-
-lemma ColortoFun_def (c : ℕ → ℕ) (n : ℕ) : ColortoFun c n =
-      sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
-        (fun m ↦ ite (m < n) (ColortoFun c m) 0)))}) := by
-  rw [ColortoFun]
+    apply WellFounded.intro
+    intro n
+    have h : ∀ m , C n < m → Acc (colLT C) n := by
+      intro m
+      induction m generalizing n with
+      | zero =>  intro hf; apply False.elim <| Nat.not_lt_zero _ hf
+      | succ m ih =>
+        intro hlt
+        cases lt_or_eq_of_le (Nat.le_of_lt_succ hlt) with
+        | inl h =>  exact ih n h
+        | inr h =>
+          apply Acc.intro
+          intro a ha
+          cases ha with
+          | inl h1 =>
+            apply ih  a (h ▸ h1)
+          | inr h1 =>
+            have h' : ∀ k, C a = C n ∧ a < k → Acc (colLT C) a := by
+              intro k
+              induction k generalizing a with
+              | zero =>
+                intro hf; apply False.elim <| Nat.not_lt_zero _ hf.2
+              | succ b iha =>
+                intro hf
+                apply Acc.intro
+                intro c hc
+                cases hc with
+                | inl h3 => apply ih c; omega
+                | inr h3 =>
+                  apply iha c ⟨h3.1 ▸ h1.1, by omega⟩ ⟨h3.1 ▸ h1.1, by omega⟩
+            apply h' n h1
+    apply h (C n).succ
+    exact Nat.lt_succ_self _
 
 lemma exists_color_orderN  (C : H.Coloring ℕ) : Nonempty ({π : ℕ ≃ ℕ // H.ColorOrderN C π}) := by
 
@@ -359,3 +322,73 @@ theorem colorable_iff_greedyColorable [DecidableRel H.Adj] {n : ℕ} :
 end withEncodable
 
 end SimpleGraph
+
+
+
+-- open scoped ENat
+
+-- abbrev colLE (C : ℕ → ℕ) : ℕ → ℕ  → Prop := fun a b ↦ (C a < C b) ∨ (C a = C b ∧ a ≤ b)
+
+
+-- instance (C : ℕ → ℕ) : Ord ℕ where
+--   compare a b := (compare (C a) (C b)).then (compare a b)
+
+
+-- def colLinearOrder (C : ℕ → ℕ) : PartialOrder ℕ where
+--   le := colLE C
+--   lt := fun a b ↦ (colLE C a b) ∧ ¬ (colLE C b a)
+--   le_refl := fun a ↦ by right; simp
+--   le_trans := fun a b c hab hbc ↦ by
+--     cases hab with
+--     | inl h =>
+--       cases hbc with
+--       | inl h1 => left; exact h.trans h1
+--       | inr h1 => left; exact h.trans_le h1.1.le
+--     | inr h =>
+--       cases hbc with
+--       | inl h1 => left; exact lt_of_le_of_lt h.1.le h1
+--       | inr h1 => right; exact ⟨h.1 ▸ h1.1,h.2.trans h1.2⟩
+--   le_antisymm := fun a b hab hba => by
+--     cases hab with
+--     | inl h =>
+--       cases hba with
+--       | inl h1 => exact False.elim <| h.not_lt h1
+--       | inr h1 => exact False.elim <| lt_irrefl _ (h1.1 ▸ h)
+--     | inr h =>
+--       cases hba with
+--       | inl h1 => exact False.elim <| lt_irrefl _ (h.1 ▸ h1)
+--       | inr h1 => exact le_antisymm h.2 h1.2
+--   lt_iff_le_not_le := fun a b ↦ Iff.rfl
+  -- le_total := fun a b ↦ by
+  --   cases lt_trichotomy (C a) (C b) with
+  --   | inl h => left; left; exact h
+  --   | inr h =>
+  --     cases h with
+  --     | inl h1 =>
+  --       cases lt_trichotomy a b with
+  --       | inl h2 => left; right; exact ⟨h1, h2.le⟩
+  --       | inr h2 =>
+  --         cases h2 with
+  --         | inl h3 => left; right; exact ⟨h1, h3.le⟩
+  --         | inr h3 => right; right; exact ⟨h1.symm, h3.le⟩
+  --     | inr h1 => right; left; exact h1
+  -- decidableLE := fun a b ↦ instDecidableOr
+  -- min := fun a b => if (colLE C a b) then a else b
+  -- max := fun a b => if (colLE C a b) then b else a
+  -- compare_eq_compareOfLessAndEq := sorry
+
+-- #check Nat.lt_wfRel
+-- noncomputable def next (c : ℕ∞ → ℕ∞) : ℕ∞ := sInf (c ⁻¹' {sInf (Set.range c)})
+-- noncomputable def next_col (c : ℕ∞ → ℕ∞) : ℕ∞ → ℕ∞ :=
+--   fun n ↦ if (n = next c) then ⊤ else (c n)
+
+
+
+-- noncomputable def ColortoFun (c : ℕ → ℕ) (n : ℕ) : ℕ :=
+--   sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
+--     (fun m ↦ ite (m < n) (ColortoFun c m) 0)))})
+
+-- lemma ColortoFun_def (c : ℕ → ℕ) (n : ℕ) : ColortoFun c n =
+--       sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
+--         (fun m ↦ ite (m < n) (ColortoFun c m) 0)))}) := by
+--   rw [ColortoFun]
