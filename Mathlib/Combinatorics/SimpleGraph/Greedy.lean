@@ -1,6 +1,7 @@
 import Mathlib.Combinatorics.SimpleGraph.Coloring
 import Mathlib.Combinatorics.SimpleGraph.Hasse
 import Mathlib.Data.Fin.Parity
+import Mathlib.Data.ENat.Basic
 import Mathlib.Logic.Encodable.Basic
 
 namespace SimpleGraph
@@ -98,6 +99,114 @@ def GreedyColoringDegree' [LocallyFinite H] {Δ : ℕ} (h : ∀ v, H.degree v �
 --------------- Encodable + Greedy vs regular colorings below ------------------
 
 
+abbrev ColorOrderN (C : H.Coloring ℕ) (π : ℕ ≃ ℕ) : Prop :=
+  ∀ a b, C a < C b → (π a) < (π b)
+open Classical
+
+open scoped ENat
+
+abbrev colLE (C : ℕ → ℕ) : ℕ → ℕ  → Prop := fun a b ↦ (C a < C b) ∨ (C a = C b ∧ a ≤ b)
+
+
+instance (C : ℕ → ℕ) : Ord ℕ where
+  compare a b := (compare (C a) (C b)).then (compare a b)
+
+
+def colLinearOrder (C : ℕ → ℕ) : PartialOrder ℕ where
+  le := colLE C
+  lt := fun a b ↦ (colLE C a b) ∧ ¬ (colLE C b a)
+  le_refl := fun a ↦ by right; simp
+  le_trans := fun a b c hab hbc ↦ by
+    cases hab with
+    | inl h =>
+      cases hbc with
+      | inl h1 => left; exact h.trans h1
+      | inr h1 => left; exact h.trans_le h1.1.le
+    | inr h =>
+      cases hbc with
+      | inl h1 => left; exact lt_of_le_of_lt h.1.le h1
+      | inr h1 => right; exact ⟨h.1 ▸ h1.1,h.2.trans h1.2⟩
+  le_antisymm := fun a b hab hba => by
+    cases hab with
+    | inl h =>
+      cases hba with
+      | inl h1 => exact False.elim <| h.not_lt h1
+      | inr h1 => exact False.elim <| lt_irrefl _ (h1.1 ▸ h)
+    | inr h =>
+      cases hba with
+      | inl h1 => exact False.elim <| lt_irrefl _ (h.1 ▸ h1)
+      | inr h1 => exact le_antisymm h.2 h1.2
+  lt_iff_le_not_le := fun a b ↦ Iff.rfl
+  -- le_total := fun a b ↦ by
+  --   cases lt_trichotomy (C a) (C b) with
+  --   | inl h => left; left; exact h
+  --   | inr h =>
+  --     cases h with
+  --     | inl h1 =>
+  --       cases lt_trichotomy a b with
+  --       | inl h2 => left; right; exact ⟨h1, h2.le⟩
+  --       | inr h2 =>
+  --         cases h2 with
+  --         | inl h3 => left; right; exact ⟨h1, h3.le⟩
+  --         | inr h3 => right; right; exact ⟨h1.symm, h3.le⟩
+  --     | inr h1 => right; left; exact h1
+  -- decidableLE := fun a b ↦ instDecidableOr
+  -- min := fun a b => if (colLE C a b) then a else b
+  -- max := fun a b => if (colLE C a b) then b else a
+  -- compare_eq_compareOfLessAndEq := sorry
+
+abbrev colLT (C : ℕ → ℕ) : ℕ → ℕ  → Prop := fun a b ↦ (C a < C b) ∨ (C a = C b ∧ a < b)
+
+instance colWellOrder (C : ℕ → ℕ) : IsWellOrder ℕ (colLT C) where
+  trichotomous := by
+    intro a b
+    cases lt_trichotomy (C a) (C b) with
+    | inl h => left; left; exact h
+    | inr h =>
+      cases h with
+      | inl h1 =>
+        cases lt_trichotomy a b with
+        | inl h2 => left; right; exact ⟨h1, h2⟩
+        | inr h2 =>
+          cases h2 with
+          | inl h3 => right; left; exact h3
+          | inr h3 => right; right; right; exact ⟨h1.symm, h3⟩
+      | inr h1 => right; right; left; exact h1
+  trans := fun a b c hab hbc ↦ by
+    cases hab with
+    | inl h =>
+      cases hbc with
+      | inl h1 => left; exact h.trans h1
+      | inr h1 => left; exact h.trans_le h1.1.le
+    | inr h =>
+      cases hbc with
+      | inl h1 => left; exact lt_of_le_of_lt h.1.le h1
+      | inr h1 => right; exact ⟨h.1 ▸ h1.1,h.2.trans h1.2⟩
+  wf := by
+    
+    sorry
+
+
+noncomputable def next (c : ℕ∞ → ℕ∞) : ℕ∞ := sInf (c ⁻¹' {sInf (Set.range c)})
+noncomputable def next_col (c : ℕ∞ → ℕ∞) : ℕ∞ → ℕ∞ :=
+  fun n ↦ if (n = next c) then ⊤ else (c n)
+
+
+
+noncomputable def ColortoFun (c : ℕ → ℕ) (n : ℕ) : ℕ :=
+  sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
+    (fun m ↦ ite (m < n) (ColortoFun c m) 0)))})
+
+lemma ColortoFun_def (c : ℕ → ℕ) (n : ℕ) : ColortoFun c n =
+      sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
+        (fun m ↦ ite (m < n) (ColortoFun c m) 0)))}) := by
+  rw [ColortoFun]
+
+lemma exists_color_orderN  (C : H.Coloring ℕ) : Nonempty ({π : ℕ ≃ ℕ // H.ColorOrderN C π}) := by
+
+  sorry
+
+
 /-- If we used a color larger than c at vertex n then n must have an earlier neighbor that
 was already colored with c -/
 lemma greedy_witness {c n : ℕ} (h : c < H.greedy n) : ∃ m < n, H.Adj m n ∧ H.greedy m = c := by
@@ -182,6 +291,10 @@ abbrev GreedyColorable [DecidableRel H.Adj] (n : ℕ) : Prop :=
 
 abbrev ColorOrder (C : H.Coloring ℕ) (π : β ≃ β) : Prop :=
   ∀ a b, C a < C b → encode (π a) < encode (π b)
+
+abbrev ColEncode (c : ℕ → ℕ) : ℕ → ℕ × ℕ := fun b ↦ (c b, b)
+
+
 
 lemma exists_color_order  (C : H.Coloring ℕ) : Nonempty ({π : β ≃ β // H.ColorOrder C π}) := by
   have e := equivRangeEncode β
