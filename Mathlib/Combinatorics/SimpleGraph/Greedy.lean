@@ -42,8 +42,14 @@ lemma unused (c : α → ℕ) (a : α) [Fintype (G.neighborSetLT a)] :
   apply card_image_le.trans_lt
   rw [← degreeLT, card_range]
   exact Nat.lt_succ_self _
+#check isWellOrder_lt
+
 
 end degreeLT
+
+
+
+
 
 /- Do greedy coloring of `SimpleGraph ℕ` first. -/
 section withN
@@ -159,11 +165,35 @@ instance colWellOrder (C : ℕ → ℕ) : IsWellOrder ℕ (colLT C) where
                 intro c hc
                 cases hc with
                 | inl h3 => apply ih c; omega
-                | inr h3 =>
-                  apply iha c ⟨h3.1 ▸ h1.1, by omega⟩ ⟨h3.1 ▸ h1.1, by omega⟩
+                | inr h3 => apply iha c ⟨h3.1 ▸ h1.1, by omega⟩ ⟨h3.1 ▸ h1.1, by omega⟩
             apply h' n h1
-    apply h (C n).succ
-    exact Nat.lt_succ_self _
+    exact h (C n).succ <| Nat.lt_succ_self _
+
+
+noncomputable def mycolfun (C : ℕ → ℕ) (n : ℕ) : ℕ := by
+  induction n using Nat.strongRecOn with
+  | ind n f =>
+  exact  WellFounded.min (colWellOrder C).wf
+    (Set.univ \ ((Set.Iio n).image (fun m ↦ if h : (m < n) then (f m h) else 0)))
+    <| Set.Infinite.nonempty (Set.Infinite.diff (Set.infinite_univ)
+      <| Set.Finite.image _ (Set.finite_Iio n))
+
+lemma mycolfun_def (C : ℕ → ℕ) (n : ℕ) : mycolfun C n = (WellFounded.min (colWellOrder C).wf
+    (Set.univ \ ((Set.Iio n).image (fun m ↦ if (m < n) then (mycolfun C m) else 0)))
+    <| Set.Infinite.nonempty (Set.Infinite.diff (Set.infinite_univ)
+      <| Set.Finite.image _ (Set.finite_Iio n))) := by
+  rw [mycolfun, Nat.strongRecOn, WellFounded.fix_eq]
+  rfl
+
+lemma mycolfun_not_mem (C : ℕ → ℕ) (n : ℕ) : mycolfun C n ∉ (Set.Iio n).image (mycolfun C) := by
+  intro h
+  apply ((colWellOrder C).wf.min_mem (Set.univ \ ((Set.Iio n).image (fun m ↦ if (m < n) then (mycolfun C m) else 0))) ( Set.Infinite.nonempty (Set.Infinite.diff (Set.infinite_univ)
+      <| Set.Finite.image _ (Set.finite_Iio n)))).2
+  rw [mycolfun_def] at h
+  convert h using 1
+  ext m
+  simp only [Set.mem_image, Set.mem_Iio]
+  aesop
 
 lemma exists_color_orderN  (C : H.Coloring ℕ) : Nonempty ({π : ℕ ≃ ℕ // H.ColorOrderN C π}) := by
 
@@ -384,9 +414,9 @@ end SimpleGraph
 
 
 
--- noncomputable def ColortoFun (c : ℕ → ℕ) (n : ℕ) : ℕ :=
---   sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
---     (fun m ↦ ite (m < n) (ColortoFun c m) 0)))})
+noncomputable def ColortoFun (c : ℕ → ℕ) (n : ℕ) : ℕ :=
+  sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
+    (fun m ↦ ite (m < n) (ColortoFun c m) 0)))})
 
 -- lemma ColortoFun_def (c : ℕ → ℕ) (n : ℕ) : ColortoFun c n =
 --       sInf (c ⁻¹' {sInf (c '' (Set.univ \ (Set.Iio n).image
