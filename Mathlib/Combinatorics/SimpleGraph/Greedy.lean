@@ -187,12 +187,11 @@ lemma mycolfun_def (C : ℕ → ℕ) (n : ℕ) : mycolfun C n = (WellFounded.min
 
 lemma mycolfun_not_mem (C : ℕ → ℕ) (n : ℕ) : mycolfun C n ∉ (Set.Iio n).image (mycolfun C) := by
   intro h
-  apply ((colWellOrder C).wf.min_mem (Set.univ \ ((Set.Iio n).image (fun m ↦ if (m < n) then (mycolfun C m) else 0))) ( Set.Infinite.nonempty (Set.Infinite.diff (Set.infinite_univ)
+  apply ((colWellOrder C).wf.min_mem (Set.univ \ ((Set.Iio n).image (fun m ↦ if (m < n) then
+    (mycolfun C m) else 0))) ( Set.Infinite.nonempty (Set.Infinite.diff (Set.infinite_univ)
       <| Set.Finite.image _ (Set.finite_Iio n)))).2
   rw [mycolfun_def] at h
   convert h using 1
-  ext m
-  simp only [Set.mem_image, Set.mem_Iio]
   aesop
 
 lemma exists_color_orderN  (C : H.Coloring ℕ) : Nonempty ({π : ℕ ≃ ℕ // H.ColorOrderN C π}) := by
