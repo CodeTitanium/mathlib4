@@ -175,18 +175,21 @@ theorem IsPreprimitive.of_isTrivialBlock_of_not_mem_fixedPoints {a : X} (ha : a 
 @[to_additive
   "If the action is not trivial, then the trivial blocks condition implies preprimitivity
 (pretransitivity is automatic)"]
-theorem mk' (Hnt : fixedPoints G X ≠ ⊤)
+theorem IsPreprimitive.mk' (Hnt : fixedPoints G X ≠ ⊤)
     (H : ∀ {B : Set X} (_ : IsBlock G B), IsTrivialBlock B) :
     IsPreprimitive G X := by
   simp only [Set.top_eq_univ, Set.ne_univ_iff_exists_not_mem] at Hnt
   obtain ⟨_, ha⟩ := Hnt
   exact .of_isTrivialBlock_of_not_mem_fixedPoints ha fun {B} _ ↦ H
 
+@[deprecated (since := "2025-03-03")] alias mk' := IsPreprimitive.mk'
+@[deprecated (since := "2025-03-03")] alias _root_.AddAction.mk' := AddAction.IsPreprimitive.mk'
+
 section EquivariantMap
 
 variable {M : Type*} [Group M] {α : Type*} [MulAction M α]
 variable {N β : Type*} [Group N] [MulAction N β]
-variable {φ : M →* N} {f : α →ₑ[φ] β}
+variable {φ : M → N} {f : α →ₑ[φ] β}
 
 @[to_additive]
 theorem IsPreprimitive.of_surjective [IsPreprimitive M α] (hf : Function.Surjective f) :
@@ -371,13 +374,13 @@ theorem exists_mem_smul_and_not_mem_smul [IsPreprimitive G X]
     apply Set.Subsingleton.eq_singleton_of_mem hyp
     rw [Set.mem_iInter]; intro g; simp only [Set.mem_iInter, imp_self]
   · -- B = ⊤ : contradiction
-    change B = ⊤ at hyp
+    change B = Set.univ at hyp
     exfalso; apply hA'
     suffices ∃ g : G, a ∈ g • A by
       obtain ⟨g, hg⟩ := this
-      have : B ≤ g • A := Set.biInter_subset_of_mem hg
-      rw [hyp, top_le_iff, ← eq_inv_smul_iff] at this
-      rw [this, Set.top_eq_univ, Set.smul_set_univ]
+      have : B ⊆ g • A := Set.biInter_subset_of_mem hg
+      rw [hyp, Set.univ_subset_iff, ← eq_inv_smul_iff] at this
+      rw [this, Set.smul_set_univ]
     -- ∃ (g : M), a ∈ g • A
     obtain ⟨x, hx⟩ := hA
     obtain ⟨g, hg⟩ := MulAction.exists_smul_eq G x a
