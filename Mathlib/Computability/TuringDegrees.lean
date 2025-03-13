@@ -170,7 +170,7 @@ instance : IsRefl (ℕ →. ℕ) TuringReducible :=
 Proof that turing reducibility is transitive.
 -/
 theorem TuringReducible.trans {f g h : ℕ →. ℕ} (hg : f ≤ᵀ g) (hh : g ≤ᵀ h) :
-  f ≤ᵀ h := by
+    f ≤ᵀ h := by
   induction hg
   · exact RecursiveIn.zero
   · exact RecursiveIn.succ
