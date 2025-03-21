@@ -6,7 +6,6 @@ Authors: Mario Carneiro, Johan Commelin
 import Mathlib.Algebra.Group.WithOne.Defs
 import Mathlib.Algebra.GroupWithZero.Hom
 import Mathlib.Algebra.GroupWithZero.Units.Basic
--- import Mathlib.Algebra.Equiv.TransferInstance
 import Mathlib.Data.Nat.Cast.Defs
 import Mathlib.Data.Option.Basic
 import Mathlib.Data.Option.NAry
@@ -321,3 +320,5 @@ instance addMonoidWithOne [AddMonoidWithOne α] : AddMonoidWithOne (WithZero α)
   natCast_succ n := by cases n <;> simp
 
 end WithZero
+
+#min_imports

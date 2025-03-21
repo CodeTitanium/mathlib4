@@ -4,13 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Johan Commelin, Patrick Massot
 -/
 import Mathlib.Algebra.GroupWithZero.InjSurj
-import Mathlib.Algebra.GroupWithZero.Units.Equiv
 import Mathlib.Algebra.GroupWithZero.WithZero
 import Mathlib.Algebra.Order.AddGroupWithTop
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Lemmas
 import Mathlib.Algebra.Order.Monoid.Basic
 import Mathlib.Algebra.Order.Monoid.OrderDual
 import Mathlib.Algebra.Order.Monoid.TypeTags
+import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+import Mathlib.Order.Interval.Set.Defs
 
 /-!
 # Linearly ordered commutative groups and monoids with a zero element adjoined
@@ -168,6 +169,13 @@ theorem lt_of_mul_lt_mul_of_le₀ (h : a * b < c * d) (hc : 0 < c) (hh : c ≤ a
   simpa [inv_mul_cancel_left₀ ha, inv_mul_cancel_left₀ hc.ne']
     using mul_lt_mul_of_le_of_lt_of_nonneg_of_pos hh  h zero_le' (inv_pos.2 hc)
 
+theorem mul_lt_mul_right₀ {α : Type*} {a b c : α} [LinearOrderedCommGroupWithZero α]
+    (hc : 0 < c) : a * c < b * c ↔ a < b := by
+  rw [mul_comm a, mul_comm b]
+  exact mul_lt_mul_left hc
+
+
+
 @[deprecated div_le_div_iff_of_pos_right (since := "2024-11-18")]
 theorem div_le_div_right₀ (hc : c ≠ 0) : a / c ≤ b / c ↔ a ≤ b :=
   div_le_div_iff_of_pos_right (zero_lt_iff.2 hc)
@@ -322,6 +330,10 @@ instance existsAddOfLE [Add α] [ExistsAddOfLE α] : ExistsAddOfLE (WithZero α)
     obtain ⟨c, rfl⟩ := exists_add_of_le (WithZero.coe_le_coe.1 h)
     exact ⟨c, rfl⟩⟩
 
+theorem one_lt_div' {α : Type*} [LinearOrderedCommGroupWithZero α] (a : α) {b : α} (hb : b ≠ 0) :
+    1 < a / b ↔ b < a := by
+  rw [← mul_lt_mul_right₀ (zero_lt_iff.mpr hb), one_mul, div_eq_mul_inv, inv_mul_cancel_right₀ hb]
+
 end Preorder
 
 section PartialOrder
@@ -396,6 +408,17 @@ instance instLinearOrderedCommGroupWithZero [LinearOrderedCommGroup α] :
   __ := instLinearOrderedCommMonoidWithZero
   __ := commGroupWithZero
 
+theorem strictMonoOn_zpow {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
+    StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) :=
+  fun a ha b _ hab ↦ by
+    have ha0 : a ≠ 0 := ne_of_gt ha
+    have han : a ^ n ≠ 0 := by
+      rw [WithZero.ne_zero_iff_exists] at ha0 ⊢
+      obtain ⟨x, hx⟩ := ha0
+      exact ⟨x ^ n, by rw [← hx, WithZero.coe_zpow]⟩
+    simp only [← one_lt_div' (b^n) han, ← div_zpow]
+    exact one_lt_zpow ((one_lt_div' _ ha0).mpr hab) hn
+
 end WithZero
 
 section MultiplicativeNotation
@@ -407,3 +430,5 @@ scoped[Multiplicative] notation "ℕₘ₀" => WithZero (Multiplicative ℕ)
 scoped[Multiplicative] notation "ℤₘ₀" => WithZero (Multiplicative ℤ)
 
 end MultiplicativeNotation
+
+#min_imports
