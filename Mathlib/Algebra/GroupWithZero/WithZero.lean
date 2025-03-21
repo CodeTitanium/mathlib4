@@ -320,5 +320,3 @@ instance addMonoidWithOne [AddMonoidWithOne α] : AddMonoidWithOne (WithZero α)
   natCast_succ n := by cases n <;> simp
 
 end WithZero
-
-#min_imports

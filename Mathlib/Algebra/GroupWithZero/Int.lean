@@ -25,4 +25,8 @@ theorem ofAdd_neg_one_pow_comm (a : ℤ) (n : ℕ) :
   simp only [zpow_neg, zpow_one, inv_zpow', inv_inv, coe_zpow]
   rw [← zpow_natCast, zpow_comm, ← ofAdd_zpow]
 
+theorem ofAdd_neg_nat (n : ℕ) : (↑(ofAdd (-n : ℤ)) : ℤₘ₀) = ofAdd (-1 : ℤ) ^ n := by
+  simp only [ofAdd_neg, coe_inv, inv_pow, coe_pow, inv_inj]
+  rw [← @WithZero.coe_pow, WithZero.coe_inj, ← one_mul (n : ℤ), Int.ofAdd_mul, zpow_natCast]
+
 end WithZero
