@@ -316,6 +316,7 @@ theorem one_le_zpow {x : G} (H : 1 ≤ x) {n : ℤ} (hn : 0 ≤ n) : 1 ≤ x ^ n
   rw [zpow_natCast]
   apply one_le_pow_of_one_le' H
 
+@[to_additive zsmul_pos]
 theorem one_lt_zpow  {g : G} (hg : 1 < g) {k : ℤ}
     (hk : 0 < k) : 1 < g ^ k := by
   lift k to ℕ using Int.le_of_lt hk
