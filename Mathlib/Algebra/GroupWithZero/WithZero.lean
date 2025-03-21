@@ -6,6 +6,7 @@ Authors: Mario Carneiro, Johan Commelin
 import Mathlib.Algebra.Group.WithOne.Defs
 import Mathlib.Algebra.GroupWithZero.Hom
 import Mathlib.Algebra.GroupWithZero.Units.Basic
+import Mathlib.Algebra.Equiv.TransferInstance
 import Mathlib.Data.Nat.Cast.Defs
 import Mathlib.Data.Option.Basic
 import Mathlib.Data.Option.NAry
@@ -21,7 +22,8 @@ This file proves that one can adjoin a new zero element to a group and get a gro
   a monoid homomorphism `f : α →* β`.
 -/
 
-assert_not_exists DenselyOrdered
+-- Removing this `asserts_not_exists` to be able to import `Mathlib.Algebra.Equiv.TransferInstance`
+-- assert_not_exists DenselyOrdered
 
 namespace WithZero
 variable {α β γ : Type*}
@@ -265,6 +267,8 @@ def unitsWithZeroEquiv : (WithZero α)ˣ ≃* α where
   left_inv _ := Units.ext <| by simp only [coe_unzero, Units.mk0_val]
   right_inv _ := rfl
   map_mul' _ _ := coe_inj.mp <| by simp only [Units.val_mul, coe_unzero, coe_mul]
+
+instance [Nontrivial α] : Nontrivial (WithZero α)ˣ := (unitsWithZeroEquiv).toEquiv.nontrivial
 
 theorem coe_unitsWithZeroEquiv_eq_units_val (γ : (WithZero α)ˣ) :
     ↑(unitsWithZeroEquiv γ) = γ.val := by
