@@ -450,7 +450,8 @@ theorem lt_succ_iff_le {x : ℤₘ₀} {m : Multiplicative ℤ} : x < m * ofAdd 
   · obtain ⟨x, rfl⟩ := ne_zero_iff_exists.mp hx
     simpa [← WithZero.coe_mul] using ⟨le_of_lt_add_one, lt_add_one_of_le⟩
 
-theorem Int.ofAdd_neg_one_lt_one : (↑(Multiplicative.ofAdd (-1 : ℤ)) : ℤₘ₀) < (1 : ℤₘ₀) := by
+theorem Int.ofAdd_neg_natCast_lt_one {n : ℕ} (hn : n ≠ 0) :
+    (↑(Multiplicative.ofAdd (-n : ℤ)) : ℤₘ₀) < 1 := by
   rw [← coe_one, coe_lt_coe, ← ofAdd_zero, ofAdd_lt]
   omega
 
