@@ -438,8 +438,7 @@ theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn :
 open Set in
 theorem zpow_left_inj {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} {a b : WithZero α}
     (ha : a ≠ 0) (hb : b ≠ 0) (hn : n ≠ 0) : a ^ n = b ^ n ↔ a = b :=
-  InjOn.eq_iff (zpow_left_injOn hn) (mem_Ioi.mpr (zero_lt_iff.mpr ha))
-    (mem_Ioi.mpr (zero_lt_iff.mpr hb))
+  (zpow_left_injOn hn).eq_iff ha.bot_lt hb.bot_lt
 
 section Int
 
