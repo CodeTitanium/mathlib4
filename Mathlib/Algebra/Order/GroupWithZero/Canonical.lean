@@ -183,7 +183,7 @@ theorem lt_of_mul_lt_mul_of_le₀ (h : a * b < c * d) (hc : 0 < c) (hh : c ≤ a
 
 theorem mul_lt_mul_right₀ {a b c : α}
     (hc : 0 < c) : a * c < b * c ↔ a < b := by
-  simpa only [mul_comm a, mul_comm b] using mul_lt_mul_left hc
+  simp [mul_lt_mul_right hc]
 
 @[deprecated div_le_div_iff_of_pos_right (since := "2024-11-18")]
 theorem div_le_div_right₀ (hc : c ≠ 0) : a / c ≤ b / c ↔ a ≤ b :=
@@ -431,8 +431,8 @@ theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
 theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
     Set.InjOn (fun x : WithZero α ↦ x ^ n) (Set.Ioi 0) := by
   rcases hn.symm.lt_or_lt with h | h
-  · exact (strictMonoOn_zpow h).injOn
-  · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (strictMonoOn_zpow (neg_pos.mpr h)).injOn ha hb ?_
+  · exact (zpow_strictMonoOn h).injOn
+  · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (zpow_strictMonoOn (neg_pos.mpr h)).injOn ha hb ?_
     simp only [zpow_neg, zpow_neg, hab]
 
 open Set in
