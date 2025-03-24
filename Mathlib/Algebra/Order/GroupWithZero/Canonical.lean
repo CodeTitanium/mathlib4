@@ -429,7 +429,7 @@ theorem strictMonoOn_zpow [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
 
 
 theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
-    Set.InjOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) := by
+    Set.InjOn (fun x : WithZero α ↦ x ^ n) (Set.Ioi 0) := by
   rcases hn.symm.lt_or_lt with h | h
   · exact (strictMonoOn_zpow h).injOn
   · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (strictMonoOn_zpow (neg_pos.mpr h)).injOn ha hb ?_
