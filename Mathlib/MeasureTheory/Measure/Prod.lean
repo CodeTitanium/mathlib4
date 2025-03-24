@@ -8,6 +8,7 @@ import Mathlib.MeasureTheory.Integral.Lebesgue
 import Mathlib.MeasureTheory.MeasurableSpace.Prod
 import Mathlib.MeasureTheory.Measure.GiryMonad
 import Mathlib.MeasureTheory.Measure.OpenPos
+import Mathlib.MeasureTheory.Measure.WithDensity
 
 /-!
 # The product measure
@@ -1041,5 +1042,26 @@ theorem _root_.MeasureTheory.volume_preserving_prodAssoc {α₁ β₁ γ₁ : Ty
   MeasureTheory.measurePreserving_prodAssoc volume volume volume
 
 end MeasurePreserving
+
+section withDensity
+
+theorem prod_withDensity_mul [SFinite ν'] {f : α → ℝ≥0∞} {g : β → ℝ≥0∞}
+    (hf : Measurable f) (hg : Measurable g)
+    (hμ : μ = μ'.withDensity f) (hν : ν = ν'.withDensity g):
+    μ.prod ν = (μ'.prod ν').withDensity (fun (x,y) ↦ f x * g y) := by
+  rw[measure_eq_measure_iff_lintegral_eq_lintegral]
+  intro h mh
+  rw[lintegral_prod _ mh.aemeasurable, hμ, hν,
+     lintegral_withDensity_eq_lintegral_mul _ hf
+     (by apply Measurable.lintegral_prod_right; fun_prop),
+     lintegral_withDensity_eq_lintegral_mul _ (by fun_prop) mh, lintegral_prod _ (by fun_prop)]
+  refine lintegral_congr (fun x ↦ ?_)
+  rw[Pi.mul_apply, lintegral_withDensity_eq_lintegral_mul _ hg (by fun_prop),
+     ← lintegral_const_mul _ (by fun_prop)]
+  refine lintegral_congr (fun x ↦ ?_)
+  simp
+  ring
+
+end withDensity
 
 end MeasureTheory
