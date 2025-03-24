@@ -136,9 +136,11 @@ instance probabilitymeasure_of_probabilitymeasures_mconv (μ : Measure M) (ν : 
 
 section Group
 
-variable {G : Type*} [Group G] [MeasurableSpace G] {π : Measure G}
+variable {G : Type*} [Group G] [MeasurableSpace G]
+         {π : Measure G} [SFinite π] [IsMulLeftInvariant π]
+
 @[to_additive conv_withDensity_lconvolution]
-theorem mconv_withDensity_mlconvolution [SFinite π] [IsMulLeftInvariant π]
+theorem mconv_withDensity_mlconvolution
     [MeasurableMul₂ G] [MeasurableInv G] {μ : Measure G} {ν : Measure G} [SFinite ν]
     {f : G → ℝ≥0∞} {g : G → ℝ≥0∞} (hf : Measurable f) (hg : Measurable g)
     (hμ : μ = π.withDensity f) (hν : ν = π.withDensity g):
