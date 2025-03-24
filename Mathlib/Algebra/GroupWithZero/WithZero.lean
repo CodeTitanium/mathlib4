@@ -270,7 +270,7 @@ def unitsWithZeroEquiv : (WithZero α)ˣ ≃* α where
   but it would create too large an input, detected by the `asserts_not_exist` at the beginning of
   this file. -/
 instance [Nontrivial α] : Nontrivial (WithZero α)ˣ :=
-  (unitsWithZeroEquiv).toEquiv.surjective.nontrivial
+  unitsWithZeroEquiv.toEquiv.surjective.nontrivial
 
 theorem coe_unitsWithZeroEquiv_eq_units_val (γ : (WithZero α)ˣ) :
     ↑(unitsWithZeroEquiv γ) = γ.val := by
