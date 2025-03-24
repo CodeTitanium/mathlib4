@@ -181,10 +181,6 @@ theorem lt_of_mul_lt_mul_of_le₀ (h : a * b < c * d) (hc : 0 < c) (hh : c ≤ a
   simpa [inv_mul_cancel_left₀ ha, inv_mul_cancel_left₀ hc.ne']
     using mul_lt_mul_of_le_of_lt_of_nonneg_of_pos hh  h zero_le' (inv_pos.2 hc)
 
-theorem mul_lt_mul_right₀ {a b c : α}
-    (hc : 0 < c) : a * c < b * c ↔ a < b := by
-  simp [mul_lt_mul_right hc]
-
 @[deprecated div_le_div_iff_of_pos_right (since := "2024-11-18")]
 theorem div_le_div_right₀ (hc : c ≠ 0) : a / c ≤ b / c ↔ a ≤ b :=
   div_le_div_iff_of_pos_right (zero_lt_iff.2 hc)
