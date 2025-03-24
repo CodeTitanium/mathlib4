@@ -452,7 +452,6 @@ theorem lt_succ_iff_le  (x : ℤₘ₀) (m : ℤ) :
     simpa only [coe_le_coe, coe_lt_coe, ← toAdd_le, ← toAdd_lt, toAdd_ofAdd] using
       ⟨le_of_lt_add_one, lt_add_one_of_le⟩
 
-
 theorem Int.ofAdd_neg_one_lt_one : (↑(Multiplicative.ofAdd (-1 : ℤ)) : ℤₘ₀) < (1 : ℤₘ₀) := by
   rw [← coe_one, coe_lt_coe, ← ofAdd_zero, ofAdd_lt]
   omega
