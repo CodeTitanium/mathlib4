@@ -266,9 +266,6 @@ def unitsWithZeroEquiv : (WithZero α)ˣ ≃* α where
   right_inv _ := rfl
   map_mul' _ _ := coe_inj.mp <| by simp only [Units.val_mul, coe_unzero, coe_mul]
 
-/- Importing `Mathlib.Algebra.Equiv.TransferInstance` would allow avoiding the `.surjective` call
-  but it would create too large an input, detected by the `asserts_not_exist` at the beginning of
-  this file. -/
 instance [Nontrivial α] : Nontrivial (WithZero α)ˣ :=
   unitsWithZeroEquiv.toEquiv.surjective.nontrivial
 
