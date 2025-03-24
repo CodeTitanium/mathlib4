@@ -444,13 +444,11 @@ section Int
 
 open Int Multiplicative
 
-theorem lt_succ_iff_le  (x : ℤₘ₀) (m : ℤ) :
-    x < ↑(↑(ofAdd (m + 1)) : ℤₘ₀) ↔ x ≤ (↑(ofAdd m) : ℤₘ₀) := by
+theorem lt_succ_iff_le {x : ℤₘ₀} {m : Multiplicative ℤ} : x < m * ofAdd (1 : ℤ) ↔ x ≤ m := by
   by_cases hx : x = 0
   · simpa only [hx, zero_le', iff_true, zero_lt_iff] using coe_ne_zero
-  · obtain ⟨-, rfl⟩ := ne_zero_iff_exists.mp hx
-    simpa only [coe_le_coe, coe_lt_coe, ← toAdd_le, ← toAdd_lt, toAdd_ofAdd] using
-      ⟨le_of_lt_add_one, lt_add_one_of_le⟩
+  · obtain ⟨x, rfl⟩ := ne_zero_iff_exists.mp hx
+    simpa [← WithZero.coe_mul] using ⟨le_of_lt_add_one, lt_add_one_of_le⟩
 
 theorem Int.ofAdd_neg_one_lt_one : (↑(Multiplicative.ofAdd (-1 : ℤ)) : ℤₘ₀) < (1 : ℤₘ₀) := by
   rw [← coe_one, coe_lt_coe, ← ofAdd_zero, ofAdd_lt]
