@@ -4,9 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kenny Lau, Johan Commelin, Patrick Massot
 -/
 import Mathlib.Algebra.GroupWithZero.InjSurj
+import Mathlib.Algebra.GroupWithZero.Units.Equiv
 import Mathlib.Algebra.GroupWithZero.WithZero
 import Mathlib.Algebra.Order.AddGroupWithTop
-import Mathlib.Algebra.Order.Group.Int
+-- import Mathlib.Algebra.Order.Group.Int
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Lemmas
 import Mathlib.Algebra.Order.Monoid.Basic
 import Mathlib.Algebra.Order.Monoid.OrderDual
@@ -419,27 +420,27 @@ theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
   simpa only [← one_lt_div' _ han, ← div_zpow] using one_lt_zpow (one_lt_div' _ ha|>.mpr hab) hn
 
 
-theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
-    Set.InjOn (fun x : WithZero α ↦ x ^ n) (Set.Ioi 0) := by
-  rcases hn.symm.lt_or_lt with h | h
-  · exact (zpow_strictMonoOn h).injOn
-  · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (zpow_strictMonoOn (neg_pos.mpr h)).injOn ha hb ?_
-    simp only [zpow_neg, zpow_neg, hab]
+-- theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
+--     Set.InjOn (fun x : WithZero α ↦ x ^ n) (Set.Ioi 0) := by
+--   rcases hn.symm.lt_or_lt with h | h
+--   · exact (zpow_strictMonoOn h).injOn
+--   · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (zpow_strictMonoOn (neg_pos.mpr h)).injOn ha hb ?_
+--     simp only [zpow_neg, zpow_neg, hab]
 
-open Set in
-theorem zpow_left_inj {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} {a b : WithZero α}
-    (ha : a ≠ 0) (hb : b ≠ 0) (hn : n ≠ 0) : a ^ n = b ^ n ↔ a = b :=
-  (zpow_left_injOn hn).eq_iff ha.bot_lt hb.bot_lt
+-- open Set in
+-- theorem zpow_left_inj {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} {a b : WithZero α}
+--     (ha : a ≠ 0) (hb : b ≠ 0) (hn : n ≠ 0) : a ^ n = b ^ n ↔ a = b :=
+--   (zpow_left_injOn hn).eq_iff ha.bot_lt hb.bot_lt
 
 section Int
 
 open Int Multiplicative
 
-theorem lt_succ_iff_le {x : ℤₘ₀} {m : Multiplicative ℤ} : x < m * ofAdd (1 : ℤ) ↔ x ≤ m := by
-  by_cases hx : x = 0
-  · simpa only [hx, zero_le', iff_true, zero_lt_iff] using coe_ne_zero
-  · obtain ⟨x, rfl⟩ := ne_zero_iff_exists.mp hx
-    simpa [← WithZero.coe_mul] using ⟨le_of_lt_add_one, lt_add_one_of_le⟩
+-- theorem lt_succ_iff_le {x : ℤₘ₀} {m : Multiplicative ℤ} : x < m * ofAdd (1 : ℤ) ↔ x ≤ m := by
+--   by_cases hx : x = 0
+--   · simpa only [hx, zero_le', iff_true, zero_lt_iff] using coe_ne_zero
+--   · obtain ⟨x, rfl⟩ := ne_zero_iff_exists.mp hx
+--     simpa [← WithZero.coe_mul] using ⟨le_of_lt_add_one, lt_add_one_of_le⟩
 
 theorem Int.ofAdd_neg_natCast_lt_one {n : ℕ} (hn : n ≠ 0) :
     (↑(Multiplicative.ofAdd (-n : ℤ)) : ℤₘ₀) < 1 := by
@@ -449,3 +450,5 @@ theorem Int.ofAdd_neg_natCast_lt_one {n : ℕ} (hn : n ≠ 0) :
 end Int
 
 end WithZero
+
+#min_imports
