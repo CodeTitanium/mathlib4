@@ -409,19 +409,14 @@ instance instLinearOrderedCommGroupWithZero [LinearOrderedCommGroup α] :
   __ := instLinearOrderedCommMonoidWithZero
   __ := commGroupWithZero
 
-theorem one_lt_div' [LinearOrderedCommGroupWithZero α] (a : α) {b : α} (hb : b ≠ 0) :
-    1 < a / b ↔ b < a := by
-  rw [← mul_lt_mul_right (zero_lt_iff.mpr hb), one_mul, div_eq_mul_inv, inv_mul_cancel_right₀ hb]
+theorem one_lt_div' [GroupWithZero α] [LinearOrder α] [MulPosStrictMono α]
+    (a : α) {b : α} (hb : 0 < b) :1 < a / b ↔ b < a := by
+  rw [← mul_lt_mul_right hb, one_mul, div_eq_mul_inv, inv_mul_cancel_right₀ <| ne_of_gt hb]
 
 theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
-    StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) :=
-  fun a ha b _ hab ↦ by
-    have han : a ^ n ≠ 0 := by
-      obtain ⟨x, hx⟩ := ne_zero_iff_exists (x := a).mp (ne_of_gt ha)
-      rw [← hx, ← coe_zpow, ne_zero_iff_exists]
-      use x ^ n
-    simpa only [← one_lt_div' (b ^ n) han, ← div_zpow] using
-      one_lt_zpow (one_lt_div' _ (ne_of_gt ha)|>.mpr hab) hn
+    StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) := fun a ha b _ hab ↦ by
+  have han : 0 < a ^ n := zpow_pos ha _
+  simpa only [← one_lt_div' _ han, ← div_zpow] using one_lt_zpow (one_lt_div' _ ha|>.mpr hab) hn
 
 
 theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
