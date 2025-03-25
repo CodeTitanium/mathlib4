@@ -7,12 +7,12 @@ import Mathlib.Algebra.GroupWithZero.InjSurj
 import Mathlib.Algebra.GroupWithZero.Units.Equiv
 import Mathlib.Algebra.GroupWithZero.WithZero
 import Mathlib.Algebra.Order.AddGroupWithTop
-import Mathlib.Algebra.Order.Group.Int
+-- import Mathlib.Algebra.Order.Group.Int
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Lemmas
 import Mathlib.Algebra.Order.Monoid.Basic
 import Mathlib.Algebra.Order.Monoid.OrderDual
 import Mathlib.Algebra.Order.Monoid.TypeTags
--- import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
 -- import Mathlib.Data.Set.Monotone
 -- import Mathlib.Order.Interval.Set.Defs
 
