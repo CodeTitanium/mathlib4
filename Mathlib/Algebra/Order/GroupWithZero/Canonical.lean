@@ -7,13 +7,13 @@ import Mathlib.Algebra.GroupWithZero.InjSurj
 import Mathlib.Algebra.GroupWithZero.Units.Equiv
 import Mathlib.Algebra.GroupWithZero.WithZero
 import Mathlib.Algebra.Order.AddGroupWithTop
--- import Mathlib.Algebra.Order.Group.Int
+import Mathlib.Algebra.Order.Group.Int
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Lemmas
 import Mathlib.Algebra.Order.Monoid.Basic
 import Mathlib.Algebra.Order.Monoid.OrderDual
 import Mathlib.Algebra.Order.Monoid.TypeTags
--- import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
--- import Mathlib.Data.Set.Monotone
+import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+import Mathlib.Data.Set.Monotone
 import Mathlib.Order.Interval.Set.Defs
 
 /-!
@@ -414,23 +414,23 @@ theorem one_lt_div' [GroupWithZero α] [LinearOrder α] [MulPosStrictMono α]
     (a : α) {b : α} (hb : 0 < b) :1 < a / b ↔ b < a := by
   rw [← mul_lt_mul_right hb, one_mul, div_eq_mul_inv, inv_mul_cancel_right₀ <| ne_of_gt hb]
 
--- theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
---     StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) := fun a ha b _ hab ↦ by
---   have han : 0 < a ^ n := zpow_pos ha _
---   simpa only [← one_lt_div' _ han, ← div_zpow] using one_lt_zpow (one_lt_div' _ ha|>.mpr hab) hn
+theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
+    StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) := fun a ha b _ hab ↦ by
+  have han : 0 < a ^ n := zpow_pos ha _
+  simpa only [← one_lt_div' _ han, ← div_zpow] using one_lt_zpow (one_lt_div' _ ha|>.mpr hab) hn
 
 
--- theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
---     Set.InjOn (fun x : WithZero α ↦ x ^ n) (Set.Ioi 0) := by
---   rcases hn.symm.lt_or_lt with h | h
---   · exact (zpow_strictMonoOn h).injOn
---   · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (zpow_strictMonoOn (neg_pos.mpr h)).injOn ha hb ?_
---     simp only [zpow_neg, zpow_neg, hab]
+theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
+    Set.InjOn (fun x : WithZero α ↦ x ^ n) (Set.Ioi 0) := by
+  rcases hn.symm.lt_or_lt with h | h
+  · exact (zpow_strictMonoOn h).injOn
+  · refine fun a ha b hb (hab : a ^ n = b ^ n) ↦ (zpow_strictMonoOn (neg_pos.mpr h)).injOn ha hb ?_
+    simp only [zpow_neg, zpow_neg, hab]
 
--- open Set in
--- theorem zpow_left_inj {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} {a b : WithZero α}
---     (ha : a ≠ 0) (hb : b ≠ 0) (hn : n ≠ 0) : a ^ n = b ^ n ↔ a = b :=
---   (zpow_left_injOn hn).eq_iff ha.bot_lt hb.bot_lt
+open Set in
+theorem zpow_left_inj {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} {a b : WithZero α}
+    (ha : a ≠ 0) (hb : b ≠ 0) (hn : n ≠ 0) : a ^ n = b ^ n ↔ a = b :=
+  (zpow_left_injOn hn).eq_iff ha.bot_lt hb.bot_lt
 
 section Int
 
