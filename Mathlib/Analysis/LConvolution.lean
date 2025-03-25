@@ -65,14 +65,27 @@ theorem mlconvolution_measurable [MeasurableMul₂ G] [MeasurableInv G]
   apply Measurable.lintegral_prod_right
   fun_prop
 
-/-- Convolution is associative -/
+/-- Convolution is associative when the measure is invariant under the group operations -/
 @[to_additive lconvolution_assoc]
-theorem mlconvolution_assoc : 1 = 1 := sorry
+theorem mlconvolution_assoc [MeasurableMul G]
+    {f : G → ℝ≥0∞} {g : G → ℝ≥0∞} {h : G → ℝ≥0∞}
+    (μ : Measure G) [IsMulLeftInvariant μ] [SFinite μ]:
+    f ⋆ₗ[μ] g ⋆ₗ[μ] h = f ⋆ₗ[μ] (g ⋆ₗ[μ] h) := by
+  ext x
+  simp[mlconvolution_def]
 
-/-- Convolution is commutative when the underlying group is commutative -/
+/-- Convolution is commutative when the underlying group is commutative and the measure
+is invariant under the group operations-/
 @[to_additive lconvolution_comm]
-theorem mlconvolution_comm : 1 = 1 := sorry
-
+theorem mlconvolution_comm [CommGroup G] [MeasurableMul G] [MeasurableInv G]
+    {f : G → ℝ≥0∞} {g : G → ℝ≥0∞}
+    (μ : Measure G) [IsMulLeftInvariant μ] :
+    f ⋆ₗ[μ] g = g ⋆ₗ[μ] f := by
+  ext x
+  simp[mlconvolution_def]
+  rw[← lintegral_inv_eq_self _, ← lintegral_mul_left_eq_self _ x⁻¹]
+  refine lintegral_congr (fun y => )
+  sorry
 
 
 end MeasureTheory
