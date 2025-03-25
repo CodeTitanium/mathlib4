@@ -7,12 +7,12 @@ import Mathlib.Algebra.GroupWithZero.InjSurj
 import Mathlib.Algebra.GroupWithZero.Units.Equiv
 import Mathlib.Algebra.GroupWithZero.WithZero
 import Mathlib.Algebra.Order.AddGroupWithTop
--- import Mathlib.Algebra.Order.Group.Int
+import Mathlib.Algebra.Order.Group.Int
 import Mathlib.Algebra.Order.GroupWithZero.Unbundled.Lemmas
 import Mathlib.Algebra.Order.Monoid.Basic
 import Mathlib.Algebra.Order.Monoid.OrderDual
 import Mathlib.Algebra.Order.Monoid.TypeTags
-import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+-- import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
 import Mathlib.Data.Set.Monotone
 import Mathlib.Order.Interval.Set.Defs
 
@@ -414,10 +414,10 @@ theorem one_lt_div' [GroupWithZero α] [LinearOrder α] [MulPosStrictMono α]
     (a : α) {b : α} (hb : 0 < b) :1 < a / b ↔ b < a := by
   rw [← mul_lt_mul_right hb, one_mul, div_eq_mul_inv, inv_mul_cancel_right₀ <| ne_of_gt hb]
 
-theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
-    StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) := fun a ha b _ hab ↦ by
-  have han : 0 < a ^ n := zpow_pos ha _
-  simpa only [← one_lt_div' _ han, ← div_zpow] using one_lt_zpow (one_lt_div' _ ha|>.mpr hab) hn
+-- theorem zpow_strictMonoOn [LinearOrderedCommGroup α] {n : ℤ} (hn : 0 < n) :
+--     StrictMonoOn (fun x : (WithZero α) ↦ x ^ n) (Set.Ioi 0) := fun a ha b _ hab ↦ by
+--   have han : 0 < a ^ n := zpow_pos ha _
+--   simpa only [← one_lt_div' _ han, ← div_zpow] using one_lt_zpow (one_lt_div' _ ha|>.mpr hab) hn
 
 
 -- theorem zpow_left_injOn {α : Type*} [LinearOrderedCommGroup α] {n : ℤ} (hn : n ≠ 0) :
@@ -436,11 +436,11 @@ section Int
 
 open Int Multiplicative
 
--- theorem lt_succ_iff_le {x : ℤₘ₀} {m : Multiplicative ℤ} : x < m * ofAdd (1 : ℤ) ↔ x ≤ m := by
---   by_cases hx : x = 0
---   · simpa only [hx, zero_le', iff_true, zero_lt_iff] using coe_ne_zero
---   · obtain ⟨x, rfl⟩ := ne_zero_iff_exists.mp hx
---     simpa [← WithZero.coe_mul] using ⟨le_of_lt_add_one, lt_add_one_of_le⟩
+theorem lt_succ_iff_le {x : ℤₘ₀} {m : Multiplicative ℤ} : x < m * ofAdd (1 : ℤ) ↔ x ≤ m := by
+  by_cases hx : x = 0
+  · simpa only [hx, zero_le', iff_true, zero_lt_iff] using coe_ne_zero
+  · obtain ⟨x, rfl⟩ := ne_zero_iff_exists.mp hx
+    simpa [← WithZero.coe_mul] using ⟨le_of_lt_add_one, lt_add_one_of_le⟩
 
 theorem Int.ofAdd_neg_natCast_lt_one {n : ℕ} (hn : n ≠ 0) :
     (↑(Multiplicative.ofAdd (-n : ℤ)) : ℤₘ₀) < 1 := by
