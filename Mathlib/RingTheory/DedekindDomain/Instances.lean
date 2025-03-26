@@ -8,7 +8,7 @@ import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Order.CompletePartialOrder
 import Mathlib.RingTheory.DedekindDomain.PID
 import Mathlib.FieldTheory.Separable
-import Mathlib.LinearAlgebra.Dual
+import Mathlib.LinearAlgebra.Dual.Lemmas
 
 /-!
 # Instances for Dedekind domains
