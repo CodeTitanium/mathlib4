@@ -450,5 +450,3 @@ theorem Int.ofAdd_neg_natCast_lt_one {n : ℕ} (hn : n ≠ 0) :
 end Int
 
 end WithZero
-
-#min_imports
