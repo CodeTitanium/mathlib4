@@ -1388,7 +1388,7 @@ section misc
 variable [PosMulStrictMono G₀] [MulPosMono G₀] {n : ℤ}
 
 lemma zpow_left_strictMonoOn₀ (hn : 0 < n) : StrictMonoOn (fun a : G₀ ↦ a ^ n) {a | 0 ≤ a} := by
-  lift n to ℕ using hn.le; simpa using pow_left_strictMonoOn₀ (M₀ := G₀) (n := n) (by omega)
+  lift n to ℕ using hn.le; simpa using pow_left_strictMonoOn₀ (by omega)
 
 end misc
 
@@ -1846,8 +1846,7 @@ lemma div_lt_div₀' (hac : a ≤ c) (hdb : d < b) (hc : 0 < c) (hd : 0 < d) : a
     (inv_nonneg.2 <| hd.le.trans hdb.le) hc
 
 lemma zpow_left_injOn₀ : ∀ {n : ℤ}, n ≠ 0 → {a | 0 ≤ a}.InjOn fun a : G₀ ↦ a ^ n
-  | (n + 1 : ℕ), _ => by
-    simpa using mod_cast (pow_left_strictMonoOn₀ (M₀ := G₀) n.succ_ne_zero).injOn
+  | (n + 1 : ℕ), _ => by simpa using mod_cast (pow_left_strictMonoOn₀ n.succ_ne_zero).injOn
   | .negSucc n, _ => by
     simpa using inv_injective.comp_injOn (pow_left_strictMonoOn₀ n.succ_ne_zero).injOn
 
