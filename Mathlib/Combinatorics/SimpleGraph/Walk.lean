@@ -1133,6 +1133,12 @@ lemma getVert_take_of_le {u v : V} {m n : ℕ} (p : G.Walk u v) (h : n ≤ m)  :
         simp_rw [Nat.add_le_add_iff_right, take_cons_succ, getVert_cons_succ] at *
         exact ih p h
 
+lemma getVert_take {u v : V} (p : G.Walk u v) (m n : ℕ) :
+   (p.take m).getVert n = if (m ≤ n) then p.getVert m else p.getVert n := by
+  split_ifs with h
+  · exact getVert_take_of_ge p h
+  · exact getVert_take_of_le p (Nat.le_of_not_le h)
+
 lemma getVert_drop {u v : V} (p : G.Walk u v) (m n : ℕ) :
    (p.drop m).getVert n = p.getVert (m + n) := by
   induction m generalizing n u with
