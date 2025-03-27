@@ -187,21 +187,19 @@ theorem length_dropUntil_le {u v w : V} (p : G.Walk v w) (h : u ∈ p.support) :
   rw [length_append, add_comm] at this
   exact Nat.le.intro this
 
+@[simp]
+lemma getVert_length_takeUntil_eq_self {u v x} (p : G.Walk u v) (h : x ∈ p.support) :
+    p.getVert (p.takeUntil _ h).length = x := by
+  have := congr_arg₂ (y := (p.takeUntil _ h).length) getVert (take_spec p h) rfl
+  rwa [getVert_append, if_neg <| lt_irrefl _, Nat.sub_self, getVert_zero, Eq.comm] at this
+
 lemma getVert_takeUntil {u v : V} {n : ℕ} {p : G.Walk u v} (hw : w ∈ p.support)
     (hn : n ≤ (p.takeUntil w hw).length) : (p.takeUntil w hw).getVert n = p.getVert n := by
-  cases p with
-  | nil => simp only [support_nil, List.mem_singleton] at hw; aesop
-  | cons h q =>
-    by_cases huw : w = u
-    · subst huw
-      simp_all
-    simp only [support_cons, List.mem_cons, huw, false_or] at hw
-    by_cases hn0 : n = 0
-    · aesop
-    simp only [takeUntil_cons hw ((Ne.eq_def _ _).mpr huw).symm, length_cons,
-      getVert_cons _ _ hn0] at hn ⊢
-    apply q.getVert_takeUntil hw
-    omega
+  cases hn.lt_or_eq with
+  | inl h =>
+    nth_rw 2 [← take_spec p hw]
+    rw [getVert_append, if_pos h]
+  | inr h => simp [h]
 
 lemma snd_takeUntil (hsu : w ≠ u) (p : G.Walk u v) (h : w ∈ p.support) :
     (p.takeUntil w h).snd = p.snd := by
@@ -210,11 +208,22 @@ lemma snd_takeUntil (hsu : w ≠ u) (p : G.Walk u v) (h : w ∈ p.support) :
   simp only [Nat.lt_one_iff, ← nil_iff_length_eq, nil_takeUntil] at hc
   exact hsu hc.symm
 
+@[simp]
+lemma length_takeUntil_add_dropUntil {p : G.Walk u v} (h : w ∈ p.support) :
+    (p.takeUntil w h).length + (p.dropUntil w h).length = p.length := by
+  rw [← length_append, take_spec]
+  
 lemma length_takeUntil_lt {u v w : V} {p : G.Walk v w} (h : u ∈ p.support) (huw : u ≠ w) :
     (p.takeUntil u h).length < p.length := by
   rw [(p.length_takeUntil_le h).lt_iff_ne]
   exact fun hl ↦ huw (by simpa using (hl ▸ getVert_takeUntil h (by rfl) :
     (p.takeUntil u h).getVert (p.takeUntil u h).length = p.getVert p.length))
+
+lemma getVert_dropUntil {u v : V} {p : G.Walk u v} (n : ℕ) (hw : w ∈ p.support) :
+    (p.dropUntil w hw).getVert n = p.getVert (n + (p.takeUntil w hw).length) := by
+  nth_rw 2 [← take_spec p hw]
+  have ha := getVert_append (p.takeUntil w hw) (p.dropUntil w hw) (n + (p.takeUntil w hw).length)
+  rwa [if_neg <| not_lt.2 <| Nat.le_add_left _ _, Nat.add_sub_cancel, Eq.comm] at ha
 
 lemma takeUntil_takeUntil {w x : V} (p : G.Walk u v) (hw : w ∈ p.support)
     (hx : x ∈ (p.takeUntil w hw).support) :
@@ -276,6 +285,12 @@ theorem rotate_edges {u v : V} (c : G.Walk v v) (h : u ∈ c.support) :
     (c.rotate h).edges ~r c.edges :=
   (rotate_darts c h).map _
 
+lemma getVert_rotate {n : ℕ} {c : G.Walk v v} (h : w ∈ c.support) (hn : n ≤ c.length) :
+    (c.rotate h).getVert n = if (n < (c.dropUntil _ h).length) then
+      c.getVert ((n + (c.takeUntil _ h).length)) else c.getVert (n - (c.dropUntil _ h).length) := by
+  rw [rotate, getVert_append, getVert_dropUntil, getVert_takeUntil]
+  simpa
+
 end WalkDecomp
 
 /-- Given a walk `w` and a node in the support, there exists a natural `n`, such that given node
@@ -287,26 +302,8 @@ theorem mem_support_iff_exists_getVert {u v w : V} {p : G.Walk v w} :
   classical
   constructor
   · intro h
-    obtain ⟨q, r, hqr⟩ := SimpleGraph.Walk.mem_support_iff_exists_append.mp h
-    use q.length
-    rw [hqr, Walk.getVert_append]
-    simp only [lt_self_iff_false, ↓reduceIte, Nat.sub_self, getVert_zero, length_append,
-      Nat.le_add_right, and_self]
-  · rintro ⟨n, hn⟩
-    rw [mem_support_iff]
-    cases n with
-    | zero => aesop
-    | succ n =>
-      right
-      have hnp : ¬ p.Nil := by
-        rw [nil_iff_length_eq]
-        omega
-      rw [← support_tail_of_not_nil _ hnp, mem_support_iff_exists_getVert]
-      use n
-      rwa [getVert_tail, ← Nat.add_one_le_add_one_iff, length_tail_add_one hnp]
-termination_by p.length
-decreasing_by
-· simp_wf
-  rw [Nat.lt_iff_add_one_le, length_tail_add_one hnp]
+    exact ⟨_, p.getVert_length_takeUntil_eq_self h, p.length_takeUntil_le h⟩
+  · intro ⟨_, h⟩
+    exact h.1 ▸ (getVert_mem_support _ _)
 
 end SimpleGraph.Walk
