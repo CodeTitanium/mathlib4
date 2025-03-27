@@ -932,7 +932,7 @@ lemma take_length_le {u v : V} {n : ℕ} (p : G.Walk u v) (hn : p.length ≤ n )
     | succ n =>
       rw [Nat.add_le_add_iff_right] at hn
       simp [ih hn]
-      
+
 /-- The penultimate vertex of a walk, or the only vertex in a nil walk. -/
 abbrev penultimate (p : G.Walk u v) : V := p.getVert (p.length - 1)
 
@@ -1115,46 +1115,37 @@ theorem length_take_le {u v : V} (p : G.Walk u v) (n : ℕ) : (p.take n).length 
   | zero => simp
   | succ _ ih => cases p <;> simp [ih _]
 
-lemma getVert_take {u v : V} (p : G.Walk u v) (m n : ℕ) :
-   (p.take m).getVert n = if (m ≤ n) then p.getVert m else p.getVert n := by
-  by_cases h : m < p.length
-  · split_ifs with h1
-    · exact getVert_of_length_le _ <| (p.length_take_le m).trans h1
-    · push_neg at h1
-      induction m generalizing n u with
-      | zero => exact (Nat.not_lt_zero _ h1).elim
-      | succ m ih =>
-        cases p with
-        | nil => simp
-        | cons h p =>
-          cases n with
-          | zero => simp
-          | succ n =>
-            simp_rw [length_cons, Nat.add_lt_add_iff_right] at *
-            exact ih _ _ h h1
-  · push_neg at h
-    rw [take_length_le p h, getVert_copy]
-    split_ifs with h1
-    · rw [getVert_of_length_le p h, getVert_of_length_le p (h.trans h1)]
-    · rfl
+lemma getVert_take_of_ge {u v : V} {m n : ℕ} (p : G.Walk u v) (h : m ≤ n)  :
+   (p.take m).getVert n = p.getVert m := by
+  rw [getVert_of_length_le _ ((p.length_take_le m).trans h)]
+
+lemma getVert_take_of_le {u v : V} {m n : ℕ} (p : G.Walk u v) (h : n ≤ m)  :
+    (p.take m).getVert n = p.getVert n := by
+  induction m generalizing n u with
+  | zero => simp_all
+  | succ m ih =>
+    cases p with
+    | nil => simp
+    | cons h p =>
+      cases n with
+      | zero => simp
+      | succ n =>
+        simp_rw [Nat.add_le_add_iff_right, take_cons_succ, getVert_cons_succ] at *
+        exact ih p h
 
 lemma getVert_drop {u v : V} (p : G.Walk u v) (m n : ℕ) :
    (p.drop m).getVert n = p.getVert (m + n) := by
-  by_cases h : p.length ≤ m
-  · rw [drop_length_le _ h, p.getVert_of_length_le (Nat.le_add_right_of_le h)]
-    simp
-  · push_neg at h
-    induction m generalizing n u with
-    | zero => simp
-    | succ m ih =>
-      cases p with
-      | nil => simp
-      | cons h p =>
-        cases n with
-        | zero => simp
-        | succ n =>
-          simp_rw [Nat.succ_add, getVert_cons_succ, length_cons, Nat.add_lt_add_iff_right] at *
-          exact ih _ _ h
+  induction m generalizing n u with
+  | zero => simp
+  | succ m ih =>
+    cases p with
+    | nil => simp
+    | cons h p =>
+      cases n with
+      | zero => simp
+      | succ n =>
+        simp_rw [Nat.succ_add, getVert_cons_succ, drop_cons_succ] at *
+        exact ih _ _
 
 end Walk
 

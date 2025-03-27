@@ -212,7 +212,7 @@ lemma snd_takeUntil (hsu : w ≠ u) (p : G.Walk u v) (h : w ∈ p.support) :
 lemma length_takeUntil_add_dropUntil {p : G.Walk u v} (h : w ∈ p.support) :
     (p.takeUntil w h).length + (p.dropUntil w h).length = p.length := by
   rw [← length_append, take_spec]
-  
+
 lemma length_takeUntil_lt {u v w : V} {p : G.Walk v w} (h : u ∈ p.support) (huw : u ≠ w) :
     (p.takeUntil u h).length < p.length := by
   rw [(p.length_takeUntil_le h).lt_iff_ne]
