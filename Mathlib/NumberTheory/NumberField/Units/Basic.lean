@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Xavier Roblot
 -/
 import Mathlib.NumberTheory.NumberField.Embeddings
-import Mathlib.RingTheory.LocalRing.RingHom.Basic
 import Mathlib.GroupTheory.Torsion
+import Mathlib.RingTheory.LocalRing.RingHom.Basic
+import Mathlib.RingTheory.RootsOfUnity.Complex
 
 /-!
 # Units of a number field
@@ -55,6 +56,15 @@ theorem NumberField.isUnit_iff_norm [NumberField K] {x : 𝓞 K} :
   convert (RingOfIntegers.isUnit_norm ℚ (F := K)).symm
   rw [← abs_one, abs_eq_abs, ← Rat.RingOfIntegers.isUnit_iff]
 
+theorem NumberField.isUnit_iff_isUnit_algebraMap [NumberField K] {L : Type*} [Field L]
+    [NumberField L] [Algebra K L] {u : 𝓞 K} :
+    IsUnit u ↔ IsUnit (algebraMap (𝓞 K) (𝓞 L) u) := by
+  refine ⟨fun h ↦ RingHom.isUnit_map _ h, fun h ↦ ?_⟩
+  rw [isUnit_iff_norm, RingOfIntegers.coe_norm, ← Algebra.norm_norm (S := K),
+    show algebraMap (𝓞 K) (𝓞 L) u = algebraMap K L (u : K) by rfl, Algebra.norm_algebraMap,
+    map_pow, abs_pow_eq_one _ Module.finrank_pos.ne'] at h
+  exact isUnit_iff_norm.mpr h
+
 end IsUnit
 
 namespace NumberField.Units
@@ -89,7 +99,27 @@ theorem coe_ne_zero (x : (𝓞 K)ˣ) : (x : K) ≠ 0 :=
 
 end coe
 
+variable {K}
+
+/--
+The group homomorphism `(𝓞 K)ˣ →* ℂˣ` induced by a complex embedding of `K`.
+-/
+protected def complexEmbedding (φ : K →+* ℂ) : (𝓞 K)ˣ →* ℂˣ :=
+  (map φ).comp (map (algebraMap (𝓞 K) K).toMonoidHom)
+
+@[simp]
+protected theorem complexEmbedding_apply (φ : K →+* ℂ) (u : (𝓞 K)ˣ) :
+    Units.complexEmbedding φ u = φ u := rfl
+
+protected theorem complexEmbedding_injective (φ : K →+* ℂ) :
+    Function.Injective (Units.complexEmbedding φ) := by
+  unfold Units.complexEmbedding
+  simp only [RingHom.toMonoidHom_eq_coe, MonoidHom.coe_comp]
+  exact (map_injective φ.injective).comp (map_injective RingOfIntegers.coe_injective)
+
 open NumberField.InfinitePlace
+
+variable (K)
 
 @[simp]
 protected theorem norm [NumberField K] (x : (𝓞 K)ˣ) :
@@ -162,6 +192,20 @@ theorem rootsOfUnity_eq_torsion [NumberField K] :
   · rw [CommGroup.mem_torsion, isOfFinOrder_iff_pow_eq_one]
     exact ⟨↑(torsionOrder K), (torsionOrder K).prop, h⟩
   · exact Subtype.ext_iff.mp (@pow_card_eq_one (torsion K) _ _ ⟨ζ, h⟩)
+
+/--
+The image of `torsion K` by a complex embedding is the group of complex roots of unity of
+order `torsionOrder K`.
+-/
+theorem map_complexEmbedding_torsion [NumberField K] (φ : K →+* ℂ) :
+    (torsion K).map (Units.complexEmbedding φ) = rootsOfUnity (torsionOrder K : ℕ) ℂ := by
+  apply Subgroup.eq_of_le_of_card_ge
+  · rw [← rootsOfUnity_eq_torsion]
+    exact map_rootsOfUnity _ (torsionOrder K)
+  · let e := ((torsion K).equivMapOfInjective (Units.complexEmbedding φ)
+      (Units.complexEmbedding_injective φ)).symm.toEquiv
+    rw [Nat.card_eq_fintype_card, Complex.card_rootsOfUnity, Nat.card_congr e, torsionOrder,
+      PNat.mk_coe, Nat.card_eq_fintype_card]
 
 section odd
 
