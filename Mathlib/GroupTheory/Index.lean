@@ -257,6 +257,13 @@ theorem index_map_of_injective {f : G →* G'} (hf : Function.Injective f) :
     (H.map f).index = H.index * f.range.index := by
   rw [H.index_map, f.ker_eq_bot_iff.mpr hf, sup_bot_eq]
 
+@[to_additive (attr := simp)]
+theorem index_map_equiv (e : G ≃* G') :
+    (map (e : G →* G') H).index = H.index := by
+  refine index_map_eq H e.surjective ?_
+  rw [(MonoidHom.ker_eq_bot_iff _).mpr e.injective]
+  exact bot_le
+
 @[to_additive]
 theorem index_map_subtype {H : Subgroup G} (K : Subgroup H) :
     (K.map H.subtype).index = K.index * H.index := by
