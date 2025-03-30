@@ -1,6 +1,8 @@
 import Mathlib.NumberTheory.NumberField.Units.Basic
 import Mathlib.RingTheory.RootsOfUnity.Complex
 
+set_option linter.style.header false
+
 section misc
 
 open Polynomial
@@ -45,111 +47,154 @@ theorem Complex.conj_rootsOfUnity {ζ : ℂˣ} {n : ℕ} [NeZero n] (hζ : ζ �
   rw [← Units.mul_eq_one_iff_eq_inv, conj_mul', norm_eq_one_of_mem_rootsOfUnity hζ, ofReal_one,
     one_pow]
 
+@[to_additive]
+theorem Subgroup.index_range {G : Type*} [Group G] {f : G →* G} [hf : f.ker.FiniteIndex] :
+    f.range.index = Nat.card f.ker := by
+  suffices f.range.index * f.ker.index = Nat.card f.ker * f.ker.index by
+    simpa [mul_eq_mul_right_iff, hf.finiteIndex, or_false] using this
+  rw [card_mul_index f.ker, index_ker, mul_comm, card_mul_index]
+
+@[to_additive]
+theorem IsCyclic.card_powMonoidHom_range {G : Type*} [CommGroup G] [hG : IsCyclic G] [Fintype G]
+    (d : ℕ) :
+    Nat.card (powMonoidHom d : G →* G).range = Fintype.card G / (Fintype.card G).gcd d := by
+  obtain ⟨g, h⟩ := exists_zpow_surjective G
+  have : (powMonoidHom d).range = Subgroup.zpowers (g ^ d) := by
+    rw [show g ^ d = powMonoidHom d g by rfl, ← MonoidHom.map_zpowers,
+      (Subgroup.eq_top_iff' (Subgroup.zpowers g)).mpr h,  ← MonoidHom.range_eq_map]
+  rw [this, Nat.card_zpowers, orderOf_pow, orderOf_eq_card_of_forall_mem_zpowers h,
+    Nat.card_eq_fintype_card]
+
+@[to_additive]
+theorem IsCyclic.index_powMonoidHom_ker {G : Type*} [CommGroup G] [hG : IsCyclic G] [Fintype G]
+    (d : ℕ) :
+    (powMonoidHom d : G →* G).ker.index = Fintype.card G / (Fintype.card G).gcd d := by
+  rw [Subgroup.index_ker, card_powMonoidHom_range]
+
+@[to_additive]
+theorem IsCyclic.card_powMonoidHom_ker {G : Type*} [CommGroup G] [hG : IsCyclic G] [Fintype G]
+    (d : ℕ) :
+    Nat.card (powMonoidHom d : G →* G).ker = (Fintype.card G).gcd d := by
+  have h : ↑(Fintype.card G / (Fintype.card G).gcd d) ≠ (0 : ℚ) :=
+    Nat.cast_ne_zero.mpr <| Nat.div_ne_zero_iff.mpr
+      ⟨Nat.gcd_ne_zero_left Fintype.card_ne_zero, Nat.gcd_le_left d Fintype.card_pos⟩
+  have := Subgroup.card_mul_index (powMonoidHom d : G →* G).ker
+  rwa [index_powMonoidHom_ker, Nat.card_eq_fintype_card (α := G), ← Nat.cast_inj (R := ℚ),
+    Nat.cast_mul, ← eq_div_iff h, ← Nat.cast_div (Nat.div_dvd_of_dvd (Nat.gcd_dvd_left _ _)) h,
+    Nat.div_div_self (Nat.gcd_dvd_left _ _) Fintype.card_ne_zero, Nat.cast_inj] at this
+
+@[to_additive]
+theorem IsCyclic.index_powMonoidHom_range {G : Type*} [CommGroup G] [hG : IsCyclic G] [Fintype G]
+    (d : ℕ) :
+    (powMonoidHom d : G →* G).range.index = (Fintype.card G).gcd d := by
+  rw [Subgroup.index_range, card_powMonoidHom_ker]
+
 end misc
 
 noncomputable section
 
 open NumberField InfinitePlace ComplexEmbedding NumberField.Units
 
-class IsCMExtension (K L : Type*) [Field K] [NumberField K] [Field L] [NumberField L]
-    [Algebra K L] : Prop where
-  isTotallyComplex : IsTotallyComplex L
-  isTotallyReal : IsTotallyReal K
-  quadratic : Module.finrank K L = 2
+class IsCM (F K : Type*) [Field F] [NumberField F] [Field K] [NumberField K]
+    [Algebra F K] : Prop where
+  isTotallyComplex : IsTotallyComplex K
+  isTotallyReal : IsTotallyReal F
+  quadratic : Module.finrank F K = 2
 
-namespace IsCMExtension
+namespace IsCM
 
 open scoped ComplexConjugate
 
-variable (K L : Type*) [Field L] [NumberField L] [Field K] [NumberField K] [Algebra K L]
+variable (F K : Type*) [Field F] [NumberField F] [Field K] [NumberField K] [Algebra F K]
 
-instance [IsCMExtension K L] : IsGalois K L :=
-{ to_isSeparable := Algebra.IsSeparable.of_integral K L
+instance [IsCM F K] : IsGalois F K :=
+{ to_isSeparable := Algebra.IsSeparable.of_integral _ _
   to_normal := normal_of_rank_eq_two _ _ quadratic }
 
-variable {L}
+variable {K}
 
-theorem exists_isConj [hcm : IsCMExtension K L] (φ : L →+* ℂ) :
-    ∃ σ : L ≃ₐ[K] L, IsConj φ σ :=
+variable [hcm : IsCM F K]
+
+theorem exists_isConj (φ : K →+* ℂ) :
+    ∃ σ : K ≃ₐ[F] K, IsConj φ σ :=
   exists_isConj_of_not_isUnramified <|
     not_isUnramified_iff.mpr ⟨hcm.isTotallyComplex.isComplex _, hcm.isTotallyReal.isReal _⟩
 
-variable {K} in
-theorem isConj_ne_one [hcm : IsCMExtension K L] {φ : L →+* ℂ} {σ : L ≃ₐ[K] L} (hφ : IsConj φ σ) :
+variable {F} in
+theorem isConj_ne_one {φ : K →+* ℂ} {σ : K ≃ₐ[F] K} (hφ : IsConj φ σ) :
     σ ≠ 1 := by
   by_contra h
   rw [h, isConj_one_iff, ← isReal_mk_iff] at hφ
   exact not_isComplex_iff_isReal.mpr hφ  (hcm.isTotallyComplex.isComplex _)
 
-variable {K} in
-theorem isConj_eq_isConj [hcm : IsCMExtension K L] {φ ψ : L →+* ℂ} {σ τ : L ≃ₐ[K] L}
+variable {F} in
+theorem isConj_eq_isConj {φ ψ : K →+* ℂ} {σ τ : K ≃ₐ[F] K}
     (hφ : IsConj φ σ) (hψ : IsConj ψ τ) : σ = τ := by
-  have : Fintype.card (L ≃ₐ[K] L) = 2 := hcm.quadratic ▸ IsGalois.card_aut_eq_finrank K L
+  have : Fintype.card (K ≃ₐ[F] K) = 2 := hcm.quadratic ▸ IsGalois.card_aut_eq_finrank F K
   rw [← Nat.card_eq_fintype_card, Nat.card_eq_two_iff' 1] at this
   exact ExistsUnique.unique this (isConj_ne_one hφ) (isConj_ne_one hψ)
 
-def complexConj [IsCMExtension K L] : L ≃ₐ[K] L :=
-  (exists_isConj K (Classical.choice (inferInstance : Nonempty _))).choose
+def complexConj : K ≃ₐ[F] K :=
+  (exists_isConj F (Classical.choice (inferInstance : Nonempty _))).choose
 
-def ringOfIntegersComplexConj [IsCMExtension K L] : (𝓞 L) ≃ₐ[𝓞 K] (𝓞 L) :=
-  RingOfIntegers.mapAlgEquiv (complexConj K)
-
-@[simp]
-theorem coe_ringOfIntegersComplexConj [IsCMExtension K L] (x : 𝓞 L) :
-    (ringOfIntegersComplexConj K x : L) = complexConj K (x : L) := rfl
-
-def unitsComplexConj [IsCMExtension K L] : (𝓞 L)ˣ ≃* (𝓞 L)ˣ :=
-  Units.mapEquiv (ringOfIntegersComplexConj K).toMulEquiv
+def ringOfIntegersComplexConj : (𝓞 K) ≃ₐ[𝓞 F] (𝓞 K) :=
+  RingOfIntegers.mapAlgEquiv (complexConj F)
 
 @[simp]
-theorem coe_unitsComplexConj [IsCMExtension K L] (x : (𝓞 L)ˣ) :
-    (unitsComplexConj K x : 𝓞 L) = ringOfIntegersComplexConj K (x : 𝓞 L) := rfl
+theorem coe_ringOfIntegersComplexConj (x : 𝓞 K) :
+    (ringOfIntegersComplexConj F x : K) = complexConj F (x : K) := rfl
 
-theorem isConj_complexConj [IsCMExtension K L] (φ : L →+* ℂ) :
-    IsConj φ (complexConj K) := by
-  obtain ⟨σ, hσ⟩ := exists_isConj K φ
-  have := (exists_isConj K (Classical.choice (inferInstance : Nonempty (L →+* ℂ)))).choose_spec
+def unitsComplexConj : (𝓞 K)ˣ ≃* (𝓞 K)ˣ :=
+  Units.mapEquiv (ringOfIntegersComplexConj F).toMulEquiv
+
+@[simp]
+theorem coe_unitsComplexConj (x : (𝓞 K)ˣ) :
+    (unitsComplexConj F x : 𝓞 K) = ringOfIntegersComplexConj F (x : 𝓞 K) := rfl
+
+theorem isConj_complexConj (φ : K →+* ℂ) :
+    IsConj φ (complexConj F) := by
+  obtain ⟨σ, hσ⟩ := exists_isConj F φ
+  have := (exists_isConj F (Classical.choice (inferInstance : Nonempty (K →+* ℂ)))).choose_spec
   rwa [isConj_eq_isConj hσ this] at hσ
 
-theorem complexConj_ne_one [IsCMExtension K L] :
-    complexConj K ≠ (1 : L ≃ₐ[K] L) :=
-  isConj_ne_one (exists_isConj K (Classical.choice (inferInstance : Nonempty _))).choose_spec
+theorem complexConj_ne_one :
+    complexConj F ≠ (1 : K ≃ₐ[F] K) :=
+  isConj_ne_one (exists_isConj F (Classical.choice (inferInstance : Nonempty _))).choose_spec
 
 @[simp]
-theorem complexEmbedding_complexConj [IsCMExtension K L] (φ : L →+* ℂ) (x : L) :
-    φ (complexConj K x) = conj (φ x) := by
-  rw [IsConj.eq (isConj_complexConj K φ), RCLike.star_def]
+theorem complexEmbedding_complexConj (φ : K →+* ℂ) (x : K) :
+    φ (complexConj F x) = conj (φ x) := by
+  rw [IsConj.eq (isConj_complexConj F φ), RCLike.star_def]
 
-protected theorem Units.complexEmbedding_complexConj [IsCMExtension K L] (φ : L →+* ℂ)
-    (u : (𝓞 L)ˣ) :
-    Units.complexEmbedding φ (unitsComplexConj K u) =
+protected theorem Units.complexEmbedding_complexConj (φ : K →+* ℂ) (u : (𝓞 K)ˣ) :
+    Units.complexEmbedding φ (unitsComplexConj F u) =
       (Units.map (starRingEnd ℂ)) (Units.complexEmbedding φ u) := by
   simp [Units.ext_iff]
 
 @[simp]
-theorem unitsComplexConj_torsion [IsCMExtension K L] (ζ : torsion L) :
-    unitsComplexConj K (ζ : (𝓞 L)ˣ) = ζ⁻¹ := by
-  let φ : L →+* ℂ := Classical.choice (inferInstance : Nonempty _)
+theorem unitsComplexConj_torsion (ζ : torsion K) :
+    unitsComplexConj F (ζ : (𝓞 K)ˣ) = ζ⁻¹ := by
+  let φ : K →+* ℂ := Classical.choice (inferInstance : Nonempty _)
   rw [← (Units.complexEmbedding_injective φ).eq_iff, Units.complexEmbedding_complexConj,
     Units.ext_iff, Units.coe_map, MonoidHom.coe_coe, Subgroup.coe_inv, MonoidHom.map_inv,
-    Complex.conj_rootsOfUnity (n := torsionOrder L)]
+    Complex.conj_rootsOfUnity (n := torsionOrder K)]
   rw [← map_complexEmbedding_torsion]
-  exact Subgroup.apply_coe_mem_map _ (torsion L) ζ
+  exact Subgroup.apply_coe_mem_map _ (torsion K) ζ
 
 @[simp]
-theorem infinitePlace_complexConj [IsCMExtension K L] (w : InfinitePlace L) (x : L) :
-    w (complexConj K x) = w x := by
+theorem infinitePlace_complexConj (w : InfinitePlace K) (x : K) :
+    w (complexConj F x) = w x := by
   rw [← norm_embedding_eq, complexEmbedding_complexConj, Complex.norm_conj, norm_embedding_eq]
 
 @[simp]
-theorem complexConj_apply_apply [IsCMExtension K L] (x : L) :
-    complexConj K (complexConj K x) = x := by
-  let φ : L →+* ℂ := Classical.choice (inferInstance : Nonempty _)
+theorem complexConj_apply_apply (x : K) :
+    complexConj F (complexConj F x) = x := by
+  let φ : K →+* ℂ := Classical.choice (inferInstance : Nonempty _)
   rw [← φ.injective.eq_iff, complexEmbedding_complexConj, complexEmbedding_complexConj,
     Complex.conj_conj]
 
-theorem galoisGroup_eq [hcm : IsCMExtension K L] :
-    (⊤ : Subgroup (L ≃ₐ[K] L)).carrier = {1, complexConj K} := by
+theorem galoisGroup_eq : -- Refactor this lemma
+    (⊤ : Subgroup (K ≃ₐ[F] K)).carrier = {1, complexConj F} := by
   classical
   refine (Set.eq_of_subset_of_card_le ?_ ?_).symm
   · intro x
@@ -162,31 +207,31 @@ theorem galoisGroup_eq [hcm : IsCMExtension K L] :
     refine le_of_eq ?_
     rw [eq_comm]
     refine Finset.card_pair ?_
-    exact (complexConj_ne_one K).symm
+    exact (complexConj_ne_one F).symm
 
-theorem complexConj_eq_self_iff [IsCMExtension K L] (x : L) :
-    complexConj K x = x ↔ x ∈ (algebraMap K L).range := by
-  convert (IntermediateField.mem_fixedField_iff (⊤ : Subgroup (L ≃ₐ[K] L)) x).symm using 1
+theorem complexConj_eq_self_iff (x : K) :
+    complexConj F x = x ↔ x ∈ (algebraMap F K).range := by
+  convert (IntermediateField.mem_fixedField_iff (⊤ : Subgroup (K ≃ₐ[F] K)) x).symm using 1
   · simp only [← Subgroup.mem_carrier, galoisGroup_eq, Set.mem_insert_iff, Set.mem_singleton_iff,
       forall_eq_or_imp, AlgEquiv.one_apply, forall_eq, true_and]
   · rw [IntermediateField.fixedField_top, IntermediateField.mem_bot, RingHom.mem_range,
       Set.mem_range]
 
-theorem ringOfIntegersComplexConj_eq_self_iff [IsCMExtension K L] (x : 𝓞 L) :
-    ringOfIntegersComplexConj K x = x ↔ x ∈ (algebraMap (𝓞 K) (𝓞 L)).range := by
+theorem ringOfIntegersComplexConj_eq_self_iff (x : 𝓞 K) :
+    ringOfIntegersComplexConj F x = x ↔ x ∈ (algebraMap (𝓞 F) (𝓞 K)).range := by
   rw [← RingOfIntegers.eq_iff, coe_ringOfIntegersComplexConj, complexConj_eq_self_iff,
     RingOfIntegers.coe_eq_algebraMap, RingHom.mem_range, RingHom.mem_range]
   refine ⟨fun ⟨a, ha⟩ ↦ ⟨⟨a, ?_⟩, RingOfIntegers.eq_iff.mp ha⟩, ?_⟩
   · exact (isIntegral_algebraMap_iff
-        (FaithfulSMul.algebraMap_injective K L)).mp (ha ▸ RingOfIntegers.isIntegral_coe x)
+        (FaithfulSMul.algebraMap_injective F K)).mp (ha ▸ RingOfIntegers.isIntegral_coe x)
   · rintro ⟨a, rfl⟩
     exact ⟨a, rfl⟩
 
-variable (L) in
-def realUnits : Subgroup (𝓞 L)ˣ := (Units.map (algebraMap (𝓞 K) (𝓞 L)).toMonoidHom).range
+variable (K) in
+def realUnits : Subgroup (𝓞 K)ˣ := (Units.map (algebraMap (𝓞 F) (𝓞 K)).toMonoidHom).range
 
-theorem unitsComplexConj_eq_self_iff [IsCMExtension K L] (u : (𝓞 L)ˣ) :
-    unitsComplexConj K u = u ↔ u ∈ realUnits K L := by
+theorem unitsComplexConj_eq_self_iff (u : (𝓞 K)ˣ) :
+    unitsComplexConj F u = u ↔ u ∈ realUnits F K := by
   rw [← Units.eq_iff, coe_unitsComplexConj, ringOfIntegersComplexConj_eq_self_iff, realUnits,
     RingHom.mem_range, RingHom.toMonoidHom_eq_coe, MonoidHom.mem_range]
   refine ⟨fun ⟨x, hx⟩ ↦
@@ -194,62 +239,102 @@ theorem unitsComplexConj_eq_self_iff [IsCMExtension K L] (u : (𝓞 L)ˣ) :
   rintro ⟨x, rfl⟩
   exact ⟨x, rfl⟩
 
-variable (L) in
-def index_realUnits : ℕ := (realUnits K L ⊔ torsion L).index
+variable (K) in
+abbrev index_realUnits : ℕ := (torsion K ⊔ realUnits F K).index
 
-def unitsMulComplexConjInv [IsCMExtension K L] : (𝓞 L)ˣ →* torsion L where
-  toFun := fun u ↦ ⟨u * (unitsComplexConj K u)⁻¹, (mem_torsion L).mpr fun _ ↦ by simp⟩
+def unitsMulComplexConjInv : (𝓞 K)ˣ →* torsion K where
+  toFun := fun u ↦ ⟨u * (unitsComplexConj F u)⁻¹, (mem_torsion K).mpr fun _ ↦ by simp⟩
   map_one' := by simp
-  map_mul' := by
-    intro x y
+  map_mul' x y := by
     simp only [map_mul, mul_inv_rev, MulMemClass.mk_mul_mk, Subtype.mk.injEq]
-    rw [mul_comm ((unitsComplexConj K) y)⁻¹, mul_mul_mul_comm]
+    rw [mul_comm ((unitsComplexConj F) y)⁻¹, mul_mul_mul_comm]
 
 @[simp]
-theorem unitsMulComplexConjInv_apply [IsCMExtension K L] (u : (𝓞 L)ˣ) :
-    unitsMulComplexConjInv K u = u * (unitsComplexConj K u)⁻¹ := rfl
+theorem unitsMulComplexConjInv_apply (u : (𝓞 K)ˣ) :
+    unitsMulComplexConjInv F u = u * (unitsComplexConj F u)⁻¹ := rfl
 
-theorem unitsMulComplexConjInv_ker [IsCMExtension K L] :
-    (unitsMulComplexConjInv K).ker = realUnits K L := by
+theorem unitsMulComplexConjInv_apply_torsion (ζ : torsion K) :
+    unitsMulComplexConjInv F ζ = ζ ^ 2 := by
+  refine Subtype.eq ?_
+  simp [pow_two]
+
+variable (K) in
+theorem unitsMulComplexConjInv_ker :
+    (unitsMulComplexConjInv F).ker = realUnits F K := by
   ext
   rw [MonoidHom.mem_ker, Subtype.ext_iff_val, unitsMulComplexConjInv_apply, OneMemClass.coe_one,
     mul_inv_eq_one, eq_comm, unitsComplexConj_eq_self_iff]
 
-theorem index_unitsMulComplexConjInv_range [IsCMExtension K L] :
-    (unitsMulComplexConjInv K (L := L)).range.index ∣ 2 := by
-  let H := (⊤ : Subgroup (torsion L)).map (powMonoidHom 2)
-  have : H.index = 2 := by
-    unfold H
-    rw [Subgroup.index_map]
-    simp
-
-    sorry
+variable (K) in
+theorem index_unitsMulComplexConjInv_range :
+    (unitsMulComplexConjInv F (K := K)).range.index ∣ 2 := by
+  have : (powMonoidHom 2 : _ →* torsion K).range.index = 2 := by
+    rw [IsCyclic.index_powMonoidHom_range, ← Nat.gcd_eq_right_iff_dvd]
+    exact Even.two_dvd <| even_torsionOrder K
   rw [← this]
-  apply Subgroup.index_dvd_of_le
-  unfold H
+  refine Subgroup.index_dvd_of_le ?_
   rintro _ ⟨ζ, _, rfl⟩
   refine ⟨ζ, ?_⟩
   rw [Subtype.ext_iff_val]
   simp [pow_two]
 
+variable (K) in
+theorem map_unitsMulComplexConjInv_torsion :
+    Subgroup.map (unitsMulComplexConjInv F) (torsion K) = (powMonoidHom 2).range := by
+  ext
+  constructor
+  · rintro ⟨u, hu, rfl⟩
+    refine ⟨⟨u, hu⟩, ?_⟩
+    rw [powMonoidHom_apply, ← unitsMulComplexConjInv_apply_torsion F]
+  · rintro ⟨η, rfl⟩
+    refine ⟨η, η.prop, ?_⟩
+    rw [unitsMulComplexConjInv_apply_torsion, powMonoidHom_apply]
+
+variable (K) in
+theorem index_realUnits_mul_eq :
+    index_realUnits F K * (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K).range.index = 2 := by
+  convert (Subgroup.index_map (torsion K) (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K)).symm
+  · rw [unitsMulComplexConjInv_ker]
+  · rw [map_unitsMulComplexConjInv_torsion, IsCyclic.index_powMonoidHom_range, Nat.gcd_eq_right]
+    exact even_iff_two_dvd.mp (even_torsionOrder K)
+
+variable (K) in
+theorem index_realUnits_eq :
+    index_realUnits F K = 1 ∨ index_realUnits F K = 2 := by
+  have h₁ := index_realUnits_mul_eq F K
+  obtain h₂ | h₂ := (Nat.dvd_prime Nat.prime_two).mp <| index_unitsMulComplexConjInv_range F K
+  · exact Or.inr <| by rwa [h₂, mul_one] at h₁
+  · exact Or.inl <| by rwa [h₂, Nat.mul_left_eq_self_iff zero_lt_two] at h₁
+
+variable (K) in
+theorem index_realUnits_eq_two_iff :
+    index_realUnits F K = 2 ↔
+      ∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤ := by
+  have : (∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤) ↔
+      (unitsMulComplexConjInv F : _ →* torsion K).range.index = 1 := by
+    constructor
+    · intro ⟨u, hu⟩
+      refine Subgroup.index_eq_one.mpr ?_
+      rw [← MonoidHom.map_zpowers] at hu
+      have := Subgroup.map_le_range (unitsMulComplexConjInv F) (Subgroup.zpowers u)
+      rw [hu] at this
+      exact top_le_iff.mp this
+    · intro h
+      rw [Subgroup.index_eq_one, MonoidHom.range_eq_top] at h
+      obtain ⟨ζ, hζ⟩ := exists_zpow_surjective (torsion K)
+      obtain ⟨u, rfl⟩ := h ζ
+      refine ⟨u, ?_⟩
+      rw [← MonoidHom.map_zpowers]
+      refine (Subgroup.eq_top_iff' _).mpr fun η ↦ ?_
+      simp_rw [Subgroup.mem_map, Subgroup.exists_mem_zpowers, map_zpow]
+      exact hζ η
+  rw [this]
+  have := index_realUnits_mul_eq F K
+  constructor
+  · intro h
+    rwa [h, Nat.mul_right_eq_self_iff zero_lt_two] at this
+  · intro h
+    rwa [h, mul_one] at this
 
 
-
-
-
-
-
-
-
-
-theorem index_realUnits_eq [IsCMExtension K L] :
-    index_realUnits K L = 1 ∨ index_realUnits K L = 2 := by
-  let φ : (𝓞 L)ˣ →* sorry
-
-
-
-
-
-
-
-end IsCMExtension
+end IsCM
