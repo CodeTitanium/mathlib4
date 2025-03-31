@@ -233,6 +233,19 @@ lemma IsConj.symm (hσ : IsConj φ σ) :
 lemma isConj_symm : IsConj φ σ.symm ↔ IsConj φ σ :=
   ⟨IsConj.symm, IsConj.symm⟩
 
+lemma isConj_apply_apply (hσ : IsConj φ σ) (x : K) :
+    σ (σ x) = x := by
+  rw [← φ.injective.eq_iff, hσ.eq, hσ.eq, star_star]
+
+lemma orderOf_isConj [Decidable (IsReal φ)] (hσ : IsConj φ σ) :
+    orderOf σ = if IsReal φ then 1 else 2 := by
+  split_ifs with hφ
+  · rw [IsConj.ext hσ (isConj_one_iff.mpr hφ), orderOf_one]
+  · refine orderOf_eq_prime_iff.mpr ⟨by ext; simp [isConj_apply_apply hσ], ?_⟩
+    by_contra h
+    rw [h, isConj_one_iff] at hσ
+    exact hφ hσ
+
 end NumberField.ComplexEmbedding
 
 section InfinitePlace

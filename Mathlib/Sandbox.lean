@@ -1,4 +1,4 @@
-import Mathlib.NumberTheory.NumberField.Units.Basic
+import Mathlib.NumberTheory.NumberField.Units.Regulator
 import Mathlib.RingTheory.RootsOfUnity.Complex
 
 set_option linter.style.header false
@@ -89,6 +89,37 @@ theorem IsCyclic.index_powMonoidHom_range {G : Type*} [CommGroup G] [hG : IsCycl
     (powMonoidHom d : G →* G).range.index = (Fintype.card G).gcd d := by
   rw [Subgroup.index_range, card_powMonoidHom_ker]
 
+@[to_additive]
+theorem MulAction.mem_fixedBy_pow {M : Type*} [Monoid M] {α : Type*} [MulAction M α] {m : M}
+    {a : α} (h : a ∈ fixedBy α m) (n : ℕ) :
+    a ∈ fixedBy α (m ^ n) := by
+  induction n with
+  | zero => simp
+  | succ n hi => rw [pow_succ, mem_fixedBy, mul_smul, h, hi]
+
+@[to_additive]
+theorem MulAction.mem_fixedBy_zpow {G : Type*} [Group G] {α : Type*} [MulAction G α] {g : G}
+    {a : α} (h : a ∈ fixedBy α g) (n : ℤ) :
+    a ∈ fixedBy α (g ^ n) := by
+  induction n with
+  | hz => simp
+  | hp i hi => rw [zpow_add, zpow_one, mem_fixedBy, mul_smul, h, hi]
+  | hn i hi =>
+      rw [← fixedBy_inv] at h
+      rw [zpow_sub, zpow_one, mem_fixedBy, mul_smul, h, hi]
+
+@[to_additive (attr := simp)]
+theorem MulAction.mem_fixedBy_powers_iff_mem_fixedBy {M : Type*} [Monoid M] {α : Type*}
+    [MulAction M α] {m : M} {a : α} :
+    (∀ n, a ∈ fixedBy α (m ^ n)) ↔ a ∈ fixedBy α m :=
+  ⟨fun h ↦ by simpa using h 1, fun h n ↦ mem_fixedBy_pow h n⟩
+
+@[to_additive (attr := simp)]
+theorem MulAction.mem_fixedBy_zpowers_iff_mem_fixedBy {G : Type*} [Group G] {α : Type*}
+    [MulAction G α] {g : G} {a : α} :
+    (∀ n : ℤ, a ∈ fixedBy α (g ^ n)) ↔ a ∈ fixedBy α g :=
+  ⟨fun h ↦ by simpa using h 1, fun h n ↦ mem_fixedBy_zpow h n⟩
+
 end misc
 
 noncomputable section
@@ -97,9 +128,9 @@ open NumberField InfinitePlace ComplexEmbedding NumberField.Units
 
 class IsCM (F K : Type*) [Field F] [NumberField F] [Field K] [NumberField K]
     [Algebra F K] : Prop where
-  isTotallyComplex : IsTotallyComplex K
-  isTotallyReal : IsTotallyReal F
-  quadratic : Module.finrank F K = 2
+  isTotallyComplex' : IsTotallyComplex K
+  isTotallyReal' : IsTotallyReal F
+  isQuadratic' : Module.finrank F K = 2
 
 namespace IsCM
 
@@ -107,30 +138,39 @@ open scoped ComplexConjugate
 
 variable (F K : Type*) [Field F] [NumberField F] [Field K] [NumberField K] [Algebra F K]
 
-instance [IsCM F K] : IsGalois F K :=
+theorem isTotallyComplex [IsCM F K] :
+    IsTotallyComplex K := isTotallyComplex' F
+
+theorem isTotallyReal [IsCM F K] :
+    IsTotallyReal F := isTotallyReal' K
+
+theorem rank_eq_two [IsCM F K] :
+    Module.finrank F K = 2 := isQuadratic'
+
+variable [IsCM F K]
+
+instance  : IsGalois F K :=
 { to_isSeparable := Algebra.IsSeparable.of_integral _ _
-  to_normal := normal_of_rank_eq_two _ _ quadratic }
+  to_normal := normal_of_rank_eq_two _ _ (rank_eq_two  F K) }
 
 variable {K}
-
-variable [hcm : IsCM F K]
 
 theorem exists_isConj (φ : K →+* ℂ) :
     ∃ σ : K ≃ₐ[F] K, IsConj φ σ :=
   exists_isConj_of_not_isUnramified <|
-    not_isUnramified_iff.mpr ⟨hcm.isTotallyComplex.isComplex _, hcm.isTotallyReal.isReal _⟩
+    not_isUnramified_iff.mpr ⟨(isTotallyComplex F K).isComplex _, (isTotallyReal F K).isReal _⟩
 
 variable {F} in
 theorem isConj_ne_one {φ : K →+* ℂ} {σ : K ≃ₐ[F] K} (hφ : IsConj φ σ) :
     σ ≠ 1 := by
   by_contra h
   rw [h, isConj_one_iff, ← isReal_mk_iff] at hφ
-  exact not_isComplex_iff_isReal.mpr hφ  (hcm.isTotallyComplex.isComplex _)
+  exact not_isComplex_iff_isReal.mpr hφ  ((isTotallyComplex F K).isComplex _)
 
 variable {F} in
 theorem isConj_eq_isConj {φ ψ : K →+* ℂ} {σ τ : K ≃ₐ[F] K}
     (hφ : IsConj φ σ) (hψ : IsConj ψ τ) : σ = τ := by
-  have : Fintype.card (K ≃ₐ[F] K) = 2 := hcm.quadratic ▸ IsGalois.card_aut_eq_finrank F K
+  have : Fintype.card (K ≃ₐ[F] K) = 2 := (rank_eq_two F K) ▸ IsGalois.card_aut_eq_finrank F K
   rw [← Nat.card_eq_fintype_card, Nat.card_eq_two_iff' 1] at this
   exact ExistsUnique.unique this (isConj_ne_one hφ) (isConj_ne_one hψ)
 
@@ -157,6 +197,7 @@ theorem isConj_complexConj (φ : K →+* ℂ) :
   have := (exists_isConj F (Classical.choice (inferInstance : Nonempty (K →+* ℂ)))).choose_spec
   rwa [isConj_eq_isConj hσ this] at hσ
 
+variable (K) in
 theorem complexConj_ne_one :
     complexConj F ≠ (1 : K ≃ₐ[F] K) :=
   isConj_ne_one (exists_isConj F (Classical.choice (inferInstance : Nonempty _))).choose_spec
@@ -190,30 +231,26 @@ theorem infinitePlace_complexConj (w : InfinitePlace K) (x : K) :
 theorem complexConj_apply_apply (x : K) :
     complexConj F (complexConj F x) = x := by
   let φ : K →+* ℂ := Classical.choice (inferInstance : Nonempty _)
-  rw [← φ.injective.eq_iff, complexEmbedding_complexConj, complexEmbedding_complexConj,
-    Complex.conj_conj]
+  exact isConj_apply_apply (isConj_complexConj F φ) x
 
-theorem galoisGroup_eq : -- Refactor this lemma
-    (⊤ : Subgroup (K ≃ₐ[F] K)).carrier = {1, complexConj F} := by
-  classical
-  refine (Set.eq_of_subset_of_card_le ?_ ?_).symm
-  · intro x
-    simp
-  · rw [Fintype.card_subtype]
-    simp_rw [Subgroup.mem_carrier]
-    simp only [Subgroup.mem_top, Finset.filter_True, Finset.card_univ, Fintype.card_ofFinset,
-      Set.toFinset_singleton]
-    rw [IsGalois.card_aut_eq_finrank, hcm.quadratic]
-    refine le_of_eq ?_
-    rw [eq_comm]
-    refine Finset.card_pair ?_
-    exact (complexConj_ne_one F).symm
+variable (K) in
+theorem orderOf_complexConj :
+    orderOf (complexConj F : K ≃ₐ[F] K) = 2 :=
+  orderOf_eq_prime_iff.mpr ⟨by ext; simp, complexConj_ne_one F K⟩
+
+variable (K) in
+theorem zpowers_complexConj_eq_top :
+    Subgroup.zpowers (complexConj F : K ≃ₐ[F] K) = ⊤ := by
+  refine Subgroup.eq_top_of_card_eq _ ?_
+  rw [Nat.card_zpowers, orderOf_complexConj, Nat.card_eq_fintype_card, IsGalois.card_aut_eq_finrank,
+    rank_eq_two]
 
 theorem complexConj_eq_self_iff (x : K) :
     complexConj F x = x ↔ x ∈ (algebraMap F K).range := by
   convert (IntermediateField.mem_fixedField_iff (⊤ : Subgroup (K ≃ₐ[F] K)) x).symm using 1
-  · simp only [← Subgroup.mem_carrier, galoisGroup_eq, Set.mem_insert_iff, Set.mem_singleton_iff,
-      forall_eq_or_imp, AlgEquiv.one_apply, forall_eq, true_and]
+  · rw [← zpowers_complexConj_eq_top, Subgroup.forall_mem_zpowers]
+    exact (MulAction.mem_fixedBy_zpowers_iff_mem_fixedBy
+      (g := (complexConj F : K ≃ₐ[F] K)) (a := x)).symm
   · rw [IntermediateField.fixedField_top, IntermediateField.mem_bot, RingHom.mem_range,
       Set.mem_range]
 
@@ -253,44 +290,33 @@ def unitsMulComplexConjInv : (𝓞 K)ˣ →* torsion K where
 theorem unitsMulComplexConjInv_apply (u : (𝓞 K)ˣ) :
     unitsMulComplexConjInv F u = u * (unitsComplexConj F u)⁻¹ := rfl
 
+@[simp]
 theorem unitsMulComplexConjInv_apply_torsion (ζ : torsion K) :
-    unitsMulComplexConjInv F ζ = ζ ^ 2 := by
-  refine Subtype.eq ?_
-  simp [pow_two]
+    unitsMulComplexConjInv F ζ = ζ ^ 2 :=
+  Subtype.eq <| by simp [pow_two]
 
-variable (K) in
+variable (K)
+
 theorem unitsMulComplexConjInv_ker :
     (unitsMulComplexConjInv F).ker = realUnits F K := by
   ext
   rw [MonoidHom.mem_ker, Subtype.ext_iff_val, unitsMulComplexConjInv_apply, OneMemClass.coe_one,
     mul_inv_eq_one, eq_comm, unitsComplexConj_eq_self_iff]
 
-variable (K) in
-theorem index_unitsMulComplexConjInv_range :
+theorem index_unitsMulComplexConjInv_range_dvd :
     (unitsMulComplexConjInv F (K := K)).range.index ∣ 2 := by
-  have : (powMonoidHom 2 : _ →* torsion K).range.index = 2 := by
-    rw [IsCyclic.index_powMonoidHom_range, ← Nat.gcd_eq_right_iff_dvd]
-    exact Even.two_dvd <| even_torsionOrder K
-  rw [← this]
-  refine Subgroup.index_dvd_of_le ?_
-  rintro _ ⟨ζ, _, rfl⟩
-  refine ⟨ζ, ?_⟩
-  rw [Subtype.ext_iff_val]
-  simp [pow_two]
+  suffices (powMonoidHom 2 : _ →* torsion K).range.index = 2 by
+    refine this ▸ Subgroup.index_dvd_of_le ?_
+    rintro _ ⟨ζ, _, rfl⟩
+    exact ⟨ζ, Subtype.ext_iff_val.mpr (by simp [pow_two])⟩
+  rw [IsCyclic.index_powMonoidHom_range, ← Nat.gcd_eq_right_iff_dvd]
+  exact Even.two_dvd <| even_torsionOrder K
 
-variable (K) in
 theorem map_unitsMulComplexConjInv_torsion :
     Subgroup.map (unitsMulComplexConjInv F) (torsion K) = (powMonoidHom 2).range := by
-  ext
-  constructor
-  · rintro ⟨u, hu, rfl⟩
-    refine ⟨⟨u, hu⟩, ?_⟩
-    rw [powMonoidHom_apply, ← unitsMulComplexConjInv_apply_torsion F]
-  · rintro ⟨η, rfl⟩
-    refine ⟨η, η.prop, ?_⟩
-    rw [unitsMulComplexConjInv_apply_torsion, powMonoidHom_apply]
+  rw [← MonoidHom.restrict_range]
+  exact congr_arg (MonoidHom.range ·) (MonoidHom.ext fun _ ↦ by simp [pow_two])
 
-variable (K) in
 theorem index_realUnits_mul_eq :
     index_realUnits F K * (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K).range.index = 2 := by
   convert (Subgroup.index_map (torsion K) (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K)).symm
@@ -298,43 +324,32 @@ theorem index_realUnits_mul_eq :
   · rw [map_unitsMulComplexConjInv_torsion, IsCyclic.index_powMonoidHom_range, Nat.gcd_eq_right]
     exact even_iff_two_dvd.mp (even_torsionOrder K)
 
-variable (K) in
 theorem index_realUnits_eq :
     index_realUnits F K = 1 ∨ index_realUnits F K = 2 := by
   have h₁ := index_realUnits_mul_eq F K
-  obtain h₂ | h₂ := (Nat.dvd_prime Nat.prime_two).mp <| index_unitsMulComplexConjInv_range F K
+  obtain h₂ | h₂ := (Nat.dvd_prime Nat.prime_two).mp <| index_unitsMulComplexConjInv_range_dvd F K
   · exact Or.inr <| by rwa [h₂, mul_one] at h₁
   · exact Or.inl <| by rwa [h₂, Nat.mul_left_eq_self_iff zero_lt_two] at h₁
 
-variable (K) in
 theorem index_realUnits_eq_two_iff :
     index_realUnits F K = 2 ↔
       ∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤ := by
-  have : (∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤) ↔
-      (unitsMulComplexConjInv F : _ →* torsion K).range.index = 1 := by
-    constructor
-    · intro ⟨u, hu⟩
-      refine Subgroup.index_eq_one.mpr ?_
-      rw [← MonoidHom.map_zpowers] at hu
-      have := Subgroup.map_le_range (unitsMulComplexConjInv F) (Subgroup.zpowers u)
-      rw [hu] at this
-      exact top_le_iff.mp this
-    · intro h
-      rw [Subgroup.index_eq_one, MonoidHom.range_eq_top] at h
-      obtain ⟨ζ, hζ⟩ := exists_zpow_surjective (torsion K)
-      obtain ⟨u, rfl⟩ := h ζ
-      refine ⟨u, ?_⟩
-      rw [← MonoidHom.map_zpowers]
-      refine (Subgroup.eq_top_iff' _).mpr fun η ↦ ?_
-      simp_rw [Subgroup.mem_map, Subgroup.exists_mem_zpowers, map_zpow]
-      exact hζ η
-  rw [this]
-  have := index_realUnits_mul_eq F K
-  constructor
-  · intro h
-    rwa [h, Nat.mul_right_eq_self_iff zero_lt_two] at this
-  · intro h
-    rwa [h, mul_one] at this
+  suffices (∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤) ↔
+      (unitsMulComplexConjInv F : _ →* torsion K).range.index = 1 by
+    rw [this]
+    have h_eq := index_realUnits_mul_eq F K
+    refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+    · rwa [h, Nat.mul_right_eq_self_iff zero_lt_two] at h_eq
+    · rwa [h, mul_one] at h_eq
+  refine ⟨fun ⟨u, hu⟩ ↦ Subgroup.index_eq_one.mpr (top_le_iff.mp ?_), fun h ↦ ?_⟩
+  · refine le_of_eq_of_le ?_ ((Subgroup.zpowers u).map_le_range (unitsMulComplexConjInv F))
+    rw [MonoidHom.map_zpowers, ← hu]
+  · obtain ⟨ζ, hζ⟩ := exists_zpow_surjective (torsion K)
+    rw [Subgroup.index_eq_one, MonoidHom.range_eq_top] at h
+    obtain ⟨u, rfl⟩ := h ζ
+    exact ⟨u, (Subgroup.eq_top_iff' _).mpr hζ⟩
 
+example :
+  (index_realUnits F K) * regulator K =  2 ^ rank K * regulator F := sorry
 
 end IsCM
