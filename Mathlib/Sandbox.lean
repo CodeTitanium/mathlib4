@@ -108,17 +108,23 @@ theorem MulAction.mem_fixedBy_zpow {G : Type*} [Group G] {α : Type*} [MulAction
       rw [← fixedBy_inv] at h
       rw [zpow_sub, zpow_one, mem_fixedBy, mul_smul, h, hi]
 
-@[to_additive (attr := simp)]
+@[to_additive]
 theorem MulAction.mem_fixedBy_powers_iff_mem_fixedBy {M : Type*} [Monoid M] {α : Type*}
     [MulAction M α] {m : M} {a : α} :
     (∀ n, a ∈ fixedBy α (m ^ n)) ↔ a ∈ fixedBy α m :=
   ⟨fun h ↦ by simpa using h 1, fun h n ↦ mem_fixedBy_pow h n⟩
 
-@[to_additive (attr := simp)]
+@[to_additive]
 theorem MulAction.mem_fixedBy_zpowers_iff_mem_fixedBy {G : Type*} [Group G] {α : Type*}
     [MulAction G α] {g : G} {a : α} :
     (∀ n : ℤ, a ∈ fixedBy α (g ^ n)) ↔ a ∈ fixedBy α g :=
   ⟨fun h ↦ by simpa using h 1, fun h n ↦ mem_fixedBy_zpow h n⟩
+
+open NumberField
+
+example {k : Type*} [Field k] {K : Type*} [Field K] [Algebra k K] [Algebra.IsAlgebraic k K]
+    (w : InfinitePlace K) (x : k) :
+    w (algebraMap k K x) = w.comap (algebraMap k K) x := rfl
 
 end misc
 
@@ -126,11 +132,11 @@ noncomputable section
 
 open NumberField InfinitePlace ComplexEmbedding NumberField.Units
 
+-- use extends
 class IsCM (F K : Type*) [Field F] [NumberField F] [Field K] [NumberField K]
-    [Algebra F K] : Prop where
-  isTotallyComplex' : IsTotallyComplex K
-  isTotallyReal' : IsTotallyReal F
-  isQuadratic' : Module.finrank F K = 2
+    [Algebra F K] : Prop
+  extends IsTotallyReal F, IsTotallyComplex K where
+  finrank_eq_two' : Module.finrank F K = 2
 
 namespace IsCM
 
@@ -139,19 +145,19 @@ open scoped ComplexConjugate
 variable (F K : Type*) [Field F] [NumberField F] [Field K] [NumberField K] [Algebra F K]
 
 theorem isTotallyComplex [IsCM F K] :
-    IsTotallyComplex K := isTotallyComplex' F
+    IsTotallyComplex K := toIsTotallyComplex F
 
 theorem isTotallyReal [IsCM F K] :
-    IsTotallyReal F := isTotallyReal' K
+    IsTotallyReal F := toIsTotallyReal K
 
-theorem rank_eq_two [IsCM F K] :
-    Module.finrank F K = 2 := isQuadratic'
+theorem finrank_eq_two [IsCM F K] :
+    Module.finrank F K = 2 := finrank_eq_two'
 
 variable [IsCM F K]
 
 instance  : IsGalois F K :=
 { to_isSeparable := Algebra.IsSeparable.of_integral _ _
-  to_normal := normal_of_rank_eq_two _ _ (rank_eq_two  F K) }
+  to_normal := normal_of_rank_eq_two _ _ (finrank_eq_two  F K) }
 
 variable {K}
 
@@ -170,7 +176,7 @@ theorem isConj_ne_one {φ : K →+* ℂ} {σ : K ≃ₐ[F] K} (hφ : IsConj φ �
 variable {F} in
 theorem isConj_eq_isConj {φ ψ : K →+* ℂ} {σ τ : K ≃ₐ[F] K}
     (hφ : IsConj φ σ) (hψ : IsConj ψ τ) : σ = τ := by
-  have : Fintype.card (K ≃ₐ[F] K) = 2 := (rank_eq_two F K) ▸ IsGalois.card_aut_eq_finrank F K
+  have : Fintype.card (K ≃ₐ[F] K) = 2 := (finrank_eq_two F K) ▸ IsGalois.card_aut_eq_finrank F K
   rw [← Nat.card_eq_fintype_card, Nat.card_eq_two_iff' 1] at this
   exact ExistsUnique.unique this (isConj_ne_one hφ) (isConj_ne_one hψ)
 
@@ -243,7 +249,7 @@ theorem zpowers_complexConj_eq_top :
     Subgroup.zpowers (complexConj F : K ≃ₐ[F] K) = ⊤ := by
   refine Subgroup.eq_top_of_card_eq _ ?_
   rw [Nat.card_zpowers, orderOf_complexConj, Nat.card_eq_fintype_card, IsGalois.card_aut_eq_finrank,
-    rank_eq_two]
+    finrank_eq_two]
 
 theorem complexConj_eq_self_iff (x : K) :
     complexConj F x = x ↔ x ∈ (algebraMap F K).range := by
@@ -349,7 +355,59 @@ theorem index_realUnits_eq_two_iff :
     obtain ⟨u, rfl⟩ := h ζ
     exact ⟨u, (Subgroup.eq_top_iff' _).mpr hζ⟩
 
-example :
-  (index_realUnits F K) * regulator K =  2 ^ rank K * regulator F := sorry
+theorem card_infinitePlace_eq_card_infinitePlace :
+    Fintype.card (InfinitePlace K) = Fintype.card (InfinitePlace F) := by
+  rw [card_eq_nrRealPlaces_add_nrComplexPlaces, card_eq_nrRealPlaces_add_nrComplexPlaces,
+    nrRealPlaces_eq_zero_iff.mpr (isTotallyComplex F K), zero_add,
+    nrComplexPlaces_eq_zero_iff.mpr (isTotallyReal F K), add_zero, ← IsTotallyReal.finrank,
+    ← Nat.mul_left_cancel_iff zero_lt_two, ← IsTotallyComplex.finrank,
+    ← Module.finrank_mul_finrank ℚ F K, finrank_eq_two F K, mul_comm]
+
+theorem units_rank_eq_units_rank :
+    rank K = rank F := by
+  rw [rank, rank, card_infinitePlace_eq_card_infinitePlace F K]
+
+def equivInfinitePlace :
+    InfinitePlace K ≃ InfinitePlace F :=
+  Equiv.ofBijective (fun w ↦ w.comap (algebraMap F K))
+    <| (Fintype.bijective_iff_surjective_and_card _).mpr
+      ⟨comap_surjective, card_infinitePlace_eq_card_infinitePlace F K⟩
+
+@[simp]
+theorem equivInfinitePlace_apply (w : InfinitePlace K) :
+    equivInfinitePlace F K w = w.comap (algebraMap F K) := rfl
+
+@[simp]
+theorem equivInfinitePlace_symm_apply (w : InfinitePlace F) (x : F) :
+    (equivInfinitePlace F K).symm w (algebraMap F K x) = w x := by
+  have : (equivInfinitePlace F K).symm w (algebraMap F K x) =
+    ((equivInfinitePlace F K).symm w).comap (algebraMap F K) x := rfl
+  rw [this, ← equivInfinitePlace_apply, Equiv.apply_symm_apply]
+
+
+example : (index_realUnits F K) * regulator K = 2 ^ rank K * regulator F := by
+  classical
+  have := units_rank_eq_rank F K
+  let e : Fin (rank F) ≃ Fin (rank K) := by
+    refine Fintype.equivOfCardEq ?_
+    exact Fintype.card_congr' (congrArg Fin (id (Eq.symm this)))
+  let u := fun i ↦ (Units.map (algebraMap (𝓞 F) (𝓞 K)).toMonoidHom) (fundSystem F (e.symm i))
+  have t0 := regOfFamily_div_regulator u
+  have t1 : Subgroup.closure (Set.range u) ⊔ torsion K = realUnits F K := sorry
+  rw [t1] at t0
+  have h (w) :
+      ((equivInfinitePlaceRestrict F K).symm w).1
+        (u ((equivFinRank K).symm w)) = w.1 (fundSystem F (e.symm w)) := sorry
+
+  have : regOfFamily u = regulator F := by
+    rw [regulator_eq_regOfFamily_fundSystem, regOfFamily_eq_det', regOfFamily_eq_det']
+    rw [← Matrix.det_reindex_self (equivInfinitePlaceRestrict K F)]
+    congr
+    ext i w
+    simp
+    simp_rw [mult, if_pos sorry, Nat.cast_one, one_mul]
+    simp_rw [h]
+
+  sorry
 
 end IsCM
