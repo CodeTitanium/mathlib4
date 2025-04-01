@@ -400,13 +400,12 @@ theorem closure_realFundSystem_sup_torsion :
   rw [Subgroup.map_sup, sup_assoc]
   have : Subgroup.map (Units.map ↑(algebraMap (𝓞 F) (𝓞 K))) (torsion F) ≤ torsion K := by
     exact CommMonoid.map_torsion_le _
-  erw [sup_eq_right.mpr this]
+  rw [RingHom.toMonoidHom_eq_coe]
+  rw [sup_eq_right.mpr this]
   rw [MonoidHom.map_closure]
   congr
   ext
-  simp [realFundSystem]
-  rw [Equiv.exists_congr_left (finCongr (units_rank_eq_units_rank F K))]
-  simp
+  simp [realFundSystem, Equiv.exists_congr_left (finCongr (units_rank_eq_units_rank F K))]
 
 open dirichletUnitTheorem
 
