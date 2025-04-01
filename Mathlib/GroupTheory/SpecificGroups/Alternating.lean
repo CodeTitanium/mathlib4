@@ -281,81 +281,13 @@ lemma isCyclic_of_card_eq_three (h3 : card α = 3) : IsCyclic ↥(alternatingGro
 
 def kleinFour : Subgroup (Perm (Fin 4)) where
   carrier := {1, swap 0 1 * swap 2 3, swap 0 2 * swap 1 3, swap 0 3 * swap 1 2}
-  mul_mem' := by decide
+  mul_mem' := by simp_rw [← forall_cond_comm, SetCoe.forall']; decide
   one_mem' := by dsimp only; decide
-  inv_mem' := by dsimp only; decide
+  inv_mem' := by simp_rw [SetCoe.forall']; decide
 
 lemma mem_kleinFour {p : Perm (Fin 4)} :
     p ∈ kleinFour ↔ p.cycleType ∈ ({0, {2, 2}} : Set (Multiset ℕ)) := by
-  constructor
-  case mp =>
-    revert p
-    simp_rw [← mem_carrier, kleinFour]; decide
-  case mpr =>
-    intro hp; rw [Set.mem_insert_iff, Set.mem_singleton_iff, cycleType_eq_zero] at hp
-    obtain (rfl | hp) := hp
-    · simp [kleinFour]
-    have support_eq_pair_iff {p : Perm (Fin 4)} {m n : Fin 4} (hmn : m ≠ n) :
-        p.support = {m, n} ↔ p = swap m n := by
-      constructor
-      case mpr => rintro rfl; exact support_swap hmn
-      intro hp; have hp₂ : p.IsSwap := by simpa [hmn] using congr_arg Finset.card hp
-      obtain ⟨m', n', hmn', rfl⟩ := hp₂
-      rw [support_swap hmn'] at hp
-      by_cases hmm' : m' = m
-      case pos =>
-        subst hmm'; replace hp : n' ∈ ({m', n} : Finset (Fin 4)) := by rw [← hp]; simp
-        obtain rfl : n' = n := by simpa [hmn'.symm] using hp
-        rfl
-      case neg =>
-        have hm' : m' ∈ ({m, n} : Finset (Fin 4)) := by rw [← hp]; simp
-        obtain rfl : m' = n := by simpa [hmm'] using hm'
-        clear hmm' hm'; replace hp : n' ∈ ({m, m'} : Finset (Fin 4)) := by rw [← hp]; simp
-        obtain rfl : n' = m := by simpa [hmn'.symm] using hp
-        apply swap_comm
-    replace hp : ∃ᵉ (n ∈ ({0}ᶜ : Finset (Fin 4))) (s : Perm (Fin 4)),
-        s.support = ({0, n}ᶜ : Finset (Fin 4)) ∧ p = swap 0 n * s := by
-      replace hp : ∃ (s₀ s₁ : Perm (Fin 4)),
-          s₀.IsSwap ∧ s₁.IsSwap ∧ s₀.Disjoint s₁ ∧ 0 ∈ s₀.support ∧ p = s₀ * s₁ := by
-        have h0 : 0 ∈ p.support := by
-          convert Finset.mem_univ (0 : Fin 4) using 1
-          rw [← Finset.card_eq_iff_eq_univ, card_fin, ← sum_cycleType, hp]; rfl
-        have : 2 ∈ p.cycleType := by rw [hp]; decide
-        rw [mem_cycleType_iff] at this; obtain ⟨s₀, s₁, rfl, hs₀s₁, -, hs₀⟩ := this
-        rw [card_support_eq_two] at hs₀
-        rw [hs₀s₁.cycleType_mul, hs₀.isCycle.cycleType, card_support_eq_two.mpr hs₀,
-          Multiset.singleton_add, Multiset.insert_eq_cons, Multiset.cons_inj_right] at hp
-        replace hp := congr_arg Multiset.sum hp
-        rw [Multiset.sum_singleton, sum_cycleType, card_support_eq_two] at hp
-        rw [hs₀s₁.support_mul, Finset.mem_union] at h0
-        obtain (h0s₀ | hs0s₁) := h0
-        case inl => exact ⟨s₀, s₁, hs₀, hp, hs₀s₁, h0s₀, rfl⟩
-        case inr => exact ⟨s₁, s₀, hp, hs₀, disjoint_comm.mp hs₀s₁, hs0s₁, hs₀s₁.commute⟩
-      obtain ⟨s₀, s₁, hs₀, hs₁, hs₀s₁, h0s₁, rfl⟩ := hp
-      obtain ⟨n, hn, rfl⟩ : ∃ (n : Fin 4), n ≠ 0 ∧ s₀ = swap 0 n := by
-        obtain ⟨m, n, hmn, rfl⟩ := hs₀
-        simp_rw [support_swap hmn, Finset.mem_insert, Finset.mem_singleton] at h0s₁
-        obtain (rfl | rfl) := h0s₁
-        case inl => exact ⟨n, hmn.symm, rfl⟩
-        case inr => exact ⟨m, hmn, swap_comm m 0⟩
-      clear hs₀ h0s₁
-      refine ⟨n, by simpa using hn, s₁, ?_, rfl⟩
-      rw [disjoint_iff_disjoint_support, support_swap hn.symm,
-        ← le_compl_iff_disjoint_left, Finset.le_iff_subset] at hs₀s₁
-      rw [← Finset.eq_iff_card_le_of_subset hs₀s₁, Finset.card_compl, card_fin]
-      simp [hn.symm, card_support_eq_two.mpr hs₁]
-    obtain ⟨n, hn, s, hs, rfl⟩ := hp
-    conv at hn => arg 1; equals {1, 2, 3} => decide
-    fin_cases hn
-    · conv_rhs at hs => equals {2, 3} => decide
-      rw [support_eq_pair_iff (by decide)] at hs; subst hs
-      simp [kleinFour]
-    · conv_rhs at hs => equals {1, 3} => decide
-      rw [support_eq_pair_iff (by decide)] at hs; subst hs
-      simp [kleinFour]
-    · conv_rhs at hs => equals {1, 2} => decide
-      rw [support_eq_pair_iff (by decide)] at hs; subst hs
-      simp [kleinFour]
+  revert p; simp_rw [kleinFour, mem_mk, iff_def, forall_and, SetCoe.forall']; decide
 
 instance : kleinFour.Normal where
   conj_mem := by simp [mem_kleinFour]
