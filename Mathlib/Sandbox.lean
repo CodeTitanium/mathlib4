@@ -120,6 +120,11 @@ theorem MulAction.mem_fixedBy_zpowers_iff_mem_fixedBy {G : Type*} [Group G] {α 
     (∀ n : ℤ, a ∈ fixedBy α (g ^ n)) ↔ a ∈ fixedBy α g :=
   ⟨fun h ↦ by simpa using h 1, fun h n ↦ mem_fixedBy_zpow h n⟩
 
+theorem CommMonoid.map_torsion_le {M M' : Type*} [CommMonoid M] [CommMonoid M'] (f : M →* M') :
+    Submonoid.map f (CommMonoid.torsion M) ≤ CommMonoid.torsion M' := by
+  rintro _ ⟨x, hx, rfl⟩
+  exact MonoidHom.isOfFinOrder _ hx
+
 open NumberField
 
 example {k : Type*} [Field k] {K : Type*} [Field K] [Algebra k K] [Algebra.IsAlgebraic k K]
@@ -283,7 +288,7 @@ theorem unitsComplexConj_eq_self_iff (u : (𝓞 K)ˣ) :
   exact ⟨x, rfl⟩
 
 variable (K) in
-abbrev index_realUnits : ℕ := (torsion K ⊔ realUnits F K).index
+abbrev indexRealUnits : ℕ := (realUnits F K ⊔ torsion K).index
 
 def unitsMulComplexConjInv : (𝓞 K)ˣ →* torsion K where
   toFun := fun u ↦ ⟨u * (unitsComplexConj F u)⁻¹, (mem_torsion K).mpr fun _ ↦ by simp⟩
@@ -323,27 +328,28 @@ theorem map_unitsMulComplexConjInv_torsion :
   rw [← MonoidHom.restrict_range]
   exact congr_arg (MonoidHom.range ·) (MonoidHom.ext fun _ ↦ by simp [pow_two])
 
-theorem index_realUnits_mul_eq :
-    index_realUnits F K * (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K).range.index = 2 := by
+theorem indexRealUnits_mul_eq :
+    indexRealUnits F K * (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K).range.index = 2 := by
+  rw [indexRealUnits, sup_comm]
   convert (Subgroup.index_map (torsion K) (unitsMulComplexConjInv F : (𝓞 K)ˣ →* torsion K)).symm
   · rw [unitsMulComplexConjInv_ker]
   · rw [map_unitsMulComplexConjInv_torsion, IsCyclic.index_powMonoidHom_range, Nat.gcd_eq_right]
     exact even_iff_two_dvd.mp (even_torsionOrder K)
 
-theorem index_realUnits_eq :
-    index_realUnits F K = 1 ∨ index_realUnits F K = 2 := by
-  have h₁ := index_realUnits_mul_eq F K
+theorem indexRealUnits_eq_one_or_two :
+    indexRealUnits F K = 1 ∨ indexRealUnits F K = 2 := by
+  have h₁ := indexRealUnits_mul_eq F K
   obtain h₂ | h₂ := (Nat.dvd_prime Nat.prime_two).mp <| index_unitsMulComplexConjInv_range_dvd F K
   · exact Or.inr <| by rwa [h₂, mul_one] at h₁
   · exact Or.inl <| by rwa [h₂, Nat.mul_left_eq_self_iff zero_lt_two] at h₁
 
-theorem index_realUnits_eq_two_iff :
-    index_realUnits F K = 2 ↔
+theorem indexRealUnits_eq_two_iff :
+    indexRealUnits F K = 2 ↔
       ∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤ := by
   suffices (∃ u : (𝓞 K)ˣ, Subgroup.zpowers (unitsMulComplexConjInv F u) = ⊤) ↔
       (unitsMulComplexConjInv F : _ →* torsion K).range.index = 1 by
     rw [this]
-    have h_eq := index_realUnits_mul_eq F K
+    have h_eq := indexRealUnits_mul_eq F K
     refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
     · rwa [h, Nat.mul_right_eq_self_iff zero_lt_two] at h_eq
     · rwa [h, mul_one] at h_eq
@@ -384,30 +390,58 @@ theorem equivInfinitePlace_symm_apply (w : InfinitePlace F) (x : F) :
     ((equivInfinitePlace F K).symm w).comap (algebraMap F K) x := rfl
   rw [this, ← equivInfinitePlace_apply, Equiv.apply_symm_apply]
 
+def realFundSystem : Fin (rank K) → (𝓞 K)ˣ :=
+  fun i ↦ (Units.map (algebraMap (𝓞 F) (𝓞 K)).toMonoidHom)
+    (fundSystem F (finCongr (units_rank_eq_units_rank F K) i))
 
-example : (index_realUnits F K) * regulator K = 2 ^ rank K * regulator F := by
+theorem closure_realFundSystem_sup_torsion :
+    Subgroup.closure (Set.range (realFundSystem F K)) ⊔ torsion K = realUnits F K ⊔ torsion K := by
+  rw [realUnits, MonoidHom.range_eq_map, ← closure_fundSystem_sup_torsion_eq_top]
+  rw [Subgroup.map_sup, sup_assoc]
+  have : Subgroup.map (Units.map ↑(algebraMap (𝓞 F) (𝓞 K))) (torsion F) ≤ torsion K := by
+    exact CommMonoid.map_torsion_le _
+  erw [sup_eq_right.mpr this]
+  rw [MonoidHom.map_closure]
+  congr
+  ext
+  simp [realFundSystem]
+  rw [Equiv.exists_congr_left (finCongr (units_rank_eq_units_rank F K))]
+  simp
+
+open dirichletUnitTheorem
+
+example : regulator K / regulator F = 2 ^ rank K * (indexRealUnits F K : ℝ)⁻¹ := by
   classical
-  have := units_rank_eq_rank F K
-  let e : Fin (rank F) ≃ Fin (rank K) := by
-    refine Fintype.equivOfCardEq ?_
-    exact Fintype.card_congr' (congrArg Fin (id (Eq.symm this)))
-  let u := fun i ↦ (Units.map (algebraMap (𝓞 F) (𝓞 K)).toMonoidHom) (fundSystem F (e.symm i))
-  have t0 := regOfFamily_div_regulator u
-  have t1 : Subgroup.closure (Set.range u) ⊔ torsion K = realUnits F K := sorry
-  rw [t1] at t0
-  have h (w) :
-      ((equivInfinitePlaceRestrict F K).symm w).1
-        (u ((equivFinRank K).symm w)) = w.1 (fundSystem F (e.symm w)) := sorry
-
-  have : regOfFamily u = regulator F := by
-    rw [regulator_eq_regOfFamily_fundSystem, regOfFamily_eq_det', regOfFamily_eq_det']
-    rw [← Matrix.det_reindex_self (equivInfinitePlaceRestrict K F)]
+  let e : Fin (rank K) ≃ Fin (rank F) := finCongr (units_rank_eq_units_rank F K)
+  let w₁ := (equivInfinitePlace F K).symm w₀
+  let f : {w : InfinitePlace K  // w ≠ w₁} ≃ {w : InfinitePlace F // w ≠ w₀} :=
+    (equivInfinitePlace F K).subtypeEquiv fun w ↦ by rw [not_iff_not, Equiv.eq_symm_apply]
+  have f_apply (w : {w // w ≠ w₀}) : f.symm w = (equivInfinitePlace F K).symm w.1 := rfl
+  let g := (e.trans (equivFinRank F)).trans f.symm
+  have : regOfFamily (realFundSystem F K) = 2 ^ rank K * regulator F := by
+    rw [regulator_eq_regOfFamily_fundSystem, regOfFamily_eq_det _ w₁ g.symm, regOfFamily_eq_det']
+    rw [show (2 : ℝ) ^ rank K = |∏ w : {w : InfinitePlace F // w ≠ w₀}, 2| by
+      rw [Finset.prod_const, abs_pow, abs_of_pos zero_lt_two, units_rank_eq_units_rank F K, rank]
+      simp]
+    rw [← abs_mul]
+    rw [← Matrix.det_mul_column]
+    rw [← Matrix.det_reindex_self f]
     congr
     ext i w
-    simp
-    simp_rw [mult, if_pos sorry, Nat.cast_one, one_mul]
-    simp_rw [h]
-
-  sorry
+    simp_rw [Matrix.reindex_apply, Matrix.submatrix_apply, Matrix.of_apply, logEmbedding_component,
+      f_apply]
+    rw [show algebraMap (𝓞 K) K _ = algebraMap F K _ by rfl]
+    rw [finCongr_apply, equivInfinitePlace_symm_apply]
+    simp [f, g, e]
+  have t0 := regOfFamily_div_regulator (realFundSystem F K)
+  rw [indexRealUnits]
+  have t1 : Subgroup.closure (Set.range (realFundSystem F K)) ⊔ torsion K =
+    realUnits F K ⊔ torsion K := closure_realFundSystem_sup_torsion F K
+  rw [← t1]
+  rw [← t0]
+  rw [this]
+  rw [inv_div]
+  rw [← mul_div_assoc, mul_div_mul_comm, div_self, one_mul]
+  exact Ne.symm (NeZero.ne' (2 ^ rank K))
 
 end IsCM
