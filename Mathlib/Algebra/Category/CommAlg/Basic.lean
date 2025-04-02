@@ -176,13 +176,14 @@ def commAlgIsoToAlgEquiv {X Y : CommAlg R} (i : X ≅ Y) : X ≃ₐ[R] Y where
 
 end CategoryTheory.Iso
 
-/-- Algebra equivalences between `Algebra`s are the same as (isomorphic to) isomorphisms in
-`CommAlg`. -/
-@[simps]
-def algEquivIsoCommAlgIso {X Y : Type u} [CommRing X] [CommRing Y] [Algebra R X] [Algebra R Y] :
-    (X ≃ₐ[R] Y) ≅ CommAlg.of R X ≅ CommAlg.of R Y where
-  hom e := e.toCommAlgIso
-  inv i := i.commAlgIsoToAlgEquiv
+/-- Algebra equivalences between `Algebra`s are the same as isomorphisms in `CommAlg`. -/
+@[simps!]
+def algEquivEquivCommAlgIso {X Y : Type u} [CommRing X] [CommRing Y] [Algebra R X] [Algebra R Y] :
+    (X ≃ₐ[R] Y) ≃ (CommAlg.of R X ≅ CommAlg.of R Y) where
+  toFun := AlgEquiv.toCommAlgIso
+  invFun := Iso.commAlgIsoToAlgEquiv
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 instance CommAlg.forget_reflects_isos : (forget (CommAlg.{u} R)).ReflectsIsomorphisms where
   reflects {X Y} f _ := by
@@ -297,7 +298,7 @@ end Coprod
 end CommAlg
 
 /-- The category of commutative algebras over a commutative ring `R` is the same as rings under `R`.
--/`algebraMap R A : R → A`
+-/
 @[simps]
 def commAlgEquivUnder (R : CommRingCat) : CommAlg R ≌ Under R where
   functor.obj A := R.mkUnder A
