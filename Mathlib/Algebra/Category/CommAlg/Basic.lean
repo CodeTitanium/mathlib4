@@ -3,7 +3,7 @@ Copyright (c) 2025 Yaël Dillies, Christian Merten, Michał Mrugała, Andrew Yan
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies, Christian Merten, Michał Mrugała, Andrew Yang
 -/
-import Mathlib.Algebra.Category.ModuleCat.Basic
+import Mathlib.Algebra.Category.AlgebraCat.Basic
 import Mathlib.Algebra.Category.Ring.Under.Basic
 import Mathlib.CategoryTheory.ChosenFiniteProducts
 
@@ -13,6 +13,18 @@ import Mathlib.CategoryTheory.ChosenFiniteProducts
 We introduce the bundled category `CommAlg` of algebras over a fixed commutative ring `R` along
 with the forgetful functors to `RingCat` and `ModuleCat`. We furthermore show that the functor
 associating to a type the free `R`-algebra on that type is left adjoint to the forgetful functor.
+
+## Implementation notes
+
+`CommAlg R` is the same as `Under R` up to two details:
+* `A : CommAlg R` contains the data of both `algebraMap R A : R → A` and
+  `Algebra.smul : R → A → A`. `A : Under R` only contains `algebraMap R A`, meaning that going
+  from an unbundled algebra to `Under R` and back to an unbundled algebra gives a propeq but not
+  defeq algebra. In comparison, going from an unbundled algebra to `CommAlg R` and back to an
+  unbundled algebra gives a defeq algebra.
+* If `A : Under R`, then `A` must live in the same universe as `R`. This is not terribly important,
+  because if `R : Type u` then `CommAlg.{v} R` is cartesian-monoidal only if `u ≤ v` and,
+  for convenience, we only provide the `ChosenFiniteProducts (CommAlg.{u} R)` instance.
 -/
 
 open CategoryTheory Limits
@@ -27,12 +39,12 @@ structure CommAlg where
   private mk ::
   /-- The underlying type. -/
   carrier : Type v
-  [isRing : CommRing carrier]
+  [isCommRing : CommRing carrier]
   [isAlgebra : Algebra R carrier]
 
-attribute [instance] CommAlg.isRing CommAlg.isAlgebra
+attribute [instance] CommAlg.isCommRing CommAlg.isAlgebra
 
-initialize_simps_projections CommAlg (-isRing, -isAlgebra)
+initialize_simps_projections CommAlg (-isCommRing, -isAlgebra)
 
 namespace CommAlg
 variable {A B C : CommAlg.{v} R}
@@ -132,17 +144,17 @@ instance hasForgetToCommRing : HasForget₂ (CommAlg.{v} R) CommRingCat.{v} wher
   forget₂.obj A := CommRingCat.of A
   forget₂.map f := CommRingCat.ofHom f.hom.toRingHom
 
-instance hasForgetToModule : HasForget₂ (CommAlg.{v} R) (ModuleCat.{v} R) where
-  forget₂.obj M := ModuleCat.of R M
-  forget₂.map f := ModuleCat.ofHom f.hom.toLinearMap
+instance hasForgetToAlgebra : HasForget₂ (CommAlg.{v} R) (AlgebraCat.{v} R) where
+  forget₂.obj M := .of R M
+  forget₂.map f := AlgebraCat.ofHom f.hom
 
 @[simp]
-lemma forget₂_module_obj (X : CommAlg.{v} R) :
-    (forget₂ (CommAlg.{v} R) (ModuleCat.{v} R)).obj X = ModuleCat.of R X := rfl
+lemma forget₂_Algebra_obj (X : CommAlg.{v} R) :
+    (forget₂ (CommAlg.{v} R) (AlgebraCat.{v} R)).obj X = .of R X := rfl
 
 @[simp]
-lemma forget₂_module_map {X Y : CommAlg.{v} R} (f : X ⟶ Y) :
-    (forget₂ (CommAlg.{v} R) (ModuleCat.{v} R)).map f = ModuleCat.ofHom f.hom.toLinearMap := rfl
+lemma forget₂_Algebra_map {X Y : CommAlg.{v} R} (f : X ⟶ Y) :
+    (forget₂ (CommAlg.{v} R) (AlgebraCat.{v} R)).map f = AlgebraCat.ofHom f.hom := rfl
 
 /-- Forgetting to the underlying type and then building the bundled object returns the original
 algebra. -/
@@ -197,11 +209,11 @@ noncomputable section Coprod
 
 open TensorProduct
 
-variable (A B C : CommAlg R)
+variable (A B C : CommAlg.{v} R)
 
 /-- The explicit cocone with tensor products as the fibered product in `CommRingCat`. -/
-def binaryCofan : Limits.BinaryCofan A B :=
-  Limits.BinaryCofan.mk (ofHom Algebra.TensorProduct.includeLeft)
+def binaryCofan : BinaryCofan A B :=
+  .mk (ofHom Algebra.TensorProduct.includeLeft)
     (ofHom (Algebra.TensorProduct.includeRight (R := R) (A := A)))
 
 @[simp]
@@ -213,8 +225,8 @@ lemma binaryCofan_inr : (binaryCofan A B).inr = ofHom Algebra.TensorProduct.incl
 @[simp] lemma binaryCofan_pt : (binaryCofan A B).pt = .of R (A ⊗[R] B) := rfl
 
 /-- Verify that the `pushout_cocone` is indeed the colimit. -/
-def binaryCofanIsColimit : Limits.IsColimit (binaryCofan A B) :=
-  Limits.BinaryCofan.IsColimit.mk _
+def binaryCofanIsColimit : IsColimit (binaryCofan A B) :=
+  BinaryCofan.IsColimit.mk _
     (fun f g ↦ ofHom (Algebra.TensorProduct.lift f.hom g.hom fun _ _ ↦ .all _ _))
     (fun f g ↦ by ext1; exact Algebra.TensorProduct.lift_comp_includeLeft _ _ fun _ _ ↦ .all _ _)
     (fun f g ↦ by ext1; exact Algebra.TensorProduct.lift_comp_includeRight _ _ fun _ _ ↦ .all _ _)
@@ -223,21 +235,22 @@ def binaryCofanIsColimit : Limits.IsColimit (binaryCofan A B) :=
       refine Algebra.TensorProduct.liftEquiv.symm_apply_eq (y := ⟨⟨_, _⟩, fun _ _ ↦ .all _ _⟩).mp ?_
       exact Subtype.ext (Prod.ext congr(($hm₁).hom) congr(($hm₂).hom)))
 
-def isInitialSelf : Limits.IsInitial (of R R) := .ofUniqueHom (fun A ↦ ofHom (Algebra.ofId R A))
+/-- The initial `R`-algebra is `R`. -/
+def isInitialSelf : IsInitial (of R R) := .ofUniqueHom (fun A ↦ ofHom (Algebra.ofId R A))
   fun _ _ ↦ hom_ext (Algebra.ext_id _ _ _)
 
 open Opposite
 
-instance : ChosenFiniteProducts (CommAlg R)ᵒᵖ where
-  product A B := ⟨BinaryCofan.op <| (binaryCofan (unop A) (unop B)),
-    BinaryCofan.IsColimit.op <| (binaryCofanIsColimit (unop A) (unop B))⟩
+instance : ChosenFiniteProducts (CommAlg.{u} R)ᵒᵖ where
+  product A B := ⟨(binaryCofan (unop A) (unop B)).op,
+    BinaryCofan.IsColimit.op <| binaryCofanIsColimit (unop A) (unop B)⟩
   terminal := ⟨_, terminalOpOfInitial isInitialSelf⟩
 
 open MonoidalCategory
 
-variable {A B}
+variable {A B C D : CommAlg.{u} R}
 
-lemma rightWhisker_hom (f : A ⟶ B) :
+lemma rightWhisker_hom (f : A ⟶ B) (C : CommAlg.{u} R) :
     (f.op ▷ op C).unop.hom = Algebra.TensorProduct.map f.hom (.id _ _) := by
   suffices f.op ▷ op C = (CommAlg.ofHom (Algebra.TensorProduct.map f.hom (.id _ _))).op by
     rw [this]; rfl
@@ -250,7 +263,7 @@ lemma rightWhisker_hom (f : A ⟶ B) :
   show 1 ⊗ₜ[R] x = f 1 ⊗ₜ[R] x
   simp
 
-lemma leftWhisker_hom (f : A ⟶ B) :
+lemma leftWhisker_hom (C : CommAlg.{u} R) (f : A ⟶ B) :
     (op C ◁ f.op).unop.hom = Algebra.TensorProduct.map (.id _ _) f.hom := by
   suffices op C ◁ f.op = (CommAlg.ofHom (Algebra.TensorProduct.map (.id _ _) f.hom)).op by
     rw [this]; rfl
@@ -264,8 +277,7 @@ lemma leftWhisker_hom (f : A ⟶ B) :
   show x ⊗ₜ[R] 1 = x ⊗ₜ[R] f 1
   simp
 
-variable {C} in
-lemma associator_hom_unop_hom :
+lemma associator_hom_unop_hom (A B C : CommAlg.{u} R) :
     (α_ (op A) (op B) (op C)).hom.unop.hom =
       (Algebra.TensorProduct.assoc R A B C).symm.toAlgHom := by
   suffices (α_ (op A) (op B) (op C)).hom =
@@ -273,17 +285,14 @@ lemma associator_hom_unop_hom :
     rw [this]; rfl
   ext <;> simp <;> rfl
 
-variable {C} in
-lemma associator_inv_unop_hom :
-    (α_ (op A) (op B) (op C)).inv.unop.hom =
-      (Algebra.TensorProduct.assoc R A B C).toAlgHom := by
+lemma associator_inv_unop_hom (A B C : CommAlg.{u} R) :
+    (α_ (op A) (op B) (op C)).inv.unop.hom = (Algebra.TensorProduct.assoc R A B C).toAlgHom := by
   suffices (α_ (op A) (op B) (op C)).inv =
       (CommAlg.ofHom (Algebra.TensorProduct.assoc R A B C).toAlgHom).op by
     rw [this]; rfl
   ext <;> simp <;> rfl
 
-variable {C} in
-lemma tensorHom_unop_hom {D : CommAlg R} (f : A ⟶ C) (g : B ⟶ D) :
+lemma tensorHom_unop_hom (f : A ⟶ C) (g : B ⟶ D) :
     (MonoidalCategoryStruct.tensorHom f.op g.op).unop.hom =
       (Algebra.TensorProduct.map f.hom g.hom) := by
   rw [MonoidalCategory.tensorHom_def]
@@ -300,7 +309,7 @@ end CommAlg
 /-- The category of commutative algebras over a commutative ring `R` is the same as rings under `R`.
 -/
 @[simps]
-def commAlgEquivUnder (R : CommRingCat) : CommAlg R ≌ Under R where
+def commAlgEquivUnder (R : CommRingCat.{u}) : CommAlg.{u} R ≌ Under.{u} R where
   functor.obj A := R.mkUnder A
   functor.map {A B} f := f.hom.toUnder
   inverse.obj A := CommAlg.of _ A
