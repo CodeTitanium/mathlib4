@@ -695,7 +695,8 @@ lemma comap_surjective [Algebra k K] [Algebra.IsAlgebraic k K] :
     Function.Surjective (comap · (algebraMap k K)) := fun w ↦
   letI := w.embedding.toAlgebra
   ⟨mk (IsAlgClosed.lift (M := ℂ) (R := k)).toRingHom,
-    by simp [this, comap_mk, RingHom.algebraMap_toAlgebra]⟩
+    by simp only [AlgHom.toRingHom_eq_coe, comap_mk, AlgHom.comp_algebraMap_of_tower,
+      RingHom.algebraMap_toAlgebra, mk_embedding, this]⟩
 
 lemma mult_comap_le (f : k →+* K) (w : InfinitePlace K) : mult (w.comap f) ≤ mult w := by
   rw [mult, mult]
@@ -736,16 +737,16 @@ lemma isReal_smul_iff : IsReal (σ • w) ↔ IsReal w := isReal_comap_iff (f :=
 lemma isComplex_smul_iff : IsComplex (σ • w) ↔ IsComplex w := by
   rw [← not_isReal_iff_isComplex, ← not_isReal_iff_isComplex, isReal_smul_iff]
 
-lemma ComplexEmbedding.exists_comp_symm_eq_of_comp_eq [IsGalois k K] (φ ψ : K →+* ℂ)
-    (h : φ.comp (algebraMap k K) = ψ.comp (algebraMap k K)) :
-    ∃ σ : K ≃ₐ[k] K, φ.comp σ.symm = ψ := by
-  letI := (φ.comp (algebraMap k K)).toAlgebra
-  letI := φ.toAlgebra
-  have : IsScalarTower k K ℂ := IsScalarTower.of_algebraMap_eq' rfl
-  let ψ' : K →ₐ[k] ℂ := { ψ with commutes' := fun r ↦ (RingHom.congr_fun h r).symm }
-  use (AlgHom.restrictNormal' ψ' K).symm
-  ext1 x
-  exact AlgHom.restrictNormal_commutes ψ' K x
+-- lemma ComplexEmbedding.exists_comp_symm_eq_of_comp_eq [IsGalois k K] (φ ψ : K →+* ℂ)
+--     (h : φ.comp (algebraMap k K) = ψ.comp (algebraMap k K)) :
+--     ∃ σ : K ≃ₐ[k] K, φ.comp σ.symm = ψ := by
+--   letI := (φ.comp (algebraMap k K)).toAlgebra
+--   letI := φ.toAlgebra
+--   have : IsScalarTower k K ℂ := IsScalarTower.of_algebraMap_eq' rfl
+--   let ψ' : K →ₐ[k] ℂ := { ψ with commutes' := fun r ↦ (RingHom.congr_fun h r).symm }
+--   use (AlgHom.restrictNormal' ψ' K).symm
+--   ext1 x
+--   exact AlgHom.restrictNormal_commutes ψ' K x
 
 lemma exists_smul_eq_of_comap_eq [IsGalois k K] {w w' : InfinitePlace K}
     (h : w.comap (algebraMap k K) = w'.comap (algebraMap k K)) : ∃ σ : K ≃ₐ[k] K, σ • w = w' := by
