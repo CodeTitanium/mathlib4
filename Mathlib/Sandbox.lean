@@ -311,6 +311,11 @@ theorem unitsComplexConj_eq_self_iff (u : (𝓞 K)ˣ) :
     unitsComplexConj F u = u ↔ u ∈ realUnits F K := by
   rw [← Units.eq_iff, coe_unitsComplexConj, ringOfIntegersComplexConj_eq_self_iff, realUnits,
     RingHom.mem_range, RingHom.toMonoidHom_eq_coe, MonoidHom.mem_range]
+  refine ⟨fun ⟨x, hx⟩ ↦ ?_, ?_⟩
+  have := hx ▸ u.isUnit
+  rw [isUnit_map_iff] at this
+#exit
+
   refine ⟨fun ⟨x, hx⟩ ↦
     ⟨(isUnit_iff_isUnit_algebraMap.mpr (hx ▸ u.isUnit)).unit, Units.ext_iff.mpr hx⟩, ?_⟩
   rintro ⟨x, rfl⟩
