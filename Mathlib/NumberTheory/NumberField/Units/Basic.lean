@@ -65,14 +65,15 @@ theorem NumberField.isUnit_iff_norm [NumberField K] {x : 𝓞 K} :
 --     map_pow, abs_pow_eq_one _ Module.finrank_pos.ne'] at h
 --   exact isUnit_iff_norm.mpr h
 
-instance NumberField.RingOfIntegers.isLocalHom_algebraMap [NumberField K] {L : Type*} [Field L]
-    [NumberField L] [Algebra K L] :
-    IsLocalHom (algebraMap (𝓞 K) (𝓞 L)) := by
-  refine { map_nonunit := fun u hu ↦ ?_ }
-  rwa [isUnit_iff_norm, RingOfIntegers.coe_norm, ← Algebra.norm_norm (S := K),
-    show algebraMap (𝓞 K) (𝓞 L) u = algebraMap K L (u : K) by rfl, Algebra.norm_algebraMap,
-    map_pow, abs_pow_eq_one _ Module.finrank_pos.ne', ← @RingOfIntegers.coe_norm,
-    ← isUnit_iff_norm] at hu
+-- instance NumberField.RingOfIntegers.isLocalHom_algebraMap [NumberField K] {L : Type*} [Field L]
+--     [NumberField L] [Algebra K L] :
+--     IsLocalHom (algebraMap (𝓞 K) (𝓞 L)) := by
+--   infer_instance
+  -- refine { map_nonunit := fun u hu ↦ ?_ }
+  -- rwa [isUnit_iff_norm, RingOfIntegers.coe_norm, ← Algebra.norm_norm (S := K),
+  --   show algebraMap (𝓞 K) (𝓞 L) u = algebraMap K L (u : K) by rfl, Algebra.norm_algebraMap,
+  --   map_pow, abs_pow_eq_one _ Module.finrank_pos.ne', ← @RingOfIntegers.coe_norm,
+  --   ← isUnit_iff_norm] at hu
 
 
 end IsUnit

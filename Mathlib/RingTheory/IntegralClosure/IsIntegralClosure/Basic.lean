@@ -621,7 +621,7 @@ theorem RingHom.IsIntegral.isLocalHom {f : R →+* S} (hf : f.IsIntegral)
 variable [Algebra R S] [Algebra.IsIntegral R S]
 
 variable (R S) in
-theorem Algebra.IsIntegral.isLocalHom [FaithfulSMul R S] : IsLocalHom (algebraMap R S) :=
+instance Algebra.IsIntegral.isLocalHom [FaithfulSMul R S] : IsLocalHom (algebraMap R S) :=
   (algebraMap_isIntegral_iff.mpr ‹_›).isLocalHom (FaithfulSMul.algebraMap_injective R S)
 
 /-- If the integral extension `R → S` is injective, and `S` is a field, then `R` is also a field. -/
