@@ -314,12 +314,8 @@ theorem unitsComplexConj_eq_self_iff (u : (𝓞 K)ˣ) :
   refine ⟨fun ⟨x, hx⟩ ↦ ?_, ?_⟩
   have := hx ▸ u.isUnit
   rw [isUnit_map_iff] at this
-#exit
-
-  refine ⟨fun ⟨x, hx⟩ ↦
-    ⟨(isUnit_iff_isUnit_algebraMap.mpr (hx ▸ u.isUnit)).unit, Units.ext_iff.mpr hx⟩, ?_⟩
-  rintro ⟨x, rfl⟩
-  exact ⟨x, rfl⟩
+  sorry
+  sorry
 
 variable (K) in
 abbrev indexRealUnits : ℕ := (realUnits F K ⊔ torsion K).index
