@@ -441,37 +441,24 @@ open dirichletUnitTheorem
 
 example : regulator K / regulator F = 2 ^ rank K * (indexRealUnits F K : ℝ)⁻¹ := by
   classical
-  let e : Fin (rank K) ≃ Fin (rank F) := finCongr (units_rank_eq_units_rank F K)
-  let w₁ := (equivInfinitePlace F K).symm w₀
-  let f : {w : InfinitePlace K  // w ≠ w₁} ≃ {w : InfinitePlace F // w ≠ w₀} :=
-    (equivInfinitePlace F K).subtypeEquiv fun w ↦ by rw [not_iff_not, Equiv.eq_symm_apply]
-  have f_apply (w : {w // w ≠ w₀}) : f.symm w = (equivInfinitePlace F K).symm w.1 := rfl
-  let g := (e.trans (equivFinRank F)).trans f.symm
   have : regOfFamily (realFundSystem F K) = 2 ^ rank K * regulator F := by
-    rw [regulator_eq_regOfFamily_fundSystem, regOfFamily_eq_det _ w₁ g.symm, regOfFamily_eq_det']
+    let W₀ := (equivInfinitePlace F K).symm w₀
+    let f : {w : InfinitePlace K  // w ≠ W₀} ≃ {w : InfinitePlace F // w ≠ w₀} :=
+      (equivInfinitePlace F K).subtypeEquiv fun w ↦ by rw [not_iff_not, Equiv.eq_symm_apply]
+    let g := ((finCongr (units_rank_eq_units_rank F K)).trans (equivFinRank F)).trans f.symm
     rw [show (2 : ℝ) ^ rank K = |∏ w : {w : InfinitePlace F // w ≠ w₀}, 2| by
       rw [Finset.prod_const, abs_pow, abs_of_pos zero_lt_two, units_rank_eq_units_rank F K, rank]
       simp]
-    rw [← abs_mul]
-    rw [← Matrix.det_mul_column]
-    rw [← Matrix.det_reindex_self f]
-    congr
-    ext i w
-    simp_rw [Matrix.reindex_apply, Matrix.submatrix_apply, Matrix.of_apply, logEmbedding_component,
-      f_apply]
-    rw [show algebraMap (𝓞 K) K _ = algebraMap F K _ by rfl]
-    rw [finCongr_apply, equivInfinitePlace_symm_apply]
-    simp [f, g, e]
-  have t0 := regOfFamily_div_regulator (realFundSystem F K)
-  rw [indexRealUnits]
-  have t1 : Subgroup.closure (Set.range (realFundSystem F K)) ⊔ torsion K =
-    realUnits F K ⊔ torsion K := closure_realFundSystem_sup_torsion F K
-  rw [← t1]
-  rw [← t0]
-  rw [this]
-  rw [inv_div]
-  rw [← mul_div_assoc, mul_div_mul_comm, div_self, one_mul]
-  exact Ne.symm (NeZero.ne' (2 ^ rank K))
+    rw [regulator_eq_regOfFamily_fundSystem, regOfFamily_eq_det _ W₀ g.symm, regOfFamily_eq_det',
+      ← abs_mul, ← Matrix.det_mul_column, ← Matrix.det_reindex_self f, Matrix.reindex_apply]
+    congr; ext i w
+    rw [Matrix.submatrix_apply, Matrix.of_apply, Matrix.of_apply,
+      show f.symm w = (equivInfinitePlace F K).symm w.1 by rfl,
+      show algebraMap (𝓞 K) K _ = algebraMap F K _ by rfl, equivInfinitePlace_symm_apply]
+    simp [f, g]
+  rw [indexRealUnits, ← closure_realFundSystem_sup_torsion, ←
+    regOfFamily_div_regulator (realFundSystem F K), this, inv_div, ← mul_div_assoc,
+    mul_div_mul_comm, div_self (by positivity), one_mul]
 
 section Abelian
 
