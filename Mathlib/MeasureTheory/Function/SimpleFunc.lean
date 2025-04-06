@@ -3,6 +3,7 @@ Copyright (c) 2018 Mario Carneiro. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Mario Carneiro, Johannes Hölzl
 -/
+import Mathlib.Algebra.Order.Pi
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 
 /-!
@@ -38,6 +39,7 @@ variable {α β γ δ : Type*}
 if every preimage `f ⁻¹' {x}` is measurable, and the range is finite. This structure bundles
 a function with these properties. -/
 structure SimpleFunc.{u, v} (α : Type u) [MeasurableSpace α] (β : Type v) where
+  /-- The underlying function -/
   toFun : α → β
   measurableSet_fiber' : ∀ x, MeasurableSet (toFun ⁻¹' {x})
   finite_range' : (Set.range toFun).Finite
