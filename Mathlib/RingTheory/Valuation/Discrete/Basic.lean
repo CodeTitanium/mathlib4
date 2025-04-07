@@ -11,14 +11,14 @@ import Mathlib.RingTheory.Valuation.Basic
 # Discrete Valuations
 
 Given a linearly ordered commutative group with zero `Γ` such that `Γˣ` is nontrivial cyclic, a
-valuation `v : A → Γ` on a ring `A` is *discrete*, if `gen_lt_one Γˣ` belongs to the image. When
+valuation `v : A → Γ` on a ring `A` is *discrete*, if `genLTOne Γˣ` belongs to the image. When
 `Γ := ℤₘ₀`, the latter is equivalent to asking that `ofAdd (-1 : ℤ)` belongs to the image, in turn
 equivalent to asking that `1 : ℤ` belongs to the image of the corresponding *additive* valuation.
 
 
 ## Main Definitions
 * `IsDiscrete`: We define a `Γ`-valued valuation `v` to be discrete if `Γˣ` is cyclic and
-  `gen_lt_one Γˣ` belongs to the image of `v`
+  `genLTOne Γˣ` belongs to the image of `v`
 
 ## TODO
 * Define (pre)uniformizers for nontrivial discrete valuations.
@@ -33,9 +33,10 @@ variable {Γ : Type*} [LinearOrderedCommGroupWithZero Γ]
 
 variable {A : Type*} [Ring A] (v : Valuation A Γ)
 
-/-- A valuation `v` on a ring `A` is (normalized) discrete if it is `ℤₘ₀`-valued and
-  `ofAdd (-1 : ℤ)` belongs to the image. Note that the latter is equivalent to
-  asking that `1 : ℤ` belongs to the image of the corresponding additive valuation. -/
+/-- Given a linearly ordered commutative group with zero `Γ` such that `Γˣ` is
+nontrivial cyclic, a valuation `v : A → Γ` on a ring `A` is *discrete*, if
+`genLTOne Γˣ` belongs to the image. Note that the latter is equivalent to
+asking that `1 : ℤ` belongs to the image of the corresponding additive valuation. -/
 class IsDiscrete [IsCyclic Γˣ] [Nontrivial Γˣ] : Prop where
   exists_generator_lt_one : ∃ (γ :Γˣ), Subgroup.zpowers γ = ⊤ ∧ γ < 1 ∧ ↑γ ∈ range v
 
@@ -58,9 +59,9 @@ lemma IsDiscrete.surj (w : Valuation K Γ) [hv : IsDiscrete w] : Surjective w :=
 /-- A `ℤₘ₀`-valued valuation on a field `K` is discrete if and only if it is surjective. -/
 lemma isDiscrete_iff_surjective (w : Valuation K Γ) :
     IsDiscrete w ↔ Surjective w := by
-  refine ⟨fun _ ↦ IsDiscrete.surj w, fun h ↦ ⟨LinearOrderedCommGroup.gen_lt_one Γˣ,
+  refine ⟨fun _ ↦ IsDiscrete.surj w, fun h ↦ ⟨LinearOrderedCommGroup.genLTOne Γˣ,
     by simp, ?_, by apply h⟩⟩
-  simpa using (⊤ : Subgroup Γˣ).gen_lt_one_lt_one
+  simpa using (⊤ : Subgroup Γˣ).genLTOne_lt_one
 
 
 end Valuation
