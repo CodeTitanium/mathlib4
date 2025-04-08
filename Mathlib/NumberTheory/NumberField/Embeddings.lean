@@ -691,6 +691,11 @@ lemma isReal_comap_iff (f : k ≃+* K) {w : InfinitePlace K} :
     IsReal (w.comap (f : k →+* K)) ↔ IsReal w := by
   rw [← mk_embedding w, comap_mk, isReal_mk_iff, isReal_mk_iff, ComplexEmbedding.isReal_comp_iff]
 
+lemma isComplex_comap_iff (f : k ≃+* K) {w : InfinitePlace K} :
+    IsComplex (w.comap (f : k →+* K)) ↔ IsComplex w := by
+  rw [← mk_embedding w, comap_mk, isComplex_mk_iff, isComplex_mk_iff,
+    ComplexEmbedding.isReal_comp_iff]
+
 lemma comap_surjective [Algebra k K] [Algebra.IsAlgebraic k K] :
     Function.Surjective (comap · (algebraMap k K)) := fun w ↦
   letI := w.embedding.toAlgebra
@@ -1206,6 +1211,11 @@ theorem IsTotallyReal.mult_eq_one [h : IsTotallyReal K] (w : InfinitePlace K) :
     w.mult = 1 := by
   rw [mult, if_pos (h.isReal w)]
 
+theorem IsTotallyReal.ofRingEquiv [IsTotallyReal K] {F : Type*} [Field F] [NumberField F]
+    (f : K ≃+* F) :
+    IsTotallyReal F where
+  isReal _ := (isReal_comap_iff f).mp <| IsTotallyReal.isReal _
+
 variable (K)
 
 protected theorem IsTotallyReal.finrank [h : IsTotallyReal K] :
@@ -1250,6 +1260,11 @@ theorem nrRealPlaces_eq_zero_iff :
 theorem IsTotallyComplex.mult_eq_two [h : IsTotallyComplex K] (w : InfinitePlace K) :
     w.mult = 2 := by
   rw [mult, if_neg (not_isReal_iff_isComplex.mpr (h.isComplex w))]
+
+theorem IsTotallyComplex.ofRingEquiv [IsTotallyComplex K] {F : Type*} [Field F] [NumberField F]
+    (f : K ≃+* F) :
+    IsTotallyComplex F where
+  isComplex _ := (isComplex_comap_iff f).mp <| IsTotallyComplex.isComplex _
 
 variable (K)
 

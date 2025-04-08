@@ -2,6 +2,7 @@ import Mathlib.NumberTheory.GaussSum
 import Mathlib.NumberTheory.NumberField.Basic
 import Mathlib.NumberTheory.Cyclotomic.Gal
 import Mathlib.RingTheory.Polynomial.Cyclotomic.Roots
+import Mathlib.NumberTheory.Cyclotomic.CyclotomicCharacter
 
 set_option linter.style.header false
 
@@ -11,4 +12,3 @@ variable {K : Type*} [Field K] [CharZero K] {p : ℕ+} [hp : Fact (Nat.Prime p)]
 
 def artinMap : (ZMod p)ˣ ≃* (K ≃ₐ[ℚ] K) :=
   (IsCyclotomicExtension.autEquivPow K (Polynomial.cyclotomic.irreducible_rat p.pos)).symm
-

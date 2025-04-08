@@ -42,11 +42,6 @@ theorem IntermediateField.fixedField_bot {F : Type*} [Field F] {E : Type*} [Fiel
     fixedField (⊥ : Subgroup (E ≃ₐ[F] E)) = ⊤ :=
   IsGalois.intermediateFieldEquivSubgroup.symm.map_top
 
-theorem Complex.conj_rootsOfUnity {ζ : ℂˣ} {n : ℕ} [NeZero n] (hζ : ζ ∈ rootsOfUnity n ℂ) :
-    (starRingEnd ℂ) ζ = ζ⁻¹ := by
-  rw [← Units.mul_eq_one_iff_eq_inv, conj_mul', norm_eq_one_of_mem_rootsOfUnity hζ, ofReal_one,
-    one_pow]
-
 @[to_additive]
 theorem Subgroup.index_range {G : Type*} [Group G] {f : G →* G} [hf : f.ker.FiniteIndex] :
     f.range.index = Nat.card f.ker := by
@@ -158,6 +153,12 @@ theorem ComplexEmbedding.exists_mul_mul_symm_eq_of_isConj_isConj {φ ψ : K →+
   rw [← hf] at hψ
   have := ComplexEmbedding.IsConj_comp_of_isConj hφ f
   exact (IsConj.ext hψ this).symm
+
+-- theorem IntermediateField.finrank_eq_one_iff' {F : Type*} [Field F] {E : Type*} [Field E]
+--     [Algebra F E] {K : IntermediateField F E} :
+--     Module.finrank K E = 1 ↔ K = ⊤ := by
+
+
 
 end misc
 
@@ -480,6 +481,21 @@ theorem toto {σ : K ≃ₐ[F] K} {φ : K →+* ℂ} (hσ : IsConj φ σ) (E : I
 def maximalRealSubfield : IntermediateField F K :=
   .fixedField (Subgroup.closure {σ : K ≃ₐ[F] K | ∃ φ : K →+* ℂ, IsConj φ σ})
 
+theorem maximalRealSubfield_ne_top {φ : K →+* ℂ} {σ : K ≃ₐ[F] K}
+    (hφ : ¬ ComplexEmbedding.IsReal φ) (hσ : IsConj φ σ):
+    maximalRealSubfield F K ≠ ⊤ := by
+  by_contra h
+  simp_rw [IntermediateField.ext_iff, IntermediateField.mem_top, iff_true, maximalRealSubfield,
+    IntermediateField.mem_fixedField_iff] at h
+  have : σ ∈ Subgroup.closure {σ : K ≃ₐ[F] K | ∃ φ : K →+* ℂ, IsConj φ σ} := by
+    apply Subgroup.subset_closure
+    refine ⟨φ, hσ⟩
+  have := fun x ↦ h x σ this
+  have : σ = 1 := by
+    exact AlgEquiv.ext this
+  rw [this, isConj_one_iff] at hσ
+  exact hφ hσ
+
 instance isTotallyReal_maximalRealSubfield [NumberField F] [NumberField K] [IsTotallyReal F]
     [IsGalois F K] :
     IsTotallyReal (maximalRealSubfield F K) := by
@@ -508,7 +524,7 @@ instance isTotallyReal_maximalRealSubfield [NumberField F] [NumberField K] [IsTo
     apply Subgroup.subset_closure
     exact ⟨_, hσ⟩
 
-theorem IsTotallyReal.le_maximalRealSubfield [NumberField F] [NumberField K]
+theorem _root_.NumberField.IsTotallyReal.le_maximalRealSubfield [NumberField F] [NumberField K]
     (E : IntermediateField F K) (h : IsTotallyReal E) : E ≤ maximalRealSubfield F K := by
   rw [IsTotallyReal_iff] at h
   rw [maximalRealSubfield]
@@ -554,14 +570,21 @@ theorem isCM_maximalRealSubfield_of_forall_isConj [IsGalois F K] {τ : K ≃ₐ[
     ← Subgroup.zpowers_eq_closure, Fintype.card_zpowers, orderOf_isConj (hτ φ), if_neg]
   exact isComplex_mk_iff.mp <| IsTotallyComplex.isComplex _⟩
 
-class IsAbelianGalois (K L : Type*) [Field K] [Field L] [Algebra K L] extends
-  IsGalois K L, Std.Commutative (α := L ≃ₐ[K] L) (· * ·)
+-- class IsAbelianGalois (K L : Type*) [Field K] [Field L] [Algebra K L] extends
+--   IsGalois K L, Std.Commutative (α := L ≃ₐ[K] L) (· * ·)
 
-instance (K L : Type*) [Field K] [Field L] [Algebra K L] [IsAbelianGalois K L] :
-    CommGroup (L ≃ₐ[K] L) where
-  mul_comm := Std.Commutative.comm
+-- instance (K L : Type*) [Field K] [Field L] [Algebra K L] [IsAbelianGalois K L] :
+--     CommGroup (L ≃ₐ[K] L) where
+--   mul_comm := Std.Commutative.comm
 
-instance [IsAbelianGalois ℚ K] :
+class IsMulCommutative (M : Type*) [Mul M] : Prop where
+  is_comm : Std.Commutative (α := M) (· * ·)
+
+instance {G : Type*} [Group G] [IsMulCommutative G] :
+     CommGroup G where
+   mul_comm := IsMulCommutative.is_comm.comm
+
+instance [IsGalois ℚ K] [IsMulCommutative (K ≃ₐ[ℚ] K)]:
     IsCM (maximalRealSubfield ℚ K) K := by
   obtain ψ := (Classical.choice (inferInstance : Nonempty (K →+* ℂ)))
   obtain ⟨τ, hτ⟩ := exists_isConj ℚ ψ
@@ -571,6 +594,61 @@ instance [IsAbelianGalois ℚ K] :
     have := ComplexEmbedding.IsConj_comp_of_isConj hτ f
     rwa [mul_comm, ← AlgEquiv.aut_inv, inv_mul_cancel_left] at this
   exact isCM_maximalRealSubfield_of_forall_isConj ℚ K this
+
+example [h : IsCM F K] :
+    F ≃ₐ[ℚ] maximalRealSubfield ℚ K := by
+  let f := AlgEquiv.ofInjectiveField (algebraMap F K).toRatAlgHom
+  let F₁ : IntermediateField ℚ K := (algebraMap F K).fieldRange.toIntermediateField (by
+    intro x
+    refine RingHom.mem_fieldRange.mpr ?_
+    use x
+    simp only [map_ratCast, eq_ratCast])
+  let e : F ≃ₐ[ℚ] F₁ := by
+    unfold F₁
+    exact f
+  have h₁ : IsTotallyReal F₁ := IsTotallyReal.ofRingEquiv f.toRingEquiv
+  have h₂ : IsCM F₁ K := by
+    refine { toIsTotallyReal := h₁, toIsTotallyComplex := inferInstance, finrank_eq_two' := ?_ }
+    unfold F₁
+    rw [← h.finrank_eq_two']
+    have := Algebra.rank_eq_of_equiv_equiv f.toRingEquiv (RingEquiv.refl K) ?_
+    rw [Module.finrank, Module.finrank, this]
+    rfl
+    ext
+    simp [f]
+    rfl
+  have := h₁.le_maximalRealSubfield
+  have : F₁ = maximalRealSubfield ℚ K := by
+    refine IntermediateField.eq_of_le_of_finrank_le' this ?_
+    rw [IsCM.finrank_eq_two]
+    refine (Nat.two_le_iff (Module.finrank (maximalRealSubfield ℚ K) K)).mpr ⟨?_, ?_⟩
+    · exact Module.finrank_pos.ne'
+    · by_contra h
+      have h₁ := IntermediateField.eq_of_le_of_finrank_eq' (F := maximalRealSubfield ℚ K) (E := ⊤)
+        le_top ?_
+      obtain φ := (Classical.choice (inferInstance : Nonempty (K →+* ℂ)))
+      obtain ⟨σ, hσ⟩ := exists_isConj F φ
+      let τ := σ.restrictScalars ℚ
+      have hτ : ComplexEmbedding.IsConj φ τ := by
+        refine (IsConj.ext_iff hσ).mp ?_
+        rfl
+      have hφ : ¬ IsReal φ := by
+        rw [← @isComplex_mk_iff]
+        exact IsTotallyComplex.isComplex _
+      have :=  maximalRealSubfield_ne_top ℚ K hφ hτ
+      exact this h₁
+
+
+--      rw [(AlgEquiv.restrictScalars_injective ℚ).eq_iff] at h₁
+
+--      have := (maximalRealSubfield_ne_top ℚ ?_ hτ)
+      rw [h]
+      exact IntermediateField.finrank_top.symm
+  let g : F₁ ≃ₐ[ℚ] maximalRealSubfield ℚ K := by
+    exact IntermediateField.equivOfEq this
+  let j := e.trans g
+  exact j
+
 
 end Abelian
 
