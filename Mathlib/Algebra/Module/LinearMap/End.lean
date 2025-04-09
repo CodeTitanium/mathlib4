@@ -16,9 +16,8 @@ including the action of `Module.End` on the module we are considering endomorphi
 
 ## Main results
 
-* `Module.End.semiring` and `Module.End.ring`: the (semi)ring of endomorphisms formed by taking the
-  additive structure above with composition as multiplication.
-
+* `Module.End.instSemiring` and `Module.End.instRing`: the (semi)ring of endomorphisms formed by
+  taking the additive structure above with composition as multiplication.
 -/
 
 universe u v
