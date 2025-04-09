@@ -62,22 +62,22 @@ instance instNontrivial [Nontrivial M] : Nontrivial (Module.End R M) := by
   obtain ⟨m, ne⟩ := exists_ne (0 : M)
   exact nontrivial_of_ne 1 0 fun p => ne (LinearMap.congr_fun p m)
 
-instance monoid : Monoid (Module.End R M) where
-  mul := (· * ·)
-  one := (1 : M →ₗ[R] M)
+instance instMonoid : Monoid (Module.End R M) where
   mul_assoc _ _ _ := LinearMap.ext fun _ ↦ rfl
   mul_one := comp_id
   one_mul := id_comp
 
-instance semiring : Semiring (Module.End R M) :=
-  { AddMonoidWithOne.unary, Module.End.monoid, LinearMap.addCommMonoid with
-    mul_zero := comp_zero
-    zero_mul := zero_comp
-    left_distrib := fun _ _ _ ↦ comp_add _ _ _
-    right_distrib := fun _ _ _ ↦ add_comp _ _ _
-    natCast := fun n ↦ n • (1 : M →ₗ[R] M)
-    natCast_zero := zero_smul ℕ (1 : M →ₗ[R] M)
-    natCast_succ := fun n ↦ AddMonoid.nsmul_succ n (1 : M →ₗ[R] M) }
+instance instSemiring : Semiring (Module.End R M) where
+  __ := AddMonoidWithOne.unary
+  __ := instMonoid
+  __ := addCommMonoid
+  mul_zero := comp_zero
+  zero_mul := zero_comp
+  left_distrib := fun _ _ _ ↦ comp_add _ _ _
+  right_distrib := fun _ _ _ ↦ add_comp _ _ _
+  natCast := fun n ↦ n • (1 : M →ₗ[R] M)
+  natCast_zero := zero_smul ℕ (1 : M →ₗ[R] M)
+  natCast_succ := fun n ↦ AddMonoid.nsmul_succ n (1 : M →ₗ[R] M)
 
 /-- See also `Module.End.natCast_def`. -/
 @[simp]
@@ -87,11 +87,10 @@ theorem natCast_apply (n : ℕ) (m : M) : (↑n : Module.End R M) m = n • m :=
 theorem ofNat_apply (n : ℕ) [n.AtLeastTwo] (m : M) :
     (ofNat(n) : Module.End R M) m = ofNat(n) • m := rfl
 
-instance ring : Ring (Module.End R N₁) :=
-  { Module.End.semiring, LinearMap.addCommGroup with
-    intCast := fun z ↦ z • (1 : N₁ →ₗ[R] N₁)
-    intCast_ofNat := natCast_zsmul _
-    intCast_negSucc := negSucc_zsmul _ }
+instance instRing : Ring (Module.End R N₁) where
+  intCast z := z • (1 : N₁ →ₗ[R] N₁)
+  intCast_ofNat := natCast_zsmul _
+  intCast_negSucc := negSucc_zsmul _
 
 /-- See also `Module.End.intCast_def`. -/
 @[simp]
@@ -102,15 +101,15 @@ section
 
 variable [Monoid S] [DistribMulAction S M] [SMulCommClass R S M]
 
-instance isScalarTower :
+instance instIsScalarTower :
     IsScalarTower S (Module.End R M) (Module.End R M) :=
   ⟨smul_comp⟩
 
-instance smulCommClass [SMul S R] [IsScalarTower S R M] :
+instance instSMulCommClass [SMul S R] [IsScalarTower S R M] :
     SMulCommClass S (Module.End R M) (Module.End R M) :=
   ⟨fun s _ _ ↦ (comp_smul _ s _).symm⟩
 
-instance smulCommClass' [SMul S R] [IsScalarTower S R M] :
+instance instSMulCommClass' [SMul S R] [IsScalarTower S R M] :
     SMulCommClass (Module.End R M) S (Module.End R M) :=
   SMulCommClass.symm _ _ _
 
