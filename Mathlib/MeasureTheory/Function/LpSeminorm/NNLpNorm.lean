@@ -19,10 +19,6 @@ namespace MeasureTheory
 variable {α E : Type*} {m : MeasurableSpace α} {p : ℝ≥0∞} {q : ℝ} {μ ν : Measure α}
   [NormedAddCommGroup E] {f g h : α → E}
 
-/-- `ℒp` seminorm, equal to `0` for `p = 0`, to `(∫ ‖f a‖^p ∂μ) ^ (1/p)` for `0 < p < ∞` and to
-`essSup ‖f‖ μ` for `p = ∞`. -/
-noncomputable def nnLpNorm (f : α → E) (p : ℝ≥0∞) (μ : Measure α) : ℝ≥0 := (eLpNorm f p μ).toNNReal
-
 lemma coe_nnLpNorm_eq_eLpNorm (hf : MemLp f p μ) : nnLpNorm f p μ = eLpNorm f p μ := by
   rw [nnLpNorm, ENNReal.coe_toNNReal hf.eLpNorm_ne_top]
 
