@@ -36,7 +36,7 @@ structure NFA (α : Type u) (σ : Type v) where
   /-- Set of accepting states -/
   accept : Set σ
 
-variable {α : Type u} {σ σ' : Type v} (M : NFA α σ)
+variable {α : Type u} {σ σ' : Type v} {s t u : σ} (M : NFA α σ)
 
 namespace NFA
 
@@ -47,11 +47,15 @@ instance : Inhabited (NFA α σ) :=
 def stepSet (S : Set σ) (a : α) : Set σ :=
   ⋃ s ∈ S, M.step s a
 
-theorem mem_stepSet (s : σ) (S : Set σ) (a : α) : s ∈ M.stepSet S a ↔ ∃ t ∈ S, s ∈ M.step t a := by
+theorem mem_stepSet (S : Set σ) (a : α) : s ∈ M.stepSet S a ↔ ∃ t ∈ S, s ∈ M.step t a := by
   simp [stepSet]
 
 @[simp]
 theorem stepSet_empty (a : α) : M.stepSet ∅ a = ∅ := by simp [stepSet]
+
+@[simp]
+theorem stepSet_singleton (a : α) : M.stepSet {s} a = M.step s a := by
+  simp [stepSet]
 
 /-- `M.evalFrom S x` computes all possible paths through `M` with input `x` starting at an element
   of `S`. -/
@@ -67,9 +71,29 @@ theorem evalFrom_singleton (S : Set σ) (a : α) : M.evalFrom S [a] = M.stepSet 
   rfl
 
 @[simp]
+theorem evalFrom_cons (S : Set σ) (a : α) (x : List α) :
+    M.evalFrom S (a :: x) = M.evalFrom (M.stepSet S a) x :=
+  rfl
+
+@[simp]
 theorem evalFrom_append_singleton (S : Set σ) (x : List α) (a : α) :
     M.evalFrom S (x ++ [a]) = M.stepSet (M.evalFrom S x) a := by
   simp only [evalFrom, List.foldl_append, List.foldl_cons, List.foldl_nil]
+
+theorem evalFrom_biUnion {ι : Type*} (t : Set ι) (f : ι → Set σ) (x : List α) :
+    M.evalFrom (⋃ i ∈ t, f i) x = ⋃ i ∈ t, M.evalFrom (f i) x := by
+  induction x generalizing ι with
+  | nil => simp
+  | cons a x ih => simp [stepSet, ih]
+
+theorem evalFrom_eq_biUnion (S : Set σ) (x : List α) :
+    M.evalFrom S x = ⋃ s ∈ S, M.evalFrom {s} x := by
+  simp [← evalFrom_biUnion]
+
+theorem mem_evalFrom_iff_exists {s : σ} {S : Set σ} {x : List α} :
+    s ∈ M.evalFrom S x ↔ ∃ t ∈ S, s ∈ M.evalFrom {t} x := by
+  rw [evalFrom_eq_biUnion]
+  simp
 
 /-- `M.eval x` computes all possible paths though `M` with input `x` starting at an element of
   `M.start`. -/
@@ -93,6 +117,63 @@ def accepts : Language α := {x | ∃ S ∈ M.accept, S ∈ M.eval x}
 
 theorem mem_accepts {x : List α} : x ∈ M.accepts ↔ ∃ S ∈ M.accept, S ∈ M.evalFrom M.start x := by
   rfl
+
+/-- `M.IsPath` represents a traversal in `M` from a start state to an end state by following a list
+of transitions in order. -/
+@[mk_iff]
+inductive IsPath : σ → σ → List α → Prop
+  | nil (s : σ) : IsPath s s []
+  | cons (t s u : σ) (a : α) (x : List α) :
+      t ∈ M.step s a → IsPath t u x → IsPath s u (a :: x)
+
+@[simp]
+theorem isPath_nil : M.IsPath s t [] ↔ s = t := by
+  rw [isPath_iff]
+  simp [eq_comm]
+
+alias ⟨IsPath.eq_of_nil, _⟩ := isPath_nil
+
+@[simp]
+theorem isPath_singleton {a : α} : M.IsPath s t [a] ↔ t ∈ M.step s a where
+  mp := by
+    rintro (_ | ⟨_, _, _, _, _, _, ⟨⟩⟩)
+    assumption
+  mpr := by tauto
+
+alias ⟨_, IsPath.singleton⟩ := isPath_singleton
+
+theorem isPath_cons_iff (a : α) (x : List α) :
+    M.IsPath s u (a :: x) ↔ ∃ t ∈ M.step s a, M.IsPath t u x := by
+  rw [isPath_iff]
+  simp
+
+theorem isPath_append {x y} :
+    M.IsPath s u (x ++ y) ↔ ∃ t, M.IsPath s t x ∧ M.IsPath t u y where
+  mp := by
+    induction' x with x a ih generalizing s
+    · rw [List.nil_append]
+      tauto
+    · rintro (_ | ⟨t, _, _, _, _, _, h⟩)
+      apply ih at h
+      tauto
+  mpr := by
+    intro ⟨t, hx, _⟩
+    induction x generalizing s <;> cases hx <;> tauto
+
+theorem mem_evalFrom_iff_exists_path {s₁ s₂ : σ} {x : List α} :
+    s₂ ∈ M.evalFrom {s₁} x ↔ M.IsPath s₁ s₂ x := by
+  induction x generalizing s₁ with
+  | nil =>
+    simp
+    tauto
+  | cons a x ih =>
+    rw [isPath_cons_iff, evalFrom_cons, mem_evalFrom_iff_exists]
+    simp [← ih]
+
+theorem mem_accepts_iff_exists_path {x : List α} :
+    x ∈ M.accepts ↔ ∃ s₁ s₂, s₁ ∈ M.start ∧ s₂ ∈ M.accept ∧ M.IsPath s₁ s₂ x := by
+  simp [mem_accepts, M.mem_evalFrom_iff_exists (S := M.start), mem_evalFrom_iff_exists_path]
+  tauto
 
 /-- `M.toDFA` is a `DFA` constructed from an `NFA` `M` using the subset construction. The
   states is the type of `Set`s of `M.state` and the step function is `M.stepSet`. -/
