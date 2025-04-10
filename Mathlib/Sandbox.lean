@@ -3,6 +3,37 @@ import Mathlib.RingTheory.RootsOfUnity.Complex
 
 set_option linter.style.header false
 
+section IntermediateField
+
+
+variable (K : Type*) [Field K] [CharZero K]
+
+example : Subfield K ≃o IntermediateField ℚ K where
+  toFun := by
+    intro F
+    refine F.toIntermediateField ?_
+    intro _
+    exact SubfieldClass.ratCast_mem F _
+  invFun := by
+    intro E
+    exact E.toSubfield
+  left_inv := by
+    intro F
+    ext
+    simp [Subfield.toIntermediateField ]
+  right_inv := by
+    intro E
+    simp
+    exact rfl
+  map_rel_iff' := by
+    intro E F
+    dsimp
+    rw?
+
+end IntermediateField
+
+#exit
+
 section misc
 
 open Polynomial
