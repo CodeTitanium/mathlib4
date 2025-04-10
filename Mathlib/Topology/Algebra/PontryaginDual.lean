@@ -91,7 +91,7 @@ noncomputable instance instMonoidHomClass : MonoidHomClass (PontryaginDual A) A 
   ContinuousMonoidHom.instMonoidHomClass
 
 /-- A discrete monoid has compact Pontryagin dual. -/
-instance [DiscreteTopology M] : CompactSpace (PontryaginDual M) :=
+instance [DiscreteTopology A] : CompactSpace (PontryaginDual A) :=
   ContinuousMonoidHom.isClosedEmbedding_coe.compactSpace
 
 /-- `PontryaginDual` is a contravariant functor. -/
