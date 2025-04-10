@@ -53,7 +53,6 @@ theorem map_specializes (f : C(α, β)) {x y : α} (h : x ⤳ y) : f x ⤳ f y :
 section DiscreteTopology
 variable [DiscreteTopology α]
 
-variable (α β) in
 /--
 The continuous functions from `α` to `β` are the same as the plain functions when `α` is discrete.
 -/
@@ -64,8 +63,8 @@ def equivFnOfDiscrete : C(α, β) ≃ (α → β) :=
     fun _ => by ext; rfl,
     fun _ => by ext; rfl⟩
 
-@[simp] lemma coe_equivFnOfDiscrete (f : C(α, β)) : equivFnOfDiscrete α β f = f := rfl
-@[simp] lemma coe_equivFnOfDiscrete_symm (f : α → β) : (equivFnOfDiscrete α β).symm f = f := rfl
+@[simp] lemma coe_equivFnOfDiscrete (f : C(α, β)) : equivFnOfDiscrete f = f := rfl
+@[simp] lemma coe_equivFnOfDiscrete_symm (f : α → β) : equivFnOfDiscrete.symm f = f := rfl
 
 end DiscreteTopology
 
