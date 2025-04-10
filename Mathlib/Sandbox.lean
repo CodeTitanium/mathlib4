@@ -5,34 +5,23 @@ set_option linter.style.header false
 
 section IntermediateField
 
-
 variable (K : Type*) [Field K] [CharZero K]
 
-example : Subfield K ≃o IntermediateField ℚ K where
-  toFun := by
-    intro F
-    refine F.toIntermediateField ?_
-    intro _
-    exact SubfieldClass.ratCast_mem F _
-  invFun := by
-    intro E
-    exact E.toSubfield
-  left_inv := by
-    intro F
-    ext
-    simp [Subfield.toIntermediateField ]
-  right_inv := by
-    intro E
-    simp
-    exact rfl
-  map_rel_iff' := by
-    intro E F
-    dsimp
-    rw?
+def SubfieldEquivRatIntermediateField : Subfield K ≃o IntermediateField ℚ K where
+  toFun F := F.toIntermediateField fun _ ↦ SubfieldClass.ratCast_mem F _
+  invFun E := E.toSubfield
+  left_inv _ := by ext; simp [Subfield.toIntermediateField ]
+  right_inv _ := rfl
+  map_rel_iff' := Iff.rfl
+
+theorem mem_SubfieldEquivRatIntermediateField_iff (S : Subfield K) (x : K) :
+    x ∈ S ↔ x ∈ SubfieldEquivRatIntermediateField K S := Iff.rfl
+
+@[simps!]
+def RingEquiv.subfieldEquivRatIntermediateField (S : Subfield K) :
+    S ≃+* SubfieldEquivRatIntermediateField K S := .refl S
 
 end IntermediateField
-
-#exit
 
 section misc
 
