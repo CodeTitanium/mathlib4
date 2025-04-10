@@ -224,6 +224,9 @@ theorem coinduced_eq (h : X ≃ₜ Y) : TopologicalSpace.coinduced h ‹_› = �
 
 theorem isEmbedding (h : X ≃ₜ Y) : IsEmbedding h := ⟨h.isInducing, h.injective⟩
 
+protected theorem discreteTopology [DiscreteTopology X] (h : X ≃ₜ Y) :
+  DiscreteTopology Y := h.symm.isEmbedding.discreteTopology
+
 @[deprecated (since := "2024-10-26")]
 alias embedding := isEmbedding
 
