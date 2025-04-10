@@ -255,6 +255,20 @@ instance [T3Space Y] : T3Space C(X, Y) := inferInstance
 
 end Ev
 
+section DiscreteTopology
+variable [DiscreteTopology X]
+
+/-- The continuous functions from `X` to `Y` are the same as the plain functions when `X` is
+discrete. -/
+def homeoFnOfDiscrete : C(X, Y) ≃ₜ (X → Y) where
+  __ := equivFnOfDiscrete X Y
+  continuous_invFun :=
+    continuous_compactOpen.2 fun K hK U hU ↦ isOpen_set_pi hK.finite_of_discrete fun _ _ ↦ hU
+
+lemma isHomeomorph_coe : IsHomeomorph ((⇑) : C(X, Y) → X → Y) := homeoFnOfDiscrete.isHomeomorph
+
+end DiscreteTopology
+
 section InfInduced
 
 /-- For any subset `s` of `X`, the restriction of continuous functions to `s` is continuous

@@ -90,6 +90,10 @@ noncomputable instance instContinuousMapClass : ContinuousMapClass (PontryaginDu
 noncomputable instance instMonoidHomClass : MonoidHomClass (PontryaginDual A) A Circle :=
   ContinuousMonoidHom.instMonoidHomClass
 
+/-- A discrete monoid has compact Pontryagin dual. -/
+instance [DiscreteTopology M] : CompactSpace (PontryaginDual M) :=
+  ContinuousMonoidHom.isClosedEmbedding_coe.compactSpace
+
 /-- `PontryaginDual` is a contravariant functor. -/
 noncomputable def map (f : A →ₜ* B) :
     (PontryaginDual B) →ₜ* (PontryaginDual A) :=
