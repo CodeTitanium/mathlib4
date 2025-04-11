@@ -138,13 +138,14 @@ def accepts : Language α := {x | ∃ S ∈ M.accept, S ∈ M.eval x}
 theorem mem_accepts {x : List α} : x ∈ M.accepts ↔ ∃ S ∈ M.accept, S ∈ M.evalFrom M.start x := by
   rfl
 
-/-- `M.Path` represents a traversal in `M` from a start state to an end state by following a list
-of transitions in order. -/
+/-- `M.Path` represents a concrete path through the NFA from a start state to an end state
+for a particular word. -/
 inductive Path : σ → σ → List α → Type (max u v)
   | nil (s : σ) : Path s s []
   | cons (t s u : σ) (a : α) (x : List α) :
       t ∈ M.step s a → Path t u x → Path s u (a :: x)
 
+/-- Knowing that a path must exist, construct one particular example. -/
 noncomputable def path_of_evalFrom {s t : σ} {x : List α} (h : t ∈ M.evalFrom {s} x) :
     M.Path s t x :=
   match x with
@@ -164,6 +165,7 @@ theorem evalFrom_of_path {s t : σ} {x : List α} (h : M.Path s t x) : t ∈ M.e
     simp [M.mem_evalFrom_iff_exists (S := M.step _ _)]
     tauto
 
+/-- Knowing that the NFA accepts a word, choose a concrete start state, path, and accept state. -/
 noncomputable def path_of_accepts {x : List α} (h : x ∈ M.accepts) :
     (s t : σ) × M.Path s t x ×' s ∈ M.start ∧ t ∈ M.accept :=
   have ⟨t, ht, h⟩ := Classical.indefiniteDescription _ (M.mem_accepts.1 h)
@@ -179,6 +181,7 @@ theorem accepts_of_path {s t : σ} {x : List α} (p : M.Path s t x)
 section
 variable {M}
 
+/-- Append two paths. -/
 def Path.append {s t u : σ} {x y : List α} (p : M.Path s t x) (q : M.Path t u y) :
     M.Path s u (x ++ y) :=
   match p with
@@ -186,6 +189,7 @@ def Path.append {s t u : σ} {x y : List α} (p : M.Path s t x) (q : M.Path t u 
   | cons s' _ _ _ _ h p' =>
     cons s' _ _ _ _ h (p'.append q)
 
+/-- Split `p` at the point just after it has matched `x`. -/
 def Path.splitAfter {s u : σ} {y : List α} (x : List α) (p : M.Path s u (x ++ y)) :
     (t : σ) × M.Path s t x × M.Path t u y :=
   match x, p with
@@ -194,13 +198,14 @@ def Path.splitAfter {s u : σ} {y : List α} (x : List α) (p : M.Path s u (x ++
     let ⟨t, p', q⟩ := p.splitAfter x
     ⟨t, cons s' _ _ _ _ h p', q⟩
 
-/-- Set of states visited by a path -/
+/-- Set of states visited by a path. -/
 @[simp]
 def Path.supp [DecidableEq σ] {s t : σ} {x : List α} (p : M.Path s t x) : Finset σ :=
   match p with
   | nil s => {s}
   | cons _ _ _ _ _ _ p => {s} ∪ p.supp
 
+/-- Split `p` at the point where `t` occurs in `p.supp`. -/
 def Path.split_of_mem_supp [DecidableEq σ] {x : List α} {s t u : σ}
     (p : M.Path s u x) (h : t ∈ p.supp) :
     (x₁ x₂ : List α) × M.Path s t x₁ × M.Path t u x₂ ×' x₁ ++ x₂ = x :=
@@ -214,6 +219,8 @@ def Path.split_of_mem_supp [DecidableEq σ] {x : List α} {s t u : σ}
       have ⟨x₁, x₂, p', q, e'⟩ := p.split_of_mem_supp this
       ⟨a :: x₁, x₂, cons s' _ _ _ _ h' p', q, e' ▸ rfl⟩
 
+/-- Knowing that the length of the word guarantees that a state will repeat
+somewhere along the path, find one such state and split the path around it. -/
 def Path.split_of_supp_le_length [DecidableEq σ] {x : List α} {s u : σ}
     (p : M.Path s u x) (h : p.supp.card ≤ x.length) :
     (t : σ) × (x₁ x₂ x₃ : List α) × M.Path s t x₁ × M.Path t t x₂ × M.Path t u x₃ ×'
@@ -230,6 +237,7 @@ def Path.split_of_supp_le_length [DecidableEq σ] {x : List α} {s u : σ}
       have ⟨t, x₁, x₂, x₃, p₁, p₂, p₃, e, hne⟩ := p.split_of_supp_le_length hle
       ⟨t, a :: x₁, x₂, x₃, cons s₁ _ _ _ _ h₁ p₁, p₂, p₃, e ▸ rfl, hne⟩
 
+/-- Repeat a looping path to construct a path for `x∗`. -/
 noncomputable def Path.of_mem_kstar {x x' : List α} {s : σ} (p : M.Path s s x)
     (h : x' ∈ ({x}∗ : Language α)) : M.Path s s x' := by
   rw [Language.mem_kstar] at h
