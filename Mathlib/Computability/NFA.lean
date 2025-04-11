@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Fox Thomson
 -/
 import Mathlib.Computability.DFA
-import Mathlib.Data.Fintype.Powerset
 
 /-!
 # Nondeterministic Finite Automata
@@ -177,7 +176,9 @@ theorem accepts_of_path {s t : σ} {x : List α} (p : M.Path s t x)
   simp [mem_accepts, M.mem_evalFrom_iff_exists (S := M.start)]
   tauto
 
-variable {M} in
+section
+variable {M}
+
 def Path.append {s t u : σ} {x y : List α} (p : M.Path s t x) (q : M.Path t u y) :
     M.Path s u (x ++ y) :=
   match p with
@@ -185,7 +186,6 @@ def Path.append {s t u : σ} {x y : List α} (p : M.Path s t x) (q : M.Path t u 
   | cons s' _ _ _ _ h p' =>
     cons s' _ _ _ _ h (p'.append q)
 
-variable {M} in
 def Path.splitAfter {s u : σ} {y : List α} (x : List α) (p : M.Path s u (x ++ y)) :
     (t : σ) × M.Path s t x × M.Path t u y :=
   match x, p with
@@ -194,7 +194,6 @@ def Path.splitAfter {s u : σ} {y : List α} (x : List α) (p : M.Path s u (x ++
     let ⟨t, p', q⟩ := p.splitAfter x
     ⟨t, cons s' _ _ _ _ h p', q⟩
 
-variable {M} in
 /-- Set of states visited by a path -/
 @[simp]
 def Path.supp [DecidableEq σ] {s t : σ} {x : List α} (p : M.Path s t x) : Finset σ :=
@@ -202,7 +201,6 @@ def Path.supp [DecidableEq σ] {s t : σ} {x : List α} (p : M.Path s t x) : Fin
   | nil s => {s}
   | cons _ _ _ _ _ _ p => {s} ∪ p.supp
 
-variable {M} in
 def Path.split_of_mem_supp [DecidableEq σ] {x : List α} {s t u : σ}
     (p : M.Path s u x) (h : t ∈ p.supp) :
     (x₁ x₂ : List α) × M.Path s t x₁ × M.Path t u x₂ ×' x₁ ++ x₂ = x :=
@@ -216,7 +214,6 @@ def Path.split_of_mem_supp [DecidableEq σ] {x : List α} {s t u : σ}
       have ⟨x₁, x₂, p', q, e'⟩ := p.split_of_mem_supp this
       ⟨a :: x₁, x₂, cons s' _ _ _ _ h' p', q, e' ▸ rfl⟩
 
-variable {M} in
 def Path.split_of_supp_le_length [DecidableEq σ] {x : List α} {s u : σ}
     (p : M.Path s u x) (h : p.supp.card ≤ x.length) :
     (t : σ) × (x₁ x₂ x₃ : List α) × M.Path s t x₁ × M.Path t t x₂ × M.Path t u x₃ ×'
@@ -233,7 +230,6 @@ def Path.split_of_supp_le_length [DecidableEq σ] {x : List α} {s u : σ}
       have ⟨t, x₁, x₂, x₃, p₁, p₂, p₃, e, hne⟩ := p.split_of_supp_le_length hle
       ⟨t, a :: x₁, x₂, x₃, cons s₁ _ _ _ _ h₁ p₁, p₂, p₃, e ▸ rfl, hne⟩
 
-variable {M} in
 noncomputable def Path.of_mem_kstar {x x' : List α} {s : σ} (p : M.Path s s x)
     (h : x' ∈ ({x}∗ : Language α)) : M.Path s s x' := by
   rw [Language.mem_kstar] at h
@@ -248,6 +244,8 @@ noncomputable def Path.of_mem_kstar {x x' : List α} {s : σ} (p : M.Path s s x)
     apply p.append
     apply ih
     tauto
+
+end
 
 theorem pumping_lemma [Fintype σ] [DecidableEq σ] {x : List α} (hx : x ∈ M.accepts)
     (hlen : Fintype.card σ ≤ x.length) :
