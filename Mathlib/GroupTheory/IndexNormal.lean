@@ -46,7 +46,7 @@ theorem normal_of_index_eq_minFac_card (hHp : H.index = (Nat.card G).minFac) :
   by_cases hG1 : Nat.card G = 1
   · rw [hG1, minFac_one] at hHp
     exact normal_of_index_eq_one hHp
-  suffices H.normalCore.relindex H = 1 by
+  suffices H.normalCore.relIndex H = 1 by
     convert H.normalCore_normal
     exact le_antisymm (relindex_eq_one.mp this) (normalCore_le H)
   have : Finite G := finite_of_card_ne_zero hG0

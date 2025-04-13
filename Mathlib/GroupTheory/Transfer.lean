@@ -310,7 +310,7 @@ theorem normalizer_le_centralizer (hP : IsCyclic P) : P.normalizer ≤ centraliz
     rw [Subsingleton.elim P.normalizer (centralizer P)]
   have := Fact.mk (Nat.minFac_prime hn)
   have key := card_dvd_of_injective _ (QuotientGroup.kerLift_injective P.normalizerMonoidHom)
-  rw [normalizerMonoidHom_ker, ← index, ← relindex] at key
+  rw [normalizerMonoidHom_ker, ← index, ← relIndex] at key
   refine relindex_eq_one.mp (Nat.eq_one_of_dvd_coprimes ?_ dvd_rfl key)
   obtain ⟨k, hk⟩ := P.2.exists_card_eq
   rcases eq_zero_or_pos k with h0 | h0

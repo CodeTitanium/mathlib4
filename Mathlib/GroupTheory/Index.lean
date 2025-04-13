@@ -314,7 +314,7 @@ theorem index_dvd_card : H.index ∣ Nat.card G :=
   ⟨Nat.card H, H.index_mul_card.symm⟩
 
 @[to_additive]
-theorem relindex_dvd_card : H.relindex K ∣ Nat.card K :=
+theorem relindex_dvd_card : H.relIndex K ∣ Nat.card K :=
   (H.subgroupOf K).index_dvd_card
 
 variable {H K L}
