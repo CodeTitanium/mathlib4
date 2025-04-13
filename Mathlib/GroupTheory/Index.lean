@@ -591,6 +591,11 @@ class _root_.AddSubgroup.FiniteIndex {G : Type*} [AddGroup G] (H : AddSubgroup G
   /-- The additive subgroup has finite index -/
   index_ne_zero : H.index ≠ 0
 
+@[deprecated (since := "2025-04-13")]
+alias _root_AddSubgroup.FiniteIndex.finiteIndex := AddSubgroup.FiniteIndex.index_ne_zero
+
+@[deprecated (since := "2025-04-13")] alias FiniteIndex.finiteIndex := FiniteIndex.index_ne_zero
+
 /-- A finite index subgroup has finite quotient. -/
 @[to_additive "A finite index subgroup has finite quotient"]
 noncomputable def fintypeQuotientOfFiniteIndex [FiniteIndex H] : Fintype (G ⧸ H) :=
