@@ -613,17 +613,15 @@ protected theorem tsum_biUnion' {ι : Type*} {S : Set ι} {f : α → ENNReal} {
   symm
   fapply Equiv.tsum_eq_tsum_of_support
   · exact Set.BijOn.equiv
-      (fun ⟨⟨x, _⟩, ⟨y, _⟩⟩ ↦ ⟨y, ⟨t x, by simp_all; use x; simp_all⟩⟩)
+      (fun ⟨⟨x, hx⟩, ⟨y, hy⟩⟩ ↦ ⟨y, ⟨t x, mem_range.mpr ⟨x, by simp_all⟩, hy⟩⟩)
       ⟨fun _ _ ↦ by simp_all, by
         constructor
-        · intro ⟨x, x'⟩ _ ⟨y, y'⟩ _ _
+        · intro ⟨x, x'⟩ _ ⟨y, y'⟩ _ h'
           simp_all only [mem_support, ne_eq, Subtype.mk.injEq, not_false_eq_true]
-          ext <;> try assumption
-          by_contra q
-          have h₁ : {x'.val} ⊆ t x := by simp
-          have h₂ : {x'.val} ⊆ t y := by simp_all
-          absurd h x.coe_prop y.coe_prop q h₁ h₂
-          simp
+          ext
+          · by_contra q
+            exact h x.coe_prop y.coe_prop q (by simp : {x'.val} ⊆ t x) (by simp_all) h'.symm
+          · assumption
         · intro ⟨_, _⟩ _
           simp_all [Set.mem_iUnion.mp]⟩
   · simp only [Subtype.forall, mem_support, ne_eq]
