@@ -48,10 +48,10 @@ theorem normal_of_index_eq_minFac_card (hHp : H.index = (Nat.card G).minFac) :
     exact normal_of_index_eq_one hHp
   suffices H.normalCore.relIndex H = 1 by
     convert H.normalCore_normal
-    exact le_antisymm (relindex_eq_one.mp this) (normalCore_le H)
+    exact le_antisymm (relIndex_eq_one.mp this) (normalCore_le H)
   have : Finite G := finite_of_card_ne_zero hG0
   have index_ne_zero : H.index ≠ 0 := index_ne_zero_of_finite
-  rw [← mul_left_inj' index_ne_zero, one_mul, relindex_mul_index H.normalCore_le]
+  rw [← mul_left_inj' index_ne_zero, one_mul, relIndex_mul_index H.normalCore_le]
   have hp : Nat.Prime H.index := hHp ▸ minFac_prime hG1
   have h : H.normalCore.index ∣ H.index ! := by
     rw [normalCore_eq_ker, index_ker, index_eq_card, ← Nat.card_perm]
