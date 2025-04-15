@@ -3,6 +3,53 @@ import Mathlib.RingTheory.RootsOfUnity.Complex
 
 set_option linter.style.header false
 
+section maximalRealSubfield
+
+open NumberField
+
+variable (K : Type*) [Field K] [NumberField K]
+
+def maximalRealSubfield : Subfield K where
+  carrier := {x | ∀ φ : K →+* ℂ, star (φ x) = φ x}
+  mul_mem' := by
+    intro _ _ hx hy _
+    rw [map_mul, star_mul, hx, hy, mul_comm]
+  one_mem' := by simp
+  add_mem' := by
+    intro x y hx hy φ
+    rw [map_add, star_add, hx, hy]
+  zero_mem' := by simp
+  neg_mem' := by simp
+  inv_mem' := by simp
+
+example : IsTotallyReal (maximalRealSubfield K) := by
+  refine { isReal := ?_ }
+  intro w
+  rw [InfinitePlace.isReal_iff, ComplexEmbedding.isReal_iff]
+  ext ⟨x, hx⟩
+  rw [RingHom.star_apply]
+  letI := w.embedding.toAlgebra
+  let φ : K →+* ℂ := (IsAlgClosed.lift (M := ℂ) (R := (maximalRealSubfield K))).toRingHom
+  have hφ : w.embedding ⟨x, hx⟩ = φ x :=
+    (RingHom.congr_fun (AlgHom.comp_algebraMap_of_tower (maximalRealSubfield K)
+      IsAlgClosed.lift) ⟨x, hx⟩).symm
+  rw [hφ, hx]
+
+example (E : Subfield K) [h : IsTotallyReal E] :
+    E ≤ maximalRealSubfield K := by
+  intro x hx
+  intro φ
+  let ψ := φ.comp E.subtype
+  have : φ x = ψ ⟨x, hx⟩ := by exact rfl
+  rw [this]
+  rw [isTotallyReal_iff] at h
+  have := h (InfinitePlace.mk ψ)
+  rw [InfinitePlace.isReal_mk_iff] at this
+  rw [ComplexEmbedding.isReal_iff] at this
+  exact RingHom.congr_fun this _
+
+end maximalRealSubfield
+
 section IntermediateField
 
 variable (K : Type*) [Field K] [CharZero K]
