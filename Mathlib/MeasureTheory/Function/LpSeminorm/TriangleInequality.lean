@@ -149,6 +149,17 @@ theorem eLpNorm_sum_le {ι} {f : ι → α → E} {s : Finset ι}
     (fun f => AEStronglyMeasurable f μ) eLpNorm_zero (fun _f _g hf hg => eLpNorm_add_le hf hg hp1)
     (fun _f _g hf hg => hf.add hg) _ hfs
 
+-- TODO: The following works except for the fact that we don't have `Module ℚ≥0 ℝ≥0∞`
+-- open scoped BigOperators in
+-- lemma eLpNorm_expect_le [Module ℚ≥0 E] [NormedSpace ℝ E] {ι : Type*} {s : Finset ι}
+--     {f : ι → α → E} (hf : ∀ i ∈ s, MemLp (f i) p μ) (hp : 1 ≤ p) :
+--    eLpNorm (𝔼 i ∈ s, f i) p μ ≤ 𝔼 i ∈ s, eLpNorm (f i) p μ  :=  by
+--   obtain rfl | hs := s.eq_empty_or_nonempty
+--   · simp
+--   refine (le_inv_smul_iff_of_pos <| by positivity).2 ?_
+--   rw [Nat.cast_smul_eq_nsmul, ← eLpNorm_nsmul, Finset.card_smul_expect]
+--   exact eLpNorm_sum_le hf hp
+
 theorem MemLp.add {f g : α → E} (hf : MemLp f p μ) (hg : MemLp g p μ) : MemLp (f + g) p μ :=
   ⟨AEStronglyMeasurable.add hf.1 hg.1, eLpNorm_add_lt_top hf hg⟩
 

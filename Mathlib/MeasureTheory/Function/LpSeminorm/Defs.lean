@@ -145,8 +145,13 @@ lemma eLpNorm_nnreal_pow_eq_lintegral {f : α → ε} {p : ℝ≥0} (hp : p ≠ 
   simp [eLpNorm_eq_eLpNorm' (by exact_mod_cast hp) ENNReal.coe_ne_top,
     lintegral_rpow_enorm_eq_rpow_eLpNorm' ((NNReal.coe_pos.trans pos_iff_ne_zero).mpr hp)]
 
-/-- `ℒp` seminorm, equal to `0` for `p = 0`, to `(∫ ‖f a‖^p ∂μ) ^ (1/p)` for `0 < p < ∞` and to
-`essSup ‖f‖ μ` for `p = ∞`. -/
+/-- `ℝ≥0`-valued `ℒp` seminorm, equal to `0` for `p = 0`, to `(∫ ‖f a‖^p ∂μ) ^ p⁻¹` for `0 < p < ∞
+and to `essSup ‖f‖ μ` for `p = ∞`.
+
+This is well-defined only if `MemLp f p μ`. Otherwise, it equals `0`.
+
+This version is useful when one wants to input the `ℒp` norm where a real number is expected,
+like an exponent. -/
 noncomputable def nnLpNorm (f : α → E) (p : ℝ≥0∞) (μ : Measure α) : ℝ≥0 := (eLpNorm f p μ).toNNReal
 
 end Lp
