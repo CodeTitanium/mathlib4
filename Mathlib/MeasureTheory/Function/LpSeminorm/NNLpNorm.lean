@@ -167,12 +167,12 @@ lemma nnLpNorm_sub_le_nnLpNorm_sub_add_nnLpNorm_sub (hf : MemLp f p μ) (hg : Me
 
 lemma nnLpNorm_sum_le {ι : Type*} {s : Finset ι} {f : ι → α → E} (hf : ∀ i ∈ s, MemLp (f i) p μ)
     (hp : 1 ≤ p) : nnLpNorm (∑ i ∈ s, f i) p μ ≤ ∑ i ∈ s, nnLpNorm (f i) p μ := by
-  unfold nnLpNorm
-  rw [← ENNReal.toNNReal_sum fun i hi ↦ (hf _ hi).eLpNorm_ne_top]
-  gcongr
-  exacts [ENNReal.sum_ne_top.2 fun i hi ↦ (hf _ hi).eLpNorm_ne_top,
-    eLpNorm_sum_le (fun i hi ↦ (hf _ hi).aestronglyMeasurable) hp]
+  rw [← ENNReal.coe_le_coe, coe_nnLpNorm_eq_eLpNorm (memLp_finset_sum' s hf),
+    ENNReal.coe_finset_sum]
+  exact (eLpNorm_sum_le (fun i hi ↦ (hf _ hi).aestronglyMeasurable) hp).trans_eq <|
+    Finset.sum_congr rfl fun i hi ↦ (coe_nnLpNorm_eq_eLpNorm (hf i hi)).symm
 
+-- TODO: Golf using `eLpNorm_expect_le` once it exists
 lemma nnLpNorm_expect_le [Module ℚ≥0 E] [NormedSpace ℝ E] {ι : Type*} {s : Finset ι}
     {f : ι → α → E} (hf : ∀ i ∈ s, MemLp (f i) p μ) (hp : 1 ≤ p) :
     nnLpNorm (𝔼 i ∈ s, f i) p μ ≤ 𝔼 i ∈ s, nnLpNorm (f i) p μ  :=  by
