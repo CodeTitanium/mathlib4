@@ -423,6 +423,7 @@ lemma equation_add_iff (x₁ x₂ y₁ ℓ : R) : W'.Equation (W'.addX x₁ x₂
   rw [Equation, negAddY, addPolynomial, linePolynomial, polynomial]
   eval_simp
 
+-- TODO rename nonsingular_negAddY_of_eval_derivative_ne_zero
 lemma nonsingular_negAdd_of_eval_derivative_ne_zero {x₁ x₂ y₁ ℓ : R}
     (hx' : W'.Equation (W'.addX x₁ x₂ ℓ) (W'.negAddY x₁ x₂ y₁ ℓ))
     (hx : (W'.addPolynomial x₁ y₁ ℓ).derivative.eval (W'.addX x₁ x₂ ℓ) ≠ 0) :
