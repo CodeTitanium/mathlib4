@@ -9,15 +9,18 @@ theorem AlgHom.card_le (F K : Type*) [Field F] [Field K] [Algebra F K] [FiniteDi
     Fintype.card (K →ₐ[F] K) ≤ Module.finrank F K :=
   Module.finrank_linearMap_self F K K ▸ finrank_algHom F K
 
+#find_home AlgHom.card_le
+
 theorem AlgEquiv.card_le (F K : Type*) [Field F] [Field K] [Algebra F K] [FiniteDimensional F K] :
     Fintype.card (K ≃ₐ[F] K) ≤ Module.finrank F K :=
   Fintype.ofEquiv_card (algEquivEquivAlgHom F K).toEquiv.symm ▸ AlgHom.card_le F K
 
-class IsQuadraticExtension (F K : Type*) [Field F] [Field K]
+class IsQuadraticExtension (F K : Type*) [CommSemiring F] [Semiring K]
   extends Algebra F K where
   finrank_eq_two : Module.finrank F K = 2
 
-instance (F K : Type*) [Field F] [Field K] [h : IsQuadraticExtension F K] :
+#find_home! IsQuadraticExtension
+instance (F K : Type*) [Field F] [CommRing K] [h : IsQuadraticExtension F K] :
     FiniteDimensional F K :=
   Module.finite_of_finrank_eq_succ h.finrank_eq_two
 
@@ -36,6 +39,18 @@ instance (F K : Type*) [Field F] [Field K] [h : IsQuadraticExtension F K] :
 end IsQuadraticExtension
 
 #exit
+
+I am sorry but I don't think I understand what you mean. I see two situations:
+1) General case of CM-extension `K/F`: in this case, the required hypothesis would be
+`[IsTotallyComplex K] [IsTotallyReal F] [IsQuadraticExtension F K]`.
+2) The class `IsCM` which implies that `[IsTotallyComplex K] [IsTotallyReal (maximalRealSubfield K)]
+[IsQuadraticExtension (maximalRealSubfield K) K]` and thus all the results in (1) can be used
+seemlessly if `[IsCM K]` for `F = maximalRealSubfield K`
+And somewhere the proofs that `[IsTotallyComplex K] [IsTotallyReal F] [IsQuadraticExtension F K]` =>
+  `F ≃+* maximalRealSubfield K` and thus `[IsTotallyComplex K] [IsTotallyReal F]
+[IsQuadraticExtension F K]` => `[IsCM K]`.
+
+I do not see a situation where it would be necessary to have `IsCM K` in 1)
 
 section maximalRealSubfield
 
