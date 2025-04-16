@@ -2263,8 +2263,13 @@ import Mathlib.CategoryTheory.Monoidal.Bimon_
 import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 import Mathlib.CategoryTheory.Monoidal.Braided.Opposite
 import Mathlib.CategoryTheory.Monoidal.Braided.Reflection
+import Mathlib.CategoryTheory.Monoidal.Cartesian.CommGrp
+import Mathlib.CategoryTheory.Monoidal.Cartesian.CommMon_
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Comon_
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Grp_
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Mon_
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Over.Grp_
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Over.Mon_
 import Mathlib.CategoryTheory.Monoidal.Category
 import Mathlib.CategoryTheory.Monoidal.Center
 import Mathlib.CategoryTheory.Monoidal.CoherenceLemmas
@@ -2306,7 +2311,6 @@ import Mathlib.CategoryTheory.Monoidal.Tor
 import Mathlib.CategoryTheory.Monoidal.Transport
 import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Monoidal.Types.Coyoneda
-import Mathlib.CategoryTheory.Monoidal.Yoneda
 import Mathlib.CategoryTheory.MorphismProperty.Basic
 import Mathlib.CategoryTheory.MorphismProperty.Comma
 import Mathlib.CategoryTheory.MorphismProperty.Composition
