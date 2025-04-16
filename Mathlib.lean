@@ -2268,8 +2268,6 @@ import Mathlib.CategoryTheory.Monoidal.Cartesian.CommMon_
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Comon_
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Grp_
 import Mathlib.CategoryTheory.Monoidal.Cartesian.Mon_
-import Mathlib.CategoryTheory.Monoidal.Cartesian.Over.Grp_
-import Mathlib.CategoryTheory.Monoidal.Cartesian.Over.Mon_
 import Mathlib.CategoryTheory.Monoidal.Category
 import Mathlib.CategoryTheory.Monoidal.Center
 import Mathlib.CategoryTheory.Monoidal.CoherenceLemmas
