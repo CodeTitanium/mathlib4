@@ -81,7 +81,7 @@ lemma Grp_Class.ofRepresentableBy_yonedaGrpObjRepresentableBy :
 variable (X) in
 /-- If `X` represents a presheaf of groups `F`, then `Hom(-, X)` is isomorphic to `F` as
 a presheaf of groups. -/
-@[simps!]
+@[simps! hom inv]
 def yonedaGrpObjEquivOfRepresentableBy (F : Cᵒᵖ ⥤ Grp.{v}) (α : (F ⋙ forget _).RepresentableBy X) :
     letI := Grp_Class.ofRepresentableBy X F α
     yonedaGrpObj X ≅ F :=
