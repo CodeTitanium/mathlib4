@@ -1176,7 +1176,6 @@ lemma isReal_infinitePlace : InfinitePlace.IsReal (infinitePlace) :=
 
 end Rat
 
-
 namespace NumberField
 
 open InfinitePlace Module
@@ -1192,19 +1191,10 @@ section TotallyRealField
 /-- A number field `K` is totally real if all of its infinite places
 are real. In other words, the image of every ring homomorphism `K → ℂ`
 is a subset of `ℝ`. -/
-class IsTotallyReal (K : Type*) [Field K] [NumberField K] where
+@[mk_iff] class IsTotallyReal (K : Type*) [Field K] [NumberField K] where
   isReal : ∀ v : InfinitePlace K, v.IsReal
 
 variable {K : Type*} [Field K] [NumberField K]
-
-theorem IsTotallyReal_iff :
-    IsTotallyReal K ↔ ∀ v : InfinitePlace K, v.IsReal :=
-  ⟨fun _ v ↦ IsTotallyReal.isReal v, fun h ↦ ⟨h⟩⟩
-
-theorem nrComplexPlaces_eq_zero_iff :
-    nrComplexPlaces K = 0 ↔ IsTotallyReal K := by
-  classical
-  simp [Fintype.card_eq_zero_iff, isEmpty_subtype, IsTotallyReal_iff]
 
 @[simp]
 theorem IsTotallyReal.mult_eq_one [h : IsTotallyReal K] (w : InfinitePlace K) :
@@ -1217,6 +1207,17 @@ theorem IsTotallyReal.ofRingEquiv [IsTotallyReal K] {F : Type*} [Field F] [Numbe
   isReal _ := (isReal_comap_iff f).mp <| IsTotallyReal.isReal _
 
 variable (K)
+
+theorem nrComplexPlaces_eq_zero_iff :
+    nrComplexPlaces K = 0 ↔ IsTotallyReal K := by
+  simp [Fintype.card_eq_zero_iff, isEmpty_subtype, isTotallyReal_iff]
+
+variable (K)
+
+@[simp]
+theorem IsTotallyReal.nrComplexPlaces_eq_zero [h : IsTotallyReal K] :
+    nrComplexPlaces K = 0 :=
+  nrComplexPlaces_eq_zero_iff.mpr h
 
 protected theorem IsTotallyReal.finrank [h : IsTotallyReal K] :
     finrank ℚ K = nrRealPlaces K := by
@@ -1242,19 +1243,10 @@ open InfinitePlace
 /--
 A number field `K` is totally complex if all of its infinite places are complex.
 -/
-class IsTotallyComplex (K : Type*) [Field K] [NumberField K] where
+@[mk_iff] class IsTotallyComplex (K : Type*) [Field K] [NumberField K] where
   isComplex : ∀ v : InfinitePlace K, v.IsComplex
 
 variable {K : Type*} [Field K] [NumberField K]
-
-theorem IsTotallyComplex_iff :
-    IsTotallyComplex K ↔ ∀ v : InfinitePlace K, v.IsComplex :=
-  ⟨fun _ v ↦ IsTotallyComplex.isComplex v, fun h ↦ ⟨h⟩⟩
-
-theorem nrRealPlaces_eq_zero_iff :
-    nrRealPlaces K = 0 ↔ IsTotallyComplex K := by
-  classical
-  simp [Fintype.card_eq_zero_iff, isEmpty_subtype, IsTotallyComplex_iff]
 
 @[simp]
 theorem IsTotallyComplex.mult_eq_two [h : IsTotallyComplex K] (w : InfinitePlace K) :
@@ -1266,7 +1258,16 @@ theorem IsTotallyComplex.ofRingEquiv [IsTotallyComplex K] {F : Type*} [Field F] 
     IsTotallyComplex F where
   isComplex _ := (isComplex_comap_iff f).mp <| IsTotallyComplex.isComplex _
 
+theorem nrRealPlaces_eq_zero_iff :
+    nrRealPlaces K = 0 ↔ IsTotallyComplex K := by
+  simp [Fintype.card_eq_zero_iff, isEmpty_subtype, isTotallyComplex_iff]
+
 variable (K)
+
+@[simp]
+theorem IsTotallyComplex.nrRealPlaces_eq_zero [h : IsTotallyComplex K] :
+    nrRealPlaces K = 0 :=
+  nrRealPlaces_eq_zero_iff.mpr h
 
 protected theorem IsTotallyComplex.finrank [h : IsTotallyComplex K] :
     finrank ℚ K = 2 * nrComplexPlaces K := by
