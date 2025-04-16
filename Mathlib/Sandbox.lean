@@ -3,6 +3,40 @@ import Mathlib.RingTheory.RootsOfUnity.Complex
 
 set_option linter.style.header false
 
+section IsQuadraticExtension
+
+theorem AlgHom.card_le (F K : Type*) [Field F] [Field K] [Algebra F K] [FiniteDimensional F K] :
+    Fintype.card (K →ₐ[F] K) ≤ Module.finrank F K :=
+  Module.finrank_linearMap_self F K K ▸ finrank_algHom F K
+
+theorem AlgEquiv.card_le (F K : Type*) [Field F] [Field K] [Algebra F K] [FiniteDimensional F K] :
+    Fintype.card (K ≃ₐ[F] K) ≤ Module.finrank F K :=
+  Fintype.ofEquiv_card (algEquivEquivAlgHom F K).toEquiv.symm ▸ AlgHom.card_le F K
+
+class IsQuadraticExtension (F K : Type*) [Field F] [Field K]
+  extends Algebra F K where
+  finrank_eq_two : Module.finrank F K = 2
+
+instance (F K : Type*) [Field F] [Field K] [h : IsQuadraticExtension F K] :
+    FiniteDimensional F K :=
+  Module.finite_of_finrank_eq_succ h.finrank_eq_two
+
+instance (F K : Type*) [Field F] [Field K] [h : IsQuadraticExtension F K] : Normal F K :=
+  normal_of_finrank_eq_two F K h.finrank_eq_two
+
+instance (F K : Type*) [Field F] [Field K] [h : IsQuadraticExtension F K] :
+    IsCyclic (K ≃ₐ[F] K) := by
+  have := h.finrank_eq_two ▸ AlgEquiv.card_le F K
+  interval_cases h : Fintype.card (K ≃ₐ[F] K)
+  · simp_all
+  · exact @isCyclic_of_subsingleton _ _ (Fintype.card_le_one_iff_subsingleton.mp h.le)
+  · rw [← Nat.card_eq_fintype_card] at h
+    exact isCyclic_of_prime_card h
+
+end IsQuadraticExtension
+
+#exit
+
 section maximalRealSubfield
 
 open NumberField
