@@ -30,7 +30,7 @@ theorem isUnit_of_invertible [Monoid α] (a : α) [Invertible a] : IsUnit a :=
   ⟨unitOfInvertible a, rfl⟩
 
 /-- Units are invertible in their associated monoid. -/
-instance Units.invertible [Monoid α] (u : αˣ) :
+def Units.invertible [Monoid α] (u : αˣ) :
     Invertible (u : α) where
   invOf := ↑u⁻¹
   invOf_mul_self := u.inv_mul
