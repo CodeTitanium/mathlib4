@@ -21,8 +21,8 @@ https://ncatlab.org/nlab/show/nucleus
 -/
 
 open Order InfHom Set
-
-variable {X : Type*}
+universe u
+variable {X : Type u}
 
 /-- A nucleus is an inflationary idempotent `inf`-preserving endomorphism of a semilattice.
 In a frame, nuclei correspond to sublocales. -/ -- TODO: Formalise that claim
@@ -228,6 +228,32 @@ instance : Frame (range n) := .ofMinimalAxioms range.instFrameMinimalAxioms
 /-- The restriction of a nucleus to its range forms a Galois insertion with the forgetful map from
 the range to the original frame. -/
 def giRestrict (n : Nucleus X) : GaloisInsertion n.restrict Subtype.val := n.giAux
+
+variable {Y : Type u} [Order.Frame Y] {l : InfHom X Y} {u : Y → X}
+
+def giInfHom_toNucleus (gi : GaloisInsertion l u) : Nucleus X where
+  toFun := u ∘ l
+  map_inf' x y := by simp [gi.gc.u_inf]
+  idempotent' x := by simp [gi.l_u_eq]
+  le_apply' := gi.gc.le_u_l
+
+lemma giInfHom_toNucleus_range_eq (gi : GaloisInsertion l u) :
+    range (giInfHom_toNucleus gi) = range u := by
+  refine (range_eq_iff (⇑(giInfHom_toNucleus gi)) (range u)).mpr ?_
+  simp only [giInfHom_toNucleus, coe_mk, InfHom.coe_mk, Function.comp_apply, Set.mem_range,
+    exists_apply_eq_apply, implies_true, forall_exists_index, forall_apply_eq_imp_iff, true_and]
+  exact fun a ↦ Exists.imp (fun a_1 ↦ congrArg u) (gi.l_surjective a)
+
+lemma giInfHom_toNucleus_giRestrict_eq (gi : GaloisInsertion l u) :
+    (range (giInfHom_toNucleus gi)) = Y := by
+  rw [@giInfHom_toNucleus_range_eq]
+
+  rw [@coe_eq_subtype]
+  simp
+
+
+
+
 
 end Frame
 end Nucleus
