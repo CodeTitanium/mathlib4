@@ -9,7 +9,7 @@ import Mathlib.Tactic.Positivity.Finset
 /-!
 # `ℝ≥0`-valued Lᵖ norm
 
-This file prove theorems about `MeasureTheory.nnLpNorm`,
+This file proves theorems about `MeasureTheory.nnLpNorm`,
 an `ℝ≥0`-valued version of `MeasureTheory.eLpNorm`.
 -/
 
