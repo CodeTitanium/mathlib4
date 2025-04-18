@@ -522,7 +522,7 @@ section Module
 variable {R : Type*} [Semiring R]
   {E G : Type*} [AddCommMonoid E] [Module R E] [AddCommMonoid G] [Module R G] [Unique G]
 
-variable (R E) in
+variable (R E G) in
 /-- The natural equivalence `E × G ≃ₗ[𝕜] E` for any `Unique` type `G`.
 This is `Equiv.prodUnique` as a linear equivalence. -/
 def prodUnique : (E × G) ≃ₗ[R] E where
@@ -531,7 +531,7 @@ def prodUnique : (E × G) ≃ₗ[R] E where
   map_smul' r x := by simp
 
 @[simp]
-lemma prodUnique_toEquiv : (prodUnique R E).toEquiv = Equiv.prodUnique E G := rfl
+lemma coe_prodUnique : (prodUnique R E G : (E × G) ≃ E) = Equiv.prodUnique E G := rfl
 
 end Module
 
