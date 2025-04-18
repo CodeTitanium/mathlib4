@@ -880,8 +880,8 @@ theorem not_injOn_infinite_finite_image {f : α → β} {s : Set α} (h_inf : s.
 section Preorder
 variable {ι : Type*} [Preorder α] {s : Set α}
 
-lemma Finite.exists_maximalWrt (f : ι → α) (s : Set ι) (h : s.Finite) (hs : s.Nonempty) :
-    ∃ i, MaximalWrt (· ∈ s) f i := by
+lemma Finite.exists_maximalFor (f : ι → α) (s : Set ι) (h : s.Finite) (hs : s.Nonempty) :
+    ∃ i, MaximalFor (· ∈ s) f i := by
   induction s, h using Set.Finite.induction_on with
   | empty => exact absurd hs not_nonempty_empty
   | @insert a s his _ ih =>
@@ -898,26 +898,26 @@ lemma Finite.exists_maximalWrt (f : ι → α) (s : Set ι) (h : s.Finite) (hs :
     · cases h hbc
     · exact ih hcs hbc
 
-lemma Finite.exists_minimalWrt (f : ι → α) (s : Set ι) (h : s.Finite) (hs : s.Nonempty) :
-    ∃ i, MinimalWrt (· ∈ s) f i := Finite.exists_maximalWrt (α := αᵒᵈ) f s h hs
+lemma Finite.exists_minimalFor (f : ι → α) (s : Set ι) (h : s.Finite) (hs : s.Nonempty) :
+    ∃ i, MinimalFor (· ∈ s) f i := Finite.exists_maximalFor (α := αᵒᵈ) f s h hs
 
 lemma Finite.exists_maximal {s : Set α} (h : s.Finite) (hs : s.Nonempty) : ∃ i, Maximal (· ∈ s) i :=
-  h.exists_maximalWrt id _ hs
+  h.exists_maximalFor id _ hs
 
 lemma Finite.exists_minimal {s : Set α} (h : s.Finite) (hs : s.Nonempty) : ∃ i, Minimal (· ∈ s) i :=
-  h.exists_minimalWrt id _ hs
+  h.exists_minimalFor id _ hs
 
-/-- A version of `Finite.exists_maximalWrt` with the (weaker) hypothesis that the image of `s`
+/-- A version of `Finite.exists_maximalFor` with the (weaker) hypothesis that the image of `s`
   is finite rather than `s` itself. -/
-lemma Finite.exists_maximalWrt' (f : ι → α) (s : Set ι) (h : (f '' s).Finite) (hs : s.Nonempty) :
-    ∃ i, MaximalWrt (· ∈ s) f i := by
-  obtain ⟨_, ⟨a, ha, rfl⟩, hmax⟩ := Finite.exists_maximalWrt id (f '' s) h (hs.image f)
+lemma Finite.exists_maximalFor' (f : ι → α) (s : Set ι) (h : (f '' s).Finite) (hs : s.Nonempty) :
+    ∃ i, MaximalFor (· ∈ s) f i := by
+  obtain ⟨_, ⟨a, ha, rfl⟩, hmax⟩ := Finite.exists_maximalFor id (f '' s) h (hs.image f)
   exact ⟨a, ha, fun a' ha' hf ↦ hmax (mem_image_of_mem f ha') hf⟩
 
-/-- A version of `Finite.exists_minimalWrt` with the (weaker) hypothesis that the image of `s`
+/-- A version of `Finite.exists_minimalFor` with the (weaker) hypothesis that the image of `s`
   is finite rather than `s` itself. -/
-lemma Finite.exists_minimalWrt' (f : ι → α) (s : Set ι) (h : (f '' s).Finite) (hs : s.Nonempty) :
-    ∃ i, MinimalWrt (· ∈ s) f i := h.exists_maximalWrt' (α := αᵒᵈ) f s hs
+lemma Finite.exists_minimalFor' (f : ι → α) (s : Set ι) (h : (f '' s).Finite) (hs : s.Nonempty) :
+    ∃ i, MinimalFor (· ∈ s) f i := h.exists_maximalFor' (α := αᵒᵈ) f s hs
 
 variable [Nonempty α]
 

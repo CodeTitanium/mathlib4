@@ -188,7 +188,7 @@ This needs choice, since it can be used to prove that every vector space has a b
     have hchoose : ∀ e, e ∈ J → ∃ I, I ∈ Is ∧ (e : α) ∈ I := fun _ he ↦ mem_sUnion.1 <| hJ he
     choose! f hf using hchoose
     refine J.eq_empty_or_nonempty.elim (fun hJ ↦ hJ ▸ indep_empty) (fun hne ↦ ?_)
-    obtain ⟨x, hxJ, hxmax⟩ := Finite.exists_maximalWrt f _ hJfin hne
+    obtain ⟨x, hxJ, hxmax⟩ := Finite.exists_maximalFor f _ hJfin hne
     refine indep_subset (hIs (hf x hxJ).1).1 fun y hyJ ↦ ?_
     obtain (hle | hle) := hchain.total (hf _ hxJ).1 (hf _ hyJ).1
     · exact hxmax hyJ hle <| (hf _ hyJ).2
@@ -262,7 +262,7 @@ provided independence is determined by its behaviour on finite sets. -/
       have hE₀fin : E₀.Finite := (hI₀fin.union hB₀fin).insert e
 
       -- Extend `B₀` to a maximal independent subset of `I₀ ∪ B₀ + e`
-      obtain ⟨J, ⟨hB₀J, hJ, hJss⟩, hJmax⟩ := Finite.exists_maximalWrt (f := id)
+      obtain ⟨J, ⟨hB₀J, hJ, hJss⟩, hJmax⟩ := Finite.exists_maximalFor (f := id)
         (s := {J | B₀ ⊆ J ∧ Indep J ∧ J ⊆ E₀})
         (hE₀fin.finite_subsets.subset (by simp))
         ⟨B₀, Subset.rfl, hB₀, subset_union_right.trans (subset_insert _ _)⟩
@@ -314,7 +314,7 @@ theorem _root_.Matroid.existsMaximalSubsetProperty_of_bdd {P : Set α → Prop}
     obtain ⟨n₀, heq, hle⟩ := hP Y hY
     rwa [ncard_def, heq, ENat.toNat_coe]
   obtain ⟨Y, ⟨hY, hIY, hYX⟩, hY'⟩ :=
-    Finite.exists_maximalWrt' ncard _ hfin ⟨I, hI, rfl.subset, hIX⟩
+    Finite.exists_maximalFor' ncard _ hfin ⟨I, hI, rfl.subset, hIX⟩
 
   refine ⟨Y, hIY, ⟨hY, hYX⟩, fun K ⟨hPK, hKX⟩ hYK ↦ ?_⟩
   have hKfin : K.Finite := finite_of_encard_le_coe (hP K hPK)
