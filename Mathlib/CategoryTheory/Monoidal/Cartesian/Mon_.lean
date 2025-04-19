@@ -10,8 +10,8 @@ import Mathlib.CategoryTheory.Monoidal.Mon_
 /-!
 # Yoneda embedding of `Mon_ C`
 
-We show that monoid objects are exactly those whose yoneda presheaf is a presheaf of monoids,
-by constructing the yoneda embedding `Mon_ C ⥤ Cᵒᵖ ⥤ MonCat.{v}` and
+We show that monoid objects in cartesian monoidal categories are exactly those whose yoneda presheaf
+is a presheaf of monoids, by constructing the yoneda embedding `Mon_ C ⥤ Cᵒᵖ ⥤ MonCat.{v}` and
 showing that it is fully faithful and its (essential) image is the representable functors.
 -/
 

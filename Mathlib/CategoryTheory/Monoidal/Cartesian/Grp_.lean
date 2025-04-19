@@ -10,7 +10,7 @@ import Mathlib.CategoryTheory.Monoidal.Grp_
 /-!
 # Yoneda embedding of `Grp_ C`
 
-We show that monoid objects are exactly those whose yoneda presheaf is a presheaf of monoids,
+We show that group objects are exactly those whose yoneda presheaf is a presheaf of groups,
 by constructing the yoneda embedding `Grp_ C ⥤ Cᵒᵖ ⥤ Grp.{v}` and
 showing that it is fully faithful and its (essential) image is the representable functors.
 -/
@@ -48,13 +48,11 @@ def Grp_Class.ofRepresentableBy (F : Cᵒᵖ ⥤ Grp.{w}) (α : (F ⋙ forget _)
 
 attribute [local instance] monoidOfMon_Class
 
-instance Grp_Class.instInv : Inv (X ⟶ G) where inv := (· ≫ ι)
-
 /-- If `G` is a group object, then `Hom(X, G)` has a group structure. -/
 abbrev groupOfGrp_Class : Group (X ⟶ G) where
   __ := monoidOfMon_Class
+  inv := (· ≫ ι)
   div_eq_mul_inv _ _ := rfl
-  zpow := zpowRec
   inv_mul_cancel f := by
     change lift (f ≫ ι) _ ≫ μ = toUnit X ≫ η
     rw [← comp_toUnit f, Category.assoc, ← Grp_Class.left_inv _, comp_lift_assoc, Category.comp_id]
@@ -100,7 +98,7 @@ def yonedaGrp : Grp_ C ⥤ Cᵒᵖ ⥤ Grp.{v} where
 
 @[reassoc]
 lemma yonedaGrp_naturality (α : yonedaGrpObj G ⟶ yonedaGrpObj H) (f : X ⟶ Y) (g : Y ⟶ G) :
-      α.app _ (f ≫ g) = f ≫ α.app _ g := congr($(α.naturality f.op) g)
+    α.app _ (f ≫ g) = f ≫ α.app _ g := congr($(α.naturality f.op) g)
 
 /-- The yoneda embedding for `Grp_C` is fully faithful. -/
 def yonedaGrpFullyFaithful : yonedaGrp (C := C).FullyFaithful where
