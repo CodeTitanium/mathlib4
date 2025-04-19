@@ -38,20 +38,6 @@ instance (F K : Type*) [Field F] [Field K] [h : IsQuadraticExtension F K] :
 
 end IsQuadraticExtension
 
-#exit
-
-I am sorry but I don't think I understand what you mean. I see two situations:
-1) General case of CM-extension `K/F`: in this case, the required hypothesis would be
-`[IsTotallyComplex K] [IsTotallyReal F] [IsQuadraticExtension F K]`.
-2) The class `IsCM` which implies that `[IsTotallyComplex K] [IsTotallyReal (maximalRealSubfield K)]
-[IsQuadraticExtension (maximalRealSubfield K) K]` and thus all the results in (1) can be used
-seemlessly if `[IsCM K]` for `F = maximalRealSubfield K`
-And somewhere the proofs that `[IsTotallyComplex K] [IsTotallyReal F] [IsQuadraticExtension F K]` =>
-  `F ≃+* maximalRealSubfield K` and thus `[IsTotallyComplex K] [IsTotallyReal F]
-[IsQuadraticExtension F K]` => `[IsCM K]`.
-
-I do not see a situation where it would be necessary to have `IsCM K` in 1)
-
 section maximalRealSubfield
 
 open NumberField
