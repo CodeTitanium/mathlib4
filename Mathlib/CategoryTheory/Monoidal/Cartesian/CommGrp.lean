@@ -19,6 +19,7 @@ variable {C : Type u} [Category.{v} C] [ChosenFiniteProducts C] {X : C}
 commutative monoid object. -/
 class abbrev CommGrp_Class {C : Type*} [Category C] [ChosenFiniteProducts C] (X : C) :=
   Grp_Class X, IsCommMon X
+
 section CommGrp_
 
 variable (X) in
