@@ -3,7 +3,7 @@ Copyright (c) 2025 David Ledvinka. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Ledvinka
 -/
-import Mathlib.MeasureTheory.Measure.Prod
+import Mathlib.MeasureTheory.Group.Prod
 
 /-!
 # Convolution of functions using the Lebesgue integral
@@ -34,7 +34,11 @@ namespace MeasureTheory
 open Measure
 open scoped ENNReal
 
-variable {G : Type*} {mG : MeasurableSpace G} [Mul G] [Inv G]
+variable {G : Type*} {mG : MeasurableSpace G}
+
+section NoGroup
+
+variable [Mul G] [Inv G]
 
 /-- Multiplicative convolution of functions. -/
 @[to_additive "Additive convolution of functions"]
@@ -71,13 +75,37 @@ theorem zero_mlconvolution (f : G → ℝ≥0∞) (μ : Measure G) : 0 ⋆ₗ[μ
 theorem mlconvolution_zero (f : G → ℝ≥0∞) (μ : Measure G) : f ⋆ₗ[μ] 0 = 0 := by
   ext; simp [mlconvolution]
 
+section Measurable
+
+variable [MeasurableMul₂ G] [MeasurableInv G]
+
 /-- The convolution of measurable functions is measurable. -/
 @[to_additive (attr := measurability, fun_prop)
 "The convolution of measurable functions is measurable."]
-theorem measurable_mlconvolution [MeasurableMul₂ G] [MeasurableInv G]
-    {f g : G → ℝ≥0∞} (μ : Measure G) [SFinite μ]
+theorem measurable_mlconvolution {f g : G → ℝ≥0∞} (μ : Measure G) [SFinite μ]
     (hf : Measurable f) (hg : Measurable g) : Measurable (f ⋆ₗ[μ] g) := by
-  apply Measurable.lintegral_prod_right
+  unfold mlconvolution
   fun_prop
+
+end Measurable
+
+end NoGroup
+
+section Group
+
+variable [Group G] [MeasurableMul₂ G] [MeasurableInv G]
+
+variable (μ : Measure G) [IsMulLeftInvariant μ] [SFinite μ ]
+
+/-- The convolution of AEMeasurable functions is AEMeasurable. -/
+@[to_additive (attr := measurability, fun_prop)
+"The convolution of AEMeasurable functions is AEMeasurable"]
+theorem aemeasurable_mlconvolution {f g : G → ℝ≥0∞}
+  (hf : AEMeasurable f μ) (hg : AEMeasurable g μ) : AEMeasurable (f ⋆ₗ[μ] g) μ := by
+  apply AEMeasurable.lintegral_prod_right
+  apply AEMeasurable.mul hf.snd
+  exact hg.comp_quasiMeasurePreserving (quasiMeasurePreserving_inv_mul_swap _ _)
+
+end Group
 
 end MeasureTheory
