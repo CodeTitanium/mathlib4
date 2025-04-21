@@ -22,8 +22,8 @@ more details.
 ## Main definitions
 
 * `WithLp p V`: a copy of `V` to be equipped with an L`p` norm.
-* `WithLp.equiv p V`: the canonical equivalence between `WithLp p V` and `V`.
-* `WithLp.linearEquiv p K V`: the canonical `K`-module isomorphism between `WithLp p V` and `V`.
+* `WithLp.toLp p V`: the canonical toLpalence between `WithLp p V` and `V`.
+* `WithLp.lineartoLp p K V`: the canonical `K`-module isomorphism between `WithLp p V` and `V`.
 
 ## Implementation notes
 
@@ -52,7 +52,7 @@ namespace WithLp
 
 /-- The canonical equivalence between `WithLp p V` and `V`. This should always be used to convert
 back and forth between the representations. -/
-protected def equiv : WithLp p V ≃ V := Equiv.refl _
+protected def toLp : WithLp p V ≃ V := Equiv.refl _
 
 /-! `WithLp p V` inherits various module-adjacent structures from `V`. -/
 
@@ -85,62 +85,62 @@ instance instModuleFinite
 
 variable {K V}
 
-/-! `WithLp.equiv` preserves the module structure. -/
+/-! `WithLp.toLp` preserves the module structure. -/
 
 @[simp]
-theorem equiv_zero [AddCommGroup V] : WithLp.equiv p V 0 = 0 :=
+theorem equiv_zero [AddCommGroup V] : WithLp.toLp p V 0 = 0 :=
   rfl
 
 @[simp]
-theorem equiv_symm_zero [AddCommGroup V] : (WithLp.equiv p V).symm 0 = 0 :=
+theorem toLp_symm_zero [AddCommGroup V] : (WithLp.toLp p V).symm 0 = 0 :=
   rfl
 
 @[simp]
-theorem equiv_add [AddCommGroup V] (x y : WithLp p V) :
-    WithLp.equiv p V (x + y) = WithLp.equiv p V x + WithLp.equiv p V y :=
+theorem toLp_add [AddCommGroup V] (x y : WithLp p V) :
+    WithLp.toLp p V (x + y) = WithLp.toLp p V x + WithLp.toLp p V y :=
   rfl
 
 @[simp]
-theorem equiv_symm_add [AddCommGroup V] (x' y' : V) :
-    (WithLp.equiv p V).symm (x' + y') = (WithLp.equiv p V).symm x' + (WithLp.equiv p V).symm y' :=
+theorem toLp_symm_add [AddCommGroup V] (x' y' : V) :
+    (WithLp.toLp p V).symm (x' + y') = (WithLp.toLp p V).symm x' + (WithLp.toLp p V).symm y' :=
   rfl
 
 @[simp]
-theorem equiv_sub [AddCommGroup V] (x y : WithLp p V) :
-    WithLp.equiv p V (x - y) = WithLp.equiv p V x - WithLp.equiv p V y :=
+theorem toLp_sub [AddCommGroup V] (x y : WithLp p V) :
+    WithLp.toLp p V (x - y) = WithLp.toLp p V x - WithLp.toLp p V y :=
   rfl
 
 @[simp]
-theorem equiv_symm_sub [AddCommGroup V] (x' y' : V) :
-    (WithLp.equiv p V).symm (x' - y') = (WithLp.equiv p V).symm x' - (WithLp.equiv p V).symm y' :=
+theorem toLp_symm_sub [AddCommGroup V] (x' y' : V) :
+    (WithLp.toLp p V).symm (x' - y') = (WithLp.toLp p V).symm x' - (WithLp.toLp p V).symm y' :=
   rfl
 
 @[simp]
-theorem equiv_neg [AddCommGroup V] (x : WithLp p V) : WithLp.equiv p V (-x) = -WithLp.equiv p V x :=
+theorem toLp_neg [AddCommGroup V] (x : WithLp p V) : WithLp.toLp p V (-x) = -WithLp.toLp p V x :=
   rfl
 
 @[simp]
-theorem equiv_symm_neg [AddCommGroup V] (x' : V):
-    (WithLp.equiv p V).symm (-x') = -(WithLp.equiv p V).symm x' :=
+theorem toLp_symm_neg [AddCommGroup V] (x' : V):
+    (WithLp.toLp p V).symm (-x') = -(WithLp.toLp p V).symm x' :=
   rfl
 
 @[simp]
-theorem equiv_smul [SMul K V] (c : K) (x : WithLp p V) :
-    WithLp.equiv p V (c • x) = c • WithLp.equiv p V x :=
+theorem toLp_smul [SMul K V] (c : K) (x : WithLp p V) :
+    WithLp.toLp p V (c • x) = c • WithLp.toLp p V x :=
   rfl
 
 @[simp]
-theorem equiv_symm_smul [SMul K V] (c : K) (x' : V) :
-    (WithLp.equiv p V).symm (c • x') = c • (WithLp.equiv p V).symm x' :=
+theorem toLp_symm_smul [SMul K V] (c : K) (x' : V) :
+    (WithLp.toLp p V).symm (c • x') = c • (WithLp.toLp p V).symm x' :=
   rfl
 
 variable (K V)
 
-/-- `WithLp.equiv` as a linear equivalence. -/
+/-- `WithLp.toLp` as a linear toLpalence. -/
 @[simps -fullyApplied]
-protected def linearEquiv [Semiring K] [AddCommGroup V] [Module K V] : WithLp p V ≃ₗ[K] V :=
+protected def lineartoLp [Semiring K] [AddCommGroup V] [Module K V] : WithLp p V ≃ₗ[K] V :=
   { LinearEquiv.refl _ _ with
-    toFun := WithLp.equiv _ _
-    invFun := (WithLp.equiv _ _).symm }
+    toFun := WithLp.toLp _ _
+    invFun := (WithLp.toLp _ _).symm }
 
 end WithLp
