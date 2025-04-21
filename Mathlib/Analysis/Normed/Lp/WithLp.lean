@@ -52,7 +52,7 @@ namespace WithLp
 
 /-- The canonical equivalence between `WithLp p V` and `V`. This should always be used to convert
 back and forth between the representations. -/
-protected def toLp : WithLp p V ≃ V := Equiv.refl _
+protected def toLp : V ≃ WithLp p V := Equiv.refl _
 
 /-! `WithLp p V` inherits various module-adjacent structures from `V`. -/
 
@@ -140,7 +140,7 @@ variable (K V)
 @[simps -fullyApplied]
 protected def lineartoLp [Semiring K] [AddCommGroup V] [Module K V] : WithLp p V ≃ₗ[K] V :=
   { LinearEquiv.refl _ _ with
-    toFun := WithLp.toLp _ _
-    invFun := (WithLp.toLp _ _).symm }
+    toFun := (WithLp.toLp _ _).symm
+    invFun := WithLp.toLp _ _ }
 
 end WithLp
