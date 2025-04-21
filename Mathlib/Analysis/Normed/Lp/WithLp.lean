@@ -22,7 +22,7 @@ more details.
 ## Main definitions
 
 * `WithLp p V`: a copy of `V` to be equipped with an L`p` norm.
-* `WithLp.toLp p V`: the canonical toLpalence between `WithLp p V` and `V`.
+* `WithLp.toLp p V`: the canonical equivalence between `WithLp p V` and `V`.
 * `WithLp.toLpLinear p K V`: the canonical `K`-module isomorphism between `WithLp p V` and `V`.
 
 ## Implementation notes
