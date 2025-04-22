@@ -53,10 +53,16 @@ namespace WithLp
 variable {p V} in
 /-- The canonical equivalence between `V` and `WithLp p V`. This should always be used to convert
 back and forth between the representations. -/
-protected def toLp : V ≃ WithLp p V := Equiv.refl _
+def toLp : V ≃ WithLp p V := Equiv.refl _
+
+variable {p V} in
+/-- The canonical equivalence between `WithLp p V` and `V`. This should always be used to convert
+back and forth between the representations. -/
+def ofLp : WithLp p V ≃ V := Equiv.refl _
 
 /-- The canonical equivalence between `WithLp p V` and `V`. This should always be used to convert
 back and forth between the representations. -/
+--TODO(Paul-Lez): add deprecation!
 protected def equiv : WithLp p V ≃ V := Equiv.refl _
 
 /-! `WithLp p V` inherits various module-adjacent structures from `V`. -/
@@ -90,14 +96,24 @@ instance instModuleFinite
 
 variable {K V}
 
+@[simp]
+theorem toLp_symm_eq : (@toLp p V).symm = toLp (p:= p) := rfl
+
+@[simp]
+theorem ofLp_symm_eq : (@ofLp p V).symm = toLp (p:= p) := rfl
+
+@[simp]
+theorem ofLp_toLp (x : V) : ofLp (toLp (p:=p) x) = x :=
+  rfl
+
+@[simp]
+theorem toDual_ofDual (x : WithLp p V) : toLp (ofLp x) = x :=
+  rfl
+
 /-! `WithLp.toLp` preserves the module structure. -/
 
 @[simp]
 theorem toLp_zero [AddCommGroup V] : WithLp.toLp 0 = (0 : WithLp p V) :=
-  rfl
-
-@[simp]
-theorem toLp_symm_zero [AddCommGroup V] : WithLp.toLp.symm (0 : WithLp p V) = 0 :=
   rfl
 
 @[simp]
@@ -106,18 +122,8 @@ theorem toLp_add [AddCommGroup V] (x y : V) :
   rfl
 
 @[simp]
-theorem toLp_symm_add [AddCommGroup V] (x' y' :  WithLp p V) :
-    WithLp.toLp.symm (x' + y') = WithLp.toLp.symm x' + WithLp.toLp.symm y' :=
-  rfl
-
-@[simp]
 theorem toLp_sub [AddCommGroup V] (x y : V) :
     WithLp.toLp (x - y) = (WithLp.toLp x : WithLp p V) - WithLp.toLp y :=
-  rfl
-
-@[simp]
-theorem toLp_symm_sub [AddCommGroup V] (x' y' : WithLp p V) :
-    WithLp.toLp.symm (x' - y') = WithLp.toLp.symm x' - WithLp.toLp.symm y' :=
   rfl
 
 @[simp]
@@ -125,18 +131,29 @@ theorem toLp_neg [AddCommGroup V] (x : V) : WithLp.toLp (p := p) (-x) = -WithLp.
   rfl
 
 @[simp]
-theorem toLp_symm_neg [AddCommGroup V] (x' :  WithLp p V):
-    WithLp.toLp.symm (-x') = -WithLp.toLp.symm x' :=
-  rfl
-
-@[simp]
 theorem toLp_smul [SMul K V] (c : K) (x : V) :
     WithLp.toLp (c • x) = c • (WithLp.toLp x : WithLp p V) :=
   rfl
 
+
 @[simp]
-theorem toLp_symm_smul [SMul K V] (c : K) (x' :  WithLp p V) :
-    WithLp.toLp.symm (c • x') = c • WithLp.toLp.symm x' :=
+theorem ofLp_zero [AddCommGroup V] : ofLp (0 : WithLp p V) = 0 :=
+  rfl
+
+@[simp]
+theorem ofLp_add [AddCommGroup V] (x y : WithLp p V) : ofLp (x + y) = ofLp x + ofLp y :=
+  rfl
+
+@[simp]
+theorem ofLp_sub [AddCommGroup V] (x y : WithLp p V) : ofLp (x - y) = ofLp x - ofLp y :=
+  rfl
+
+@[simp]
+theorem ofLp_neg [AddCommGroup V] (x : WithLp p V) : ofLp (-x) = -ofLp x :=
+  rfl
+
+@[simp]
+theorem ofLp_smul [SMul K V] (c : K) (x : WithLp p V) : ofLp (c • x) = c • ofLp x :=
   rfl
 
 @[simp]

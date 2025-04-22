@@ -120,6 +120,30 @@ theorem equiv_symm_fst (x : α × β) : ((WithLp.equiv p (α × β)).symm x).fst
 theorem equiv_symm_snd (x : α × β) : ((WithLp.equiv p (α × β)).symm x).snd = x.snd :=
   rfl
 
+@[simp]
+theorem toLp_fst (x :α × β) : (WithLp.toLp (p := p) x).fst = x.fst :=
+  rfl
+
+@[simp]
+theorem toLp_snd (x : α × β) : (WithLp.toLp (p := p) x).snd = x.snd :=
+  rfl
+
+-- @[simp]
+-- theorem toLp_symm_fst (x : WithLp p (α × β)) : ((WithLp.toLp).symm x).fst = x.fst :=
+--   rfl
+
+-- @[simp]
+-- theorem toLp_symm_snd (x : WithLp p (α × β)) : ((WithLp.toLp).symm x).snd = x.snd :=
+--   rfl
+
+@[simp]
+theorem ofLp_fst (x : WithLp p (α × β)) : (WithLp.ofLp x).fst = x.fst :=
+  rfl
+
+@[simp]
+theorem ofLp_snd (x : WithLp p (α × β)) : (WithLp.ofLp x).snd = x.snd :=
+  rfl
+
 end equiv
 
 section DistNorm
@@ -423,11 +447,11 @@ theorem prod_antilipschitzWith_equiv_aux [PseudoEMetricSpace α] [PseudoEMetricS
 
 theorem prod_aux_uniformity_eq [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
     𝓤 (WithLp p (α × β)) = 𝓤[instUniformSpaceProd] := by
-  have A : IsUniformInducing (WithLp.equiv p (α × β)) :=
+  have A : IsUniformInducing (@WithLp.ofLp p (α × β)) :=
     (prod_antilipschitzWith_equiv_aux p α β).isUniformInducing
       (prod_lipschitzWith_equiv_aux p α β).uniformContinuous
   have : (fun x : WithLp p (α × β) × WithLp p (α × β) =>
-    ((WithLp.equiv p (α × β)) x.fst, (WithLp.equiv p (α × β)) x.snd)) = id := by
+    (WithLp.ofLp x.fst, WithLp.ofLp x.snd)) = id := by
     ext i <;> rfl
   rw [← A.comap_uniformity, this, comap_id]
 
@@ -438,6 +462,47 @@ theorem prod_aux_cobounded_eq [PseudoMetricSpace α] [PseudoMetricSpace β] :
       le_antisymm (prod_antilipschitzWith_equiv_aux p α β).tendsto_cobounded.le_comap
         (prod_lipschitzWith_equiv_aux p α β).comap_cobounded_le
     _ = _ := comap_id
+
+theorem prod_lipschitzWith_ofLp_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    LipschitzWith 1 (@WithLp.ofLp p (α × β)) := by
+  intro x y
+  rcases p.dichotomy with (rfl | h)
+  · simp [edist]
+  · have cancel : p.toReal * (1 / p.toReal) = 1 := mul_div_cancel₀ 1 (zero_lt_one.trans_le h).ne'
+    rw [prod_edist_eq_add (zero_lt_one.trans_le h)]
+    simp only [edist, forall_prop_of_true, one_mul, ENNReal.coe_one, sup_le_iff]
+    constructor
+    · calc
+        edist x.fst y.fst ≤ (edist x.fst y.fst ^ p.toReal) ^ (1 / p.toReal) := by
+          simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
+        _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
+          gcongr
+          simp only [self_le_add_right]
+    · calc
+        edist x.snd y.snd ≤ (edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
+          simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
+        _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
+          gcongr
+          simp only [self_le_add_left]
+
+theorem prod_antilipschitzWith_ofLp_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    AntilipschitzWith ((2 : ℝ≥0) ^ (1 / p).toReal) (@WithLp.ofLp p (α × β)) := by
+  intro x y
+  rcases p.dichotomy with (rfl | h)
+  · simp [edist]
+  · have pos : 0 < p.toReal := by positivity
+    have nonneg : 0 ≤ 1 / p.toReal := by positivity
+    have cancel : p.toReal * (1 / p.toReal) = 1 := mul_div_cancel₀ 1 (ne_of_gt pos)
+    rw [prod_edist_eq_add pos, ENNReal.toReal_div 1 p]
+    simp only [edist, ← one_div, ENNReal.toReal_one]
+    calc
+      (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) ≤
+          (edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) ^ p.toReal +
+          edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) ^ p.toReal) ^ (1 / p.toReal) := by
+        gcongr <;> simp [edist]
+      _ = (2 ^ (1 / p.toReal) : ℝ≥0) * edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) := by
+        simp only [← two_mul, ENNReal.mul_rpow_of_nonneg _ _ nonneg, ← ENNReal.rpow_mul, cancel,
+          ENNReal.rpow_one, ENNReal.coe_rpow_of_nonneg _ nonneg, coe_ofNat]
 
 end Aux
 
@@ -458,6 +523,14 @@ theorem prod_continuous_equiv : Continuous (WithLp.equiv p (α × β)) :=
 theorem prod_continuous_equiv_symm : Continuous (WithLp.equiv p (α × β)).symm :=
   continuous_id
 
+@[continuity]
+theorem prod_continuous_toLp : Continuous (@WithLp.toLp p (α × β)) :=
+  continuous_id
+
+@[continuity]
+theorem prod_continuous_ofLp : Continuous (@WithLp.ofLp p (α × β)).symm :=
+  continuous_id
+
 variable [T0Space α] [T0Space β]
 
 instance instProdT0Space : T0Space (WithLp p (α × β)) :=
@@ -476,6 +549,12 @@ theorem prod_uniformContinuous_equiv : UniformContinuous (WithLp.equiv p (α × 
   uniformContinuous_id
 
 theorem prod_uniformContinuous_equiv_symm : UniformContinuous (WithLp.equiv p (α × β)).symm :=
+  uniformContinuous_id
+
+theorem prod_uniformContinuous_toLp : UniformContinuous (@WithLp.toLp p (α × β)) :=
+  uniformContinuous_id
+
+theorem prod_uniformContinuous_ofLp : UniformContinuous (@WithLp.ofLp p (α × β)).symm :=
   uniformContinuous_id
 
 variable [CompleteSpace α] [CompleteSpace β]
@@ -563,6 +642,22 @@ theorem prod_infty_equiv_isometry [PseudoEMetricSpace α] [PseudoEMetricSpace β
       simpa only [ENNReal.div_top, ENNReal.toReal_zero, NNReal.rpow_zero, ENNReal.coe_one,
         one_mul] using prod_antilipschitzWith_equiv ∞ α β x y)
 
+theorem prod_lipschitzWith_ofLp [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    LipschitzWith 1 (@WithLp.ofLp p (α × β)) :=
+  prod_lipschitzWith_equiv_aux p α β
+
+theorem prod_antilipschitzWith_ofLp [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    AntilipschitzWith ((2 : ℝ≥0) ^ (1 / p).toReal) (@WithLp.ofLp p (α × β)) :=
+  prod_antilipschitzWith_equiv_aux p α β
+
+theorem prod_infty_ofLp_isometry [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    Isometry (WithLp.equiv ∞ (α × β)) :=
+  fun x y =>
+  le_antisymm (by simpa only [ENNReal.coe_one, one_mul] using prod_lipschitzWith_equiv ∞ α β x y)
+    (by
+      simpa only [ENNReal.div_top, ENNReal.toReal_zero, NNReal.rpow_zero, ENNReal.coe_one,
+        one_mul] using prod_antilipschitzWith_equiv ∞ α β x y)
+
 /-- Seminormed group instance on the product of two normed groups, using the `L^p`
 norm. -/
 instance instProdSeminormedAddCommGroup [SeminormedAddCommGroup α] [SeminormedAddCommGroup β] :
@@ -625,6 +720,18 @@ theorem prod_nnnorm_eq_sup (f : WithLp ∞ (α × β)) : ‖f‖₊ = ‖f.fst�
   congr_arg NNReal.toReal <| prod_nnnorm_equiv f
 
 @[simp] theorem prod_norm_equiv_symm (f : α × β) : ‖(WithLp.equiv ⊤ _).symm f‖ = ‖f‖ :=
+  (prod_norm_equiv _).symm
+
+@[simp] theorem prod_nnnorm_ofLp (f : WithLp ∞ (α × β)) : ‖WithLp.ofLp f‖₊ = ‖f‖₊ := by
+  rw [prod_nnnorm_eq_sup, Prod.nnnorm_def, ofLp_fst, ofLp_snd]
+
+@[simp] theorem prod_nnnorm_toLp (f : α × β) : ‖@WithLp.toLp ⊤ _ f‖₊ = ‖f‖₊ :=
+  (prod_nnnorm_equiv _).symm
+
+@[simp] theorem prod_norm_ofLp (f : WithLp ∞ (α × β)) : ‖WithLp.ofLp f‖ = ‖f‖ :=
+  congr_arg NNReal.toReal <| prod_nnnorm_equiv f
+
+@[simp] theorem prod_norm_toLp (f : α × β) : ‖@WithLp.toLp ⊤ _ f‖ = ‖f‖ :=
   (prod_norm_equiv _).symm
 
 section L1
@@ -761,6 +868,70 @@ theorem edist_equiv_symm_snd (y₁ y₂ : β) :
       edist y₁ y₂ := by
   simp only [edist_nndist, nndist_equiv_symm_snd p α β y₁ y₂]
 
+@[simp]
+theorem nnnorm_toLp_fst (x : α) :
+    ‖@WithLp.toLp p (α × β) (x, 0)‖₊ = ‖x‖₊ := by
+  induction p generalizing hp with
+  | top =>
+    simp [prod_nnnorm_eq_sup]
+  | coe p =>
+    have hp0 : (p : ℝ) ≠ 0 := mod_cast (zero_lt_one.trans_le <| Fact.out (p := 1 ≤ (p : ℝ≥0∞))).ne'
+    simp [prod_nnnorm_eq_add, NNReal.zero_rpow hp0, ← NNReal.rpow_mul, mul_inv_cancel₀ hp0]
+
+@[simp]
+theorem nnnorm_toLp_snd (y : β) :
+    ‖@WithLp.toLp p (α × β) (0, y)‖₊ = ‖y‖₊ := by
+  induction p generalizing hp with
+  | top =>
+    simp [prod_nnnorm_eq_sup]
+  | coe p =>
+    have hp0 : (p : ℝ) ≠ 0 := mod_cast (zero_lt_one.trans_le <| Fact.out (p := 1 ≤ (p : ℝ≥0∞))).ne'
+    simp [prod_nnnorm_eq_add, NNReal.zero_rpow hp0, ← NNReal.rpow_mul, mul_inv_cancel₀ hp0]
+
+@[simp]
+theorem norm_toLp_fst (x : α) : ‖@WithLp.toLp p (α × β) (x, 0)‖ = ‖x‖ :=
+  congr_arg ((↑) : ℝ≥0 → ℝ) <| nnnorm_equiv_symm_fst p α β x
+
+@[simp]
+theorem norm_toLp_snd (y : β) : ‖@WithLp.toLp p (α × β) (0, y)‖ = ‖y‖ :=
+  congr_arg ((↑) : ℝ≥0 → ℝ) <| nnnorm_equiv_symm_snd p α β y
+
+@[simp]
+theorem nndist_toLp_fst (x₁ x₂ : α) :
+    nndist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) =
+      nndist x₁ x₂ := by
+  rw [nndist_eq_nnnorm, nndist_eq_nnnorm, ← WithLp.toLp_sub, Prod.mk_sub_mk, sub_zero,
+    nnnorm_toLp_fst]
+
+@[simp]
+theorem nndist_toLp_snd (y₁ y₂ : β) :
+    nndist (@WithLp.toLp p (α × β) (0, y₁)) (@WithLp.toLp p (α × β) (0, y₂)) =
+      nndist y₁ y₂ := by
+  rw [nndist_eq_nnnorm, nndist_eq_nnnorm, ← WithLp.toLp_sub, Prod.mk_sub_mk, sub_zero,
+    nnnorm_toLp_snd]
+
+@[simp]
+theorem dist_toLp_fst (x₁ x₂ : α) :
+    dist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) =
+      dist x₁ x₂ :=
+  congr_arg ((↑) : ℝ≥0 → ℝ) <| nndist_equiv_symm_fst p α β x₁ x₂
+
+@[simp]
+theorem dist_toLp_snd (y₁ y₂ : β) :
+    dist (@WithLp.toLp p (α × β) (0, y₁)) (@WithLp.toLp p (α × β) (0, y₂)) = dist y₁ y₂ :=
+  congr_arg ((↑) : ℝ≥0 → ℝ) <| nndist_equiv_symm_snd p α β y₁ y₂
+
+@[simp]
+theorem edist_toLp_fst (x₁ x₂ : α) :
+    edist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) = edist x₁ x₂ := by
+  simp only [edist_nndist, nndist_toLp_fst p α β x₁ x₂]
+
+@[simp]
+theorem edist_toLp_snd (y₁ y₂ : β) :
+    edist (@WithLp.toLp p (α × β) (0, y₁)) (@WithLp.toLp p (α × β) (0, y₂)) =
+      edist y₁ y₂ := by
+  simp only [edist_nndist, nndist_toLp_snd p α β y₁ y₂]
+
 end Single
 
 section IsBoundedSMul
@@ -790,6 +961,14 @@ def prodEquivₗᵢ : WithLp ∞ (α × β) ≃ₗᵢ[𝕜] α × β where
   map_smul' _c _f := rfl
   norm_map' := prod_norm_equiv
 
+/-- The canonical map `WithLp.equiv` between `WithLp ∞ (α × β)` and `α × β` as a linear isometric
+equivalence. -/
+def prodToLpₗᵢ : α × β ≃ₗᵢ[𝕜] WithLp ∞ (α × β) where
+  __ := WithLp.toLp
+  map_add' _f _g := rfl
+  map_smul' _c _f := rfl
+  norm_map' := prod_norm_toLp
+
 end IsBoundedSMul
 
 section SeminormedAddCommGroup
@@ -804,16 +983,20 @@ def idemFst : AddMonoid.End (WithLp p (α × β)) := (AddMonoidHom.inl α β).co
 /-- Projection on `WithLp p (α × β)` with range `β` and kernel `α` -/
 def idemSnd : AddMonoid.End (WithLp p (α × β)) := (AddMonoidHom.inr α β).comp (AddMonoidHom.snd α β)
 
-lemma idemFst_apply (x : WithLp p (α × β)) : idemFst x = (WithLp.equiv _ _).symm (x.1, 0) := rfl
+lemma idemFst_apply' (x : WithLp p (α × β)) : idemFst x = (WithLp.equiv _ _).symm (x.1, 0) := rfl
 
-lemma idemSnd_apply (x : WithLp p (α × β)) : idemSnd x = (WithLp.equiv _ _).symm (0, x.2) := rfl
+lemma idemSnd_apply' (x : WithLp p (α × β)) : idemSnd x = (WithLp.equiv _ _).symm (0, x.2) := rfl
+
+lemma idemFst_apply (x : WithLp p (α × β)) : idemFst x = WithLp.toLp (x.1, 0) := rfl
+
+lemma idemSnd_apply (x : WithLp p (α × β)) : idemSnd x =  WithLp.toLp (0, x.2) := rfl
 
 @[simp]
 lemma idemFst_add_idemSnd :
     idemFst + idemSnd = (1 : AddMonoid.End (WithLp p (α × β))) := AddMonoidHom.ext
   fun x => by
     rw [AddMonoidHom.add_apply, idemFst_apply, idemSnd_apply, AddMonoid.End.coe_one, id_eq,
-      ← WithLp.equiv_symm_add, Prod.mk_add_mk, zero_add, add_zero]
+      ← WithLp.toLp_add, Prod.mk_add_mk, zero_add, add_zero]
     rfl
 
 lemma idemFst_compl : (1 : AddMonoid.End (WithLp p (α × β))) - idemFst = idemSnd := by
@@ -824,14 +1007,14 @@ lemma idemSnd_compl : (1 : AddMonoid.End (WithLp p (α × β))) - idemSnd = idem
 
 theorem prod_norm_eq_idemFst_sup_idemSnd (x : WithLp ∞ (α × β)) :
     ‖x‖ = max ‖idemFst x‖ ‖idemSnd x‖ := by
-  rw [WithLp.prod_norm_eq_sup, ← WithLp.norm_equiv_symm_fst ∞ α β x.1,
-    ← WithLp.norm_equiv_symm_snd ∞ α β x.2]
+  rw [WithLp.prod_norm_eq_sup, ← WithLp.norm_toLp_fst ∞ α β x.1,
+    ← WithLp.norm_toLp_snd ∞ α β x.2]
   rfl
 
 lemma prod_norm_eq_add_idemFst [Fact (1 ≤ p)] (hp : 0 < p.toReal) (x : WithLp p (α × β)) :
     ‖x‖ = (‖idemFst x‖ ^ p.toReal + ‖idemSnd x‖ ^ p.toReal) ^ (1 / p.toReal) := by
-  rw [WithLp.prod_norm_eq_add hp, ← WithLp.norm_equiv_symm_fst p α β x.1,
-    ← WithLp.norm_equiv_symm_snd p α β x.2]
+  rw [WithLp.prod_norm_eq_add hp, ← WithLp.norm_toLp_fst p α β x.1,
+    ← WithLp.norm_toLp_snd p α β x.2]
   rfl
 
 lemma prod_norm_eq_idemFst_of_L1 (x : WithLp 1 (α × β)) : ‖x‖ = ‖idemFst x‖ + ‖idemSnd x‖ := by
