@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Ledvinka
 -/
 import Mathlib.MeasureTheory.Group.Prod
+import Mathlib.MeasureTheory.Group.LIntegral
 
 /-!
 # Convolution of functions using the Lebesgue integral
@@ -93,19 +94,54 @@ end NoGroup
 
 section Group
 
-variable [Group G] [MeasurableMul₂ G] [MeasurableInv G]
-
-variable (μ : Measure G) [IsMulLeftInvariant μ] [SFinite μ ]
+variable [Group G] [MeasurableMul₂ G] [MeasurableInv G] (μ : Measure G)
 
 /-- The convolution of AEMeasurable functions is AEMeasurable. -/
 @[to_additive (attr := measurability, fun_prop)
 "The convolution of AEMeasurable functions is AEMeasurable"]
-theorem aemeasurable_mlconvolution {f g : G → ℝ≥0∞}
-  (hf : AEMeasurable f μ) (hg : AEMeasurable g μ) : AEMeasurable (f ⋆ₗ[μ] g) μ := by
+theorem aemeasurable_mlconvolution [IsMulLeftInvariant μ] [SFinite μ] {f g : G → ℝ≥0∞}
+    (hf : AEMeasurable f μ) (hg : AEMeasurable g μ) : AEMeasurable (f ⋆ₗ[μ] g) μ := by
   apply AEMeasurable.lintegral_prod_right
   apply AEMeasurable.mul hf.snd
   exact hg.comp_quasiMeasurePreserving (quasiMeasurePreserving_inv_mul_swap _ _)
 
+
+@[to_additive]
+theorem mlconvolution_assoc₀ [IsMulLeftInvariant μ] [SFinite μ] {f g k : G → ℝ≥0∞}
+    (hf : AEMeasurable f μ) (hg : AEMeasurable g μ) (hk : AEMeasurable k μ) :
+    f ⋆ₗ[μ] g ⋆ₗ[μ] k = (f ⋆ₗ[μ] g) ⋆ₗ[μ] k := by
+sorry
+
+/- Convolution is associative. -/
+@[to_additive "Convolution is associative."]
+theorem mlconvolution_assoc [IsMulLeftInvariant μ] [SFinite μ] {f g k : G → ℝ≥0∞}
+    (hf : Measurable f) (hg : Measurable g) (hk : Measurable k) :
+    f ⋆ₗ[μ] g ⋆ₗ[μ] k = (f ⋆ₗ[μ] g) ⋆ₗ[μ] k := by
+  ext x
+  simp only [mlconvolution_def]
+  conv in f _ * (∫⁻ _ , _ ∂μ) =>
+    rw [← lintegral_const_mul _ (by fun_prop), ← lintegral_mul_left_eq_self _ y⁻¹]
+  conv in (∫⁻ _ , _ ∂μ) * k _ =>
+    rw [← lintegral_mul_const _ (by fun_prop)]
+  rw [lintegral_lintegral_swap (by fun_prop)]
+  simp [mul_assoc]
+
 end Group
+
+section CommGroup
+
+variable [CommGroup G] [MeasurableMul₂ G] [MeasurableInv G] (μ : Measure G)
+
+/-- Convolution is commutative when the group is commutative. -/
+@[to_additive "Convolution is commutative when the group is commutative."]
+theorem mlconvolution_comm [IsMulLeftInvariant μ] [IsInvInvariant μ] {f g : G → ℝ≥0∞} :
+    (f ⋆ₗ[μ] g) = (g ⋆ₗ[μ] f) := by
+  ext x
+  simp only [mlconvolution_def]
+  rw [← lintegral_mul_left_eq_self _ x, ← lintegral_inv_eq_self]
+  simp [mul_comm]
+
+end CommGroup
+
 
 end MeasureTheory
