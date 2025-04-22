@@ -128,14 +128,6 @@ theorem toLp_fst (x :α × β) : (WithLp.toLp (p := p) x).fst = x.fst :=
 theorem toLp_snd (x : α × β) : (WithLp.toLp (p := p) x).snd = x.snd :=
   rfl
 
--- @[simp]
--- theorem toLp_symm_fst (x : WithLp p (α × β)) : ((WithLp.toLp).symm x).fst = x.fst :=
---   rfl
-
--- @[simp]
--- theorem toLp_symm_snd (x : WithLp p (α × β)) : ((WithLp.toLp).symm x).snd = x.snd :=
---   rfl
-
 @[simp]
 theorem ofLp_fst (x : WithLp p (α × β)) : (WithLp.ofLp x).fst = x.fst :=
   rfl
