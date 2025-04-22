@@ -26,4 +26,3 @@ theorem Subalgebra.isSimpleOrder_of_finrank_prime (F A) [Field F] [Ring A] [IsDo
       · exact fun h' => Subalgebra.eq_bot_of_finrank_one h'
       · exact
           Algebra.toSubmodule_eq_top.1 (eq_top_of_finrank_eq <| K.finrank_toSubmodule.trans h) }
--- TODO: `IntermediateField` version

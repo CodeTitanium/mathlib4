@@ -4,16 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Thomas Browning, Patrick Lutz
 -/
 import Mathlib.Algebra.Algebra.Subalgebra.Directed
-import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
-import Mathlib.FieldTheory.IntermediateField.Algebraic
+import Mathlib.Algebra.Algebra.Subalgebra.IsSimpleOrder
 import Mathlib.FieldTheory.Separable
 import Mathlib.FieldTheory.SplittingField.IsSplittingField
-import Mathlib.LinearAlgebra.Dimension.FreeAndStrongRankCondition
 import Mathlib.LinearAlgebra.Dual.Lemmas
 import Mathlib.RingTheory.Adjoin.Dimension
-import Mathlib.RingTheory.TensorProduct.Basic
 import Mathlib.RingTheory.TensorProduct.Finite
-import Mathlib.SetTheory.Cardinal.Subfield
 
 /-!
 # Adjoining Elements to Fields
@@ -533,6 +529,17 @@ theorem finiteDimensional_adjoin {S : Set L} [Finite S] (hS : ∀ x ∈ S, IsInt
   rw [← biSup_adjoin_simple, ← iSup_subtype'']
   haveI (x : S) := adjoin.finiteDimensional (hS x.1 x.2)
   exact finiteDimensional_iSup_of_finite
+
+/-!
+If `L/K` is an extension of fields with prime degree, then there are no non-trivial subfields.
+-/
+theorem isSimpleOrder_of_finrank_prime (hp : Nat.Prime (Module.finrank K L)) :
+    IsSimpleOrder (IntermediateField K L) := by
+  have : Algebra.IsAlgebraic K L := by
+    have : Module.Finite K L := Module.finite_of_finrank_pos <| Nat.Prime.pos hp
+    exact Algebra.IsAlgebraic.of_finite K L
+  rw [OrderIso.isSimpleOrder_iff subalgebraEquivIntermediateField.symm]
+  exact Subalgebra.isSimpleOrder_of_finrank_prime K L hp
 
 end PowerBasis
 

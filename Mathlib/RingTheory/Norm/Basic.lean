@@ -3,12 +3,11 @@ Copyright (c) 2021 Anne Baanen. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anne Baanen
 -/
-import Mathlib.RingTheory.Norm.Defs
-import Mathlib.FieldTheory.PrimitiveElement
+import Mathlib.FieldTheory.Galois.Basic
+import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 import Mathlib.LinearAlgebra.Matrix.Charpoly.Minpoly
 import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
-import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
-import Mathlib.FieldTheory.Galois.Basic
+import Mathlib.RingTheory.Norm.Transitivity
 
 /-!
 # Norm for (finite) ring extensions
@@ -130,19 +129,26 @@ end EqZeroIff
 open IntermediateField
 
 variable (K) in
-theorem norm_eq_norm_adjoin [FiniteDimensional K L] [Algebra.IsSeparable K L] (x : L) :
+theorem norm_eq_norm_adjoin [FiniteDimensional K L] (x : L) :
     norm K x = norm K (AdjoinSimple.gen K x) ^ finrank K⟮x⟯ L := by
-  letI := Algebra.isSeparable_tower_top_of_isSeparable K K⟮x⟯ L
-  let pbL := Field.powerBasisOfFiniteOfSeparable K⟮x⟯ L
-  let pbx := IntermediateField.adjoin.powerBasis (Algebra.IsSeparable.isIntegral K x)
-  rw [← AdjoinSimple.algebraMap_gen K x, norm_eq_matrix_det (pbx.basis.smulTower pbL.basis) _,
-    smulTower_leftMulMatrix_algebraMap, det_blockDiagonal, AdjoinSimple.algebraMap_gen,
-    norm_eq_matrix_det pbx.basis]
-  simp only [Finset.card_fin, Finset.prod_const]
-  congr
-  rw [← PowerBasis.finrank]
-
+  rw [← norm_norm (S := K⟮x⟯)]
+  conv in x => rw [← AdjoinSimple.algebraMap_gen K x]
+  rw [Algebra.norm_algebraMap, MonoidHom.map_pow]
 section IntermediateField
+
+theorem norm_adjoinSimpleGen {K : Type*} {L : Type*} [Field K] [Field L]
+    [Algebra K L] {x : L} (hx : IsIntegral K x) :
+    Algebra.norm K (IntermediateField.AdjoinSimple.gen K x) =
+      (-1) ^ (minpoly K x).natDegree * (minpoly K x).coeff 0 := by
+  simpa [minpoly_gen K x] using
+    Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly <| adjoin.powerBasis hx
+
+theorem norm_eq_mul_minpoly_coeff_zero_pow (K : Type*) {L : Type*} [Field K] [Field L]
+    [Algebra K L] [FiniteDimensional K L] (x : L) :
+    Algebra.norm K x =
+      ((-1) ^ (minpoly K x).natDegree * (minpoly K x).coeff 0) ^ Module.finrank K⟮x⟯ L := by
+  rw [Algebra.norm_eq_norm_adjoin, norm_adjoinSimpleGen]
+  exact Algebra.IsIntegral.isIntegral x
 
 theorem _root_.IntermediateField.AdjoinSimple.norm_gen_eq_one {x : L} (hx : ¬IsIntegral K x) :
     norm K (AdjoinSimple.gen K x) = 1 := by
@@ -285,3 +291,5 @@ lemma norm_eq_of_equiv_equiv {A₁ B₁ A₂ B₂ : Type*} [CommRing A₁] [Ring
 end EqProdEmbeddings
 
 end Algebra
+
+#min_imports
