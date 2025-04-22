@@ -82,13 +82,13 @@ def Mon_Class.ofRepresentableBy (F : Cᵒᵖ ⥤ MonCat.{w}) (α : (F ⋙ forget
 alias Mon_ClassOfRepresentableBy := Mon_Class.ofRepresentableBy
 
 /-- If `M` is a monoid object, then `Hom(X, M)` has a monoid structure. -/
-abbrev monoidOfMon_Class : Monoid (X ⟶ M) where
+abbrev Hom.monoid : Monoid (X ⟶ M) where
   mul f₁ f₂ := lift f₁ f₂ ≫ μ
   mul_assoc f₁ f₂ f₃ := by
     show lift (lift f₁ f₂ ≫ μ) f₃ ≫ μ = lift f₁ (lift f₂ f₃ ≫ μ) ≫ μ
-    trans lift (lift f₁ f₂) f₃ ≫ (μ ▷ M) ≫ μ
+    trans lift (lift f₁ f₂) f₃ ≫ μ ▷ M ≫ μ
     · rw [← tensorHom_id, lift_map_assoc, Category.comp_id]
-    trans lift f₁ (lift f₂ f₃) ≫ (M ◁ μ) ≫ μ
+    trans lift f₁ (lift f₂ f₃) ≫ M ◁ μ ≫ μ
     · rw [Mon_Class.mul_assoc]
       simp_rw [← Category.assoc]
       congr 2
@@ -106,7 +106,10 @@ abbrev monoidOfMon_Class : Monoid (X ⟶ M) where
       Category.comp_id]
     exact lift_fst _ _
 
-attribute [local instance] monoidOfMon_Class
+attribute [local instance] Hom.monoid
+
+lemma Hom.one_def : (1 : X ⟶ M) = toUnit X ≫ η := rfl
+lemma Hom.mul_def (f₁ f₂ : X ⟶ M) : f₁ * f₂ = lift f₁ f₂ ≫ μ := rfl
 
 variable (M) in
 /-- If `M` is a monoid object, then `Hom(-, M)` is a presheaf of monoids. -/
@@ -219,8 +222,15 @@ lemma essImage_yonedaMon :
     exact ⟨.mk' X, ⟨yonedaMonObjEquivOfRepresentableBy X F e⟩⟩
 
 @[reassoc]
-lemma Mon_Class.comp_mul (f : X ⟶ Y) (g h : Y ⟶ M) : f ≫ (g * h) = f ≫ g * f ≫ h :=
-  ((yonedaMon.obj <| .mk' M).map f.op).hom.map_mul g h
+lemma Mon_Class.one_comp (f : M ⟶ N) [IsMon_Hom f] : (1 : X ⟶ M) ≫ f = 1 := by simp [Hom.one_def]
+
+@[reassoc]
+lemma Mon_Class.mul_comp (f₁ f₂ : X ⟶ M) (g : M ⟶ N) [IsMon_Hom g] :
+    (f₁ * f₂) ≫ g = f₁ ≫ g * f₂ ≫ g := by simp [Hom.mul_def]
+
+@[reassoc]
+lemma Mon_Class.comp_mul (f : X ⟶ Y) (g₁ g₂ : Y ⟶ M) : f ≫ (g₁ * g₂) = f ≫ g₁ * f ≫ g₂ :=
+  ((yonedaMon.obj <| .mk' M).map f.op).hom.map_mul _ _
 
 variable (M) in
 lemma Mon_Class.one_eq_one : η = (1 : _ ⟶ M) :=

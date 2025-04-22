@@ -46,18 +46,18 @@ def Grp_Class.ofRepresentableBy (F : Cᵒᵖ ⥤ Grp.{w}) (α : (F ⋙ forget _)
     simp only [← ConcreteCategory.forget_map_eq_coe, ← Functor.comp_map, ← α.homEquiv_comp]
     simp [← Functor.comp_obj]
 
-attribute [local instance] monoidOfMon_Class
-
 /-- If `G` is a group object, then `Hom(X, G)` has a group structure. -/
-abbrev groupOfGrp_Class : Group (X ⟶ G) where
-  __ := monoidOfMon_Class
-  inv := (· ≫ ι)
-  div_eq_mul_inv _ _ := rfl
-  inv_mul_cancel f := by
-    change lift (f ≫ ι) _ ≫ μ = toUnit X ≫ η
-    rw [← comp_toUnit f, Category.assoc, ← Grp_Class.left_inv _, comp_lift_assoc, Category.comp_id]
+abbrev Hom.group : Group (X ⟶ G) where
+  __ := monoid
+  inv f := f ≫ ι
+  inv_mul_cancel f := calc
+    lift (f ≫ ι) f ≫ μ
+    _ = (f ≫ lift ι (𝟙 G)) ≫ μ := by simp
+    _ = toUnit X ≫ η := by rw [Category.assoc]; simp
 
-attribute [local instance] groupOfGrp_Class
+attribute [local instance] Hom.group
+
+lemma Hom.inv_def (f : X ⟶ G) : f⁻¹ = f ≫ ι := rfl
 
 variable (G) in
 /-- If `G` is a group object, then `Hom(-, G)` is a presheaf of groups. -/
@@ -121,3 +121,13 @@ lemma essImage_yonedaGrp :
   · rintro ⟨X, ⟨e⟩⟩
     letI := Grp_Class.ofRepresentableBy X F e
     exact ⟨.mk' X, ⟨yonedaGrpObjEquivOfRepresentableBy X F e⟩⟩
+
+@[reassoc]
+lemma Grp_Class.comp_inv (f : X ⟶ Y) (g : Y ⟶ G) : f ≫ g⁻¹ = (f ≫ g)⁻¹ :=
+  ((yonedaGrp.obj <| .mk' G).map f.op).hom.map_inv g
+
+@[reassoc]
+lemma Grp_Class.inv_comp (f : X ⟶ G) (g : G ⟶ H) [IsMon_Hom g] : f⁻¹ ≫ g = (f ≫ g)⁻¹ := by
+  simp [Hom.inv_def,IsMon_Hom.inv_hom]
+
+lemma Grp_Class.inv_eq_inv : ι = (𝟙 G)⁻¹ := by simp [Hom.inv_def]
