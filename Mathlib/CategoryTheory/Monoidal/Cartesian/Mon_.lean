@@ -229,6 +229,10 @@ lemma Mon_Class.mul_comp (f₁ f₂ : X ⟶ M) (g : M ⟶ N) [IsMon_Hom g] :
     (f₁ * f₂) ≫ g = f₁ ≫ g * f₂ ≫ g := by simp [Hom.mul_def]
 
 @[reassoc]
+lemma Mon_Class.comp_one (f : X ⟶ Y) : f ≫ (1 : Y ⟶ M) = 1 := 
+  ((yonedaMon.obj <| .mk' M).map f.op).hom.map_one
+
+@[reassoc]
 lemma Mon_Class.comp_mul (f : X ⟶ Y) (g₁ g₂ : Y ⟶ M) : f ≫ (g₁ * g₂) = f ≫ g₁ * f ≫ g₂ :=
   ((yonedaMon.obj <| .mk' M).map f.op).hom.map_mul _ _
 
