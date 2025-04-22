@@ -890,22 +890,19 @@ theorem norm_toLp_snd (y : β) : ‖@WithLp.toLp p (α × β) (0, y)‖ = ‖y�
 
 @[simp]
 theorem nndist_toLp_fst (x₁ x₂ : α) :
-    nndist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) =
-      nndist x₁ x₂ := by
+    nndist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) = nndist x₁ x₂ := by
   rw [nndist_eq_nnnorm, nndist_eq_nnnorm, ← WithLp.toLp_sub, Prod.mk_sub_mk, sub_zero,
     nnnorm_toLp_fst]
 
 @[simp]
 theorem nndist_toLp_snd (y₁ y₂ : β) :
-    nndist (@WithLp.toLp p (α × β) (0, y₁)) (@WithLp.toLp p (α × β) (0, y₂)) =
-      nndist y₁ y₂ := by
+    nndist (@WithLp.toLp p (α × β) (0, y₁)) (@WithLp.toLp p (α × β) (0, y₂)) = nndist y₁ y₂ := by
   rw [nndist_eq_nnnorm, nndist_eq_nnnorm, ← WithLp.toLp_sub, Prod.mk_sub_mk, sub_zero,
     nnnorm_toLp_snd]
 
 @[simp]
 theorem dist_toLp_fst (x₁ x₂ : α) :
-    dist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) =
-      dist x₁ x₂ :=
+    dist (@WithLp.toLp p (α × β) (x₁, 0)) (@WithLp.toLp p (α × β) (x₂, 0)) = dist x₁ x₂ :=
   congr_arg ((↑) : ℝ≥0 → ℝ) <| nndist_equiv_symm_fst p α β x₁ x₂
 
 @[simp]

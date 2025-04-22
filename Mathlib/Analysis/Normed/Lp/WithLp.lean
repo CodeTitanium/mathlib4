@@ -22,8 +22,9 @@ more details.
 ## Main definitions
 
 * `WithLp p V`: a copy of `V` to be equipped with an L`p` norm.
-* `WithLp.toLp p V`: the canonical equivalence between `WithLp p V` and `V`.
-* `WithLp.toLpLinear p K V`: the canonical `K`-module isomorphism between `WithLp p V` and `V`.
+* `WithLp.toLp`: the canonical equivalence between `V` and `WithLp p V`.
+* `WithLp.ofLp`: the canonical equivalence between `WithLp p V` and `V`.
+* `WithLp.toLpLinear p K V`: the canonical `K`-module isomorphism between `V` and `WithLp p V`.
 
 ## Implementation notes
 
@@ -207,10 +208,10 @@ variable (K V)
 
 /-- `WithLp.toLp` as a linear equivalence. -/
 @[simps -fullyApplied]
-protected def toLpLinear [Semiring K] [AddCommGroup V] [Module K V] : WithLp p V ≃ₗ[K] V :=
+protected def toLpLinear [Semiring K] [AddCommGroup V] [Module K V] : V ≃ₗ[K] WithLp p V :=
   { LinearEquiv.refl _ _ with
-    toFun := WithLp.toLp.symm
-    invFun := WithLp.toLp }
+    toFun := WithLp.toLp
+    invFun := WithLp.ofLp }
 
 /-- `WithLp.equiv` as a linear equivalence. -/
 @[simps -fullyApplied]
