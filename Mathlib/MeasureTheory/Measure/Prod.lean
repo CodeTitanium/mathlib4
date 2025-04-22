@@ -130,7 +130,6 @@ alias Measurable.map_prod_mk_right := Measurable.map_prodMk_right
 
 /-- The Lebesgue integral is measurable. This shows that the integrand of (the right-hand-side of)
   Tonelli's theorem is measurable. -/
-@[fun_prop, measurability]
 theorem Measurable.lintegral_prod_right' [SFinite ν] :
     ∀ {f : α × β → ℝ≥0∞}, Measurable f → Measurable fun x => ∫⁻ y, f (x, y) ∂ν := by
   have m := @measurable_prodMk_left
@@ -152,14 +151,12 @@ theorem Measurable.lintegral_prod_right' [SFinite ν] :
 /-- The Lebesgue integral is measurable. This shows that the integrand of (the right-hand-side of)
   Tonelli's theorem is measurable.
   This version has the argument `f` in curried form. -/
-@[fun_prop, measurability]
 theorem Measurable.lintegral_prod_right [SFinite ν] {f : α → β → ℝ≥0∞}
     (hf : Measurable (uncurry f)) : Measurable fun x => ∫⁻ y, f x y ∂ν :=
   hf.lintegral_prod_right'
 
 /-- The Lebesgue integral is measurable. This shows that the integrand of (the right-hand-side of)
   the symmetric version of Tonelli's theorem is measurable. -/
-@[fun_prop, measurability]
 theorem Measurable.lintegral_prod_left' [SFinite μ] {f : α × β → ℝ≥0∞} (hf : Measurable f) :
     Measurable fun y => ∫⁻ x, f (x, y) ∂μ :=
   (measurable_swap_iff.mpr hf).lintegral_prod_right'
@@ -167,7 +164,6 @@ theorem Measurable.lintegral_prod_left' [SFinite μ] {f : α × β → ℝ≥0�
 /-- The Lebesgue integral is measurable. This shows that the integrand of (the right-hand-side of)
   the symmetric version of Tonelli's theorem is measurable.
   This version has the argument `f` in curried form. -/
-@[fun_prop, measurability]
 theorem Measurable.lintegral_prod_left [SFinite μ] {f : α → β → ℝ≥0∞}
     (hf : Measurable (uncurry f)) : Measurable fun y => ∫⁻ x, f x y ∂μ :=
   hf.lintegral_prod_left'
@@ -376,6 +372,7 @@ theorem quasiMeasurePreserving_fst : QuasiMeasurePreserving Prod.fst (μ.prod ν
 theorem quasiMeasurePreserving_snd : QuasiMeasurePreserving Prod.snd (μ.prod ν) ν := by
   refine ⟨measurable_snd, AbsolutelyContinuous.mk fun s hs h2s => ?_⟩
   rw [map_apply measurable_snd hs, ← univ_prod, prod_prod, h2s, mul_zero]
+
 
 lemma set_prod_ae_eq {s s' : Set α} {t t' : Set β} (hs : s =ᵐ[μ] s') (ht : t =ᵐ[ν] t') :
     (s ×ˢ t : Set (α × β)) =ᵐ[μ.prod ν] (s' ×ˢ t' : Set (α × β)) :=
@@ -718,6 +715,41 @@ end MeasurePreserving
 
 namespace QuasiMeasurePreserving
 
+@[fun_prop]
+theorem quasiMeasurePreserving_fst' (f : α → β × γ) [SFinite τ]
+    (hf : QuasiMeasurePreserving f μ (ν'.prod τ)) :
+    QuasiMeasurePreserving (fun x ↦ (f x).1) μ ν' := by
+  apply (quasiMeasurePreserving_fst (μ := ν') (ν := τ)).comp hf
+
+@[fun_prop]
+theorem quasiMeasurePreserving_snd' (f : α → β × γ) [SFinite τ]
+    (hf : QuasiMeasurePreserving f μ (ν'.prod τ)) :
+    QuasiMeasurePreserving (fun x ↦ (f x).1) μ ν' := by
+  apply (quasiMeasurePreserving_fst (μ := ν') (ν := τ)).comp hf
+
+@[fun_prop]
+theorem prod {ω : Type*} {mω : MeasureSpace ω} {τ' : Measure ω}
+    [SFinite μ] [SFinite ν] [SFinite τ'] {f : α → γ} {g : β → ω}
+    (hf : QuasiMeasurePreserving f μ τ) (hg : QuasiMeasurePreserving g ν τ') :
+    QuasiMeasurePreserving (Prod.map f g) (μ.prod ν) (τ.prod τ') := by
+  refine ⟨by fun_prop, ?_⟩
+  rw[← map_prod_map _ _ (by fun_prop) (by fun_prop)]
+  exact hf.absolutelyContinuous.prod hg.absolutelyContinuous
+
+theorem quasiMeasurePreserving_copy :
+    QuasiMeasurePreserving (fun x ↦ Prod.mk x x) μ (μ.prod μ) := by
+  refine ⟨by fun_prop, AbsolutelyContinuous.mk <| fun s hs h0 ↦ ?_⟩
+  sorry
+
+@[fun_prop]
+theorem prodMk {f : α → β} {g : α → γ} [SFinite μ] [SFinite ν] [SFinite τ]
+    (hf : QuasiMeasurePreserving f μ ν) (hg : QuasiMeasurePreserving g μ τ) :
+    QuasiMeasurePreserving (fun x ↦ Prod.mk (f x) (g x)) μ (ν.prod τ) := by
+  sorry
+  -- have : (fun x ↦ Prod.mk (f x) (g x)) = (Prod.map f g) ∘ (fun x ↦ Prod.mk x x) := rfl
+  -- rw [this]
+  -- apply (prod hf hg).comp (quasiMeasurePreserving_copy (μ := μ))
+
 theorem prod_of_right {f : α × β → γ} {μ : Measure α} {ν : Measure β} {τ : Measure γ}
     (hf : Measurable f) [SFinite ν]
     (h2f : ∀ᵐ x ∂μ, QuasiMeasurePreserving (fun y => f (x, y)) ν τ) :
@@ -759,28 +791,6 @@ theorem AEMeasurable.fst [SFinite ν] {f : α → γ} (hf : AEMeasurable f μ) :
 theorem AEMeasurable.snd [SFinite ν] {f : β → γ} (hf : AEMeasurable f ν) :
     AEMeasurable (fun z : α × β => f z.2) (μ.prod ν) :=
   hf.comp_quasiMeasurePreserving quasiMeasurePreserving_snd
-
-@[fun_prop, measurability]
-theorem AEMeasurable.lintegral_prod_right' [SFinite ν] {f : α × β → ℝ≥0∞}
-    (hf : AEMeasurable f (μ.prod ν)) : AEMeasurable (fun x => ∫⁻ y, f (x, y) ∂ν) μ := by
-  obtain ⟨g , hg, hfg⟩ := hf
-  refine ⟨fun x ↦ ∫⁻ y, g (x, y) ∂ν ,(by fun_prop) , ?_⟩
-  exact Eventually.mono (Measure.ae_ae_of_ae_prod hfg) fun x hfg' ↦ lintegral_congr_ae hfg'
-
-@[fun_prop, measurability]
-theorem AEMeasurable.lintegral_prod_right [SFinite ν] {f : α → β → ℝ≥0∞}
-    (hf : AEMeasurable f.uncurry (μ.prod ν)) : AEMeasurable (fun x => ∫⁻ y, f x y ∂ν) μ :=
-  hf.lintegral_prod_right'
-
-@[fun_prop, measurability]
-theorem AEMeasurable.lintegral_prod_left' [SFinite ν] [SFinite μ] {f : α × β → ℝ≥0∞}
-    (hf : AEMeasurable f (μ.prod ν)) : AEMeasurable (fun y => ∫⁻ x, f (x, y) ∂μ) ν :=
-  hf.prod_swap.lintegral_prod_right'
-
-@[fun_prop, measurability]
-theorem AEMeasurable.lintegral_prod_left [SFinite ν] [SFinite μ] {f : α → β → ℝ≥0∞}
-    (hf : AEMeasurable f.uncurry (μ.prod ν)) : AEMeasurable (fun y => ∫⁻ x, f x y ∂μ) ν :=
-  hf.lintegral_prod_left'
 
 end
 
