@@ -155,9 +155,9 @@ end NormedSpace
 
 /-- Characterization of which natural numbers are `≤ hf.order`. Useful for avoiding case splits,
 since it applies whether or not the order is `∞`. -/
-lemma natCast_le_order_iff (hf : AnalyticAt 𝕜 f z₀) {n : ℕ} :
-    n ≤ hf.order ↔ ∃ g, AnalyticAt 𝕜 g z₀ ∧ ∀ᶠ z in 𝓝 z₀, f z = (z - z₀) ^ n • g z := by
-  unfold order
+lemma natCast_le_eanalyticOrderAt (hf : AnalyticAt 𝕜 f z₀) {n : ℕ} :
+    n ≤ eanalyticOrderAt ↔ ∃ g, AnalyticAt 𝕜 g z₀ ∧ ∀ᶠ z in 𝓝 z₀, f z = (z - z₀) ^ n • g z := by
+  unfold eanalyticOrderAt
   split_ifs with h
   · simpa using ⟨0, analyticAt_const .., by simpa⟩
   · let m := (hf.exists_eventuallyEq_pow_smul_nonzero_iff.mpr h).choose
