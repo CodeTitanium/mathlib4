@@ -520,7 +520,7 @@ theorem prod_continuous_toLp : Continuous (@WithLp.toLp p (α × β)) :=
   continuous_id
 
 @[continuity]
-theorem prod_continuous_ofLp : Continuous (@WithLp.ofLp p (α × β)).symm :=
+theorem prod_continuous_ofLp : Continuous (@WithLp.ofLp p (α × β)):=
   continuous_id
 
 variable [T0Space α] [T0Space β]
@@ -978,7 +978,7 @@ lemma idemSnd_apply' (x : WithLp p (α × β)) : idemSnd x = (WithLp.equiv _ _).
 
 lemma idemFst_apply (x : WithLp p (α × β)) : idemFst x = WithLp.toLp (x.1, 0) := rfl
 
-lemma idemSnd_apply (x : WithLp p (α × β)) : idemSnd x =  WithLp.toLp (0, x.2) := rfl
+lemma idemSnd_apply (x : WithLp p (α × β)) : idemSnd x = WithLp.toLp (0, x.2) := rfl
 
 @[simp]
 lemma idemFst_add_idemSnd :
