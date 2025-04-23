@@ -120,21 +120,11 @@ theorem equiv_symm_fst (x : α × β) : ((WithLp.equiv p (α × β)).symm x).fst
 theorem equiv_symm_snd (x : α × β) : ((WithLp.equiv p (α × β)).symm x).snd = x.snd :=
   rfl
 
-@[simp]
-theorem toLp_fst (x :α × β) : (WithLp.toLp (p := p) x).fst = x.fst :=
-  rfl
+@[simp] theorem toLp_fst (x : α × β) : (WithLp.toLp (p := p) x).fst = x.fst := rfl
+@[simp] theorem ofLp_fst (x : WithLp p (α × β)) : (WithLp.ofLp x).fst = x.fst := rfl
 
-@[simp]
-theorem toLp_snd (x : α × β) : (WithLp.toLp (p := p) x).snd = x.snd :=
-  rfl
-
-@[simp]
-theorem ofLp_fst (x : WithLp p (α × β)) : (WithLp.ofLp x).fst = x.fst :=
-  rfl
-
-@[simp]
-theorem ofLp_snd (x : WithLp p (α × β)) : (WithLp.ofLp x).snd = x.snd :=
-  rfl
+@[simp] theorem toLp_snd (x : α × β) : (WithLp.toLp (p := p) x).snd = x.snd := rfl
+@[simp] theorem ofLp_snd (x : WithLp p (α × β)) : (WithLp.ofLp x).snd = x.snd := rfl
 
 end equiv
 
@@ -546,7 +536,7 @@ theorem prod_uniformContinuous_equiv_symm : UniformContinuous (WithLp.equiv p (�
 theorem prod_uniformContinuous_toLp : UniformContinuous (@WithLp.toLp p (α × β)) :=
   uniformContinuous_id
 
-theorem prod_uniformContinuous_ofLp : UniformContinuous (@WithLp.ofLp p (α × β)).symm :=
+theorem prod_uniformContinuous_ofLp : UniformContinuous (@WithLp.ofLp p (α × β)) :=
   uniformContinuous_id
 
 variable [CompleteSpace α] [CompleteSpace β]
