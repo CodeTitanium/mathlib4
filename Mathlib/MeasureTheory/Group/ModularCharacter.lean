@@ -52,43 +52,9 @@ noncomputable def modularCharacterFun (g : G) : ℝ≥0 :=
 @[to_additive "Independence of addModularCharacterFun from the chosen Haar measure"]
 lemma modularCharacterFun_eq_haarScalarFactor [MeasurableSpace G] [BorelSpace G] (μ : Measure G)
     [IsHaarMeasure μ] (g : G) : modularCharacterFun g = haarScalarFactor (map (· * g) μ) μ := by
-  let ν := MeasureTheory.Measure.haar (G := G)
-  obtain ⟨⟨f, f_cont⟩, f_comp, f_nonneg, f_one⟩ :
-    ∃ f : C(G, ℝ), HasCompactSupport f ∧ 0 ≤ f ∧ f 1 ≠ 0 := exists_continuous_nonneg_pos 1
-  have int_f_ne_zero (μ₀ : Measure G) [IsHaarMeasure μ₀] : ∫ x, f x ∂μ₀ ≠ 0 :=
-    ne_of_gt (f_cont.integral_pos_of_hasCompactSupport_nonneg_nonzero f_comp f_nonneg f_one)
-  apply NNReal.coe_injective
-  have t : (∫ x, f (x * g) ∂ν) = (∫ x, f (x * g) ∂(haarScalarFactor ν μ • μ)) := by
-    refine integral_isMulLeftInvariant_eq_smul_of_hasCompactSupport ν μ ?_ ?_
-    · exact Continuous.comp' f_cont (continuous_mul_right g)
-    · have j : (fun x ↦ f (x * g)) = (f ∘ (Homeomorph.mulRight g)) := rfl
-      rw [j]
-      exact HasCompactSupport.comp_homeomorph f_comp _
-  have r : (haarScalarFactor ν μ : ℝ) / (haarScalarFactor ν μ) = 1 := by
-    refine div_self ?_
-    rw [NNReal.coe_ne_zero]
-    apply (ne_of_lt (haarScalarFactor_pos_of_isHaarMeasure _ _)).symm
-  calc
-  ↑(modularCharacterFun g) = ↑(haarScalarFactor (map (· * g) ν) ν) := by borelize G; rfl
-  _ = (∫ x, f x ∂(map (· * g) ν)) / ∫ x, f x ∂ν :=
-    haarScalarFactor_eq_integral_div _ _ f_cont f_comp (int_f_ne_zero ν)
-  _ = (∫ x, f (x * g) ∂ν) / ∫ x, f x ∂ν := by
-    rw [integral_map (AEMeasurable.mul_const aemeasurable_id' _)
-    (Continuous.aestronglyMeasurable f_cont)]
-  _ = (∫ x, f (x * g) ∂(haarScalarFactor ν μ • μ)) / ∫ x, f x ∂ν := by rw [t]
-  _ = (∫ x, f (x * g) ∂(haarScalarFactor ν μ • μ)) / ∫ x, f x ∂(haarScalarFactor ν μ • μ) := by
-    rw [integral_isMulLeftInvariant_eq_smul_of_hasCompactSupport ν μ f_cont f_comp]
-  _ = (haarScalarFactor ν μ • ∫ x, f (x * g) ∂μ) / (haarScalarFactor ν μ • ∫ x, f x ∂μ) := by
-    rw [integral_smul_nnreal_measure, integral_smul_nnreal_measure]
-  _ = (haarScalarFactor ν μ / haarScalarFactor ν μ) * ((∫ x, f (x * g) ∂μ) / ∫ x, f x ∂μ) :=
-    mul_div_mul_comm _ _ _ _
-  _ = 1 * ((∫ x, f (x * g) ∂μ) / ∫ x, f x ∂μ) := by rw [r]
-  _ = (∫ x, f (x * g) ∂μ) / ∫ x, f x ∂μ := by rw [one_mul]
-  _ = (∫ x, f x ∂(map (· * g) μ)) / ∫ x, f x ∂μ := by
-    rw [integral_map (AEMeasurable.mul_const aemeasurable_id' _)
-    (Continuous.aestronglyMeasurable f_cont)]
-  _ = haarScalarFactor (map (· * g) μ) μ :=
-    (haarScalarFactor_eq_integral_div _ _ f_cont f_comp (int_f_ne_zero μ)).symm
+  obtain ⟨rfl⟩ := ‹BorelSpace G›
+  letI := borel G
+  exact haarScalarFactor_smul_congr ..
 
 @[to_additive]
 lemma map_right_mul_eq_modularCharacterFun_smul [MeasurableSpace G] [BorelSpace G] (μ : Measure G)
