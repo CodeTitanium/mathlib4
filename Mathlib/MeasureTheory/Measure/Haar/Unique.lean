@@ -995,6 +995,41 @@ theorem MeasurePreserving.zpow [CompactSpace G] [RootableBy G ℤ]
 end CommGroup
 
 section DistribMulAction
+variable {G A : Type*} [Group G] [CommGroup A] [MulAction G A] [MeasurableSpace A]
+  [TopologicalSpace A] [BorelSpace A] [IsTopologicalGroup A] [LocallyCompactSpace A]
+  [ContinuousConstSMul G A] {μ ν : Measure A} [μ.IsHaarMeasure] [ν.IsHaarMeasure] {g : G}
+
+variable (μ ν) in
+@[to_additive]
+lemma haarScalarFactor_domSMul (g : Gᵈᵐᵃ) : 
+    haarScalarFactor (g • μ) (g • ν) = haarScalarFactor μ ν := by
+  obtain ⟨⟨f, f_cont⟩, f_comp, f_nonneg, f_zero⟩ :
+    ∃ f : C(A, ℝ), HasCompactSupport f ∧ 0 ≤ f ∧ f 0 ≠ 0 := exists_continuous_nonneg_pos 0
+  have int_f_ne_zero : ∫ x, f x ∂g • ν ≠ 0 :=
+    (f_cont.integral_pos_of_hasCompactSupport_nonneg_nonzero f_comp f_nonneg f_zero).ne'
+  apply NNReal.coe_injective
+  rw [addHaarScalarFactor_eq_integral_div (g • μ) (g • ν) f_cont f_comp int_f_ne_zero,
+    integral_domSMul, integral_domSMul]
+  refine (addHaarScalarFactor_eq_integral_div _ _ (by fun_prop) ?_ ?_).symm
+  · exact f_comp.comp_isClosedEmbedding (Homeomorph.smul _).isClosedEmbedding
+  · rw [← integral_domSMul]
+    exact (f_cont.integral_pos_of_hasCompactSupport_nonneg_nonzero f_comp f_nonneg f_zero).ne'
+
+variable (μ) in
+lemma addHaarScalarFactor_smul_congr (g : Gᵈᵐᵃ) :
+    addHaarScalarFactor μ (g • μ) = addHaarScalarFactor ν (g • ν) := by
+  rw [addHaarScalarFactor_eq_mul _ (g • ν), addHaarScalarFactor_domSMul,
+    mul_comm, ← addHaarScalarFactor_eq_mul]
+
+variable (μ) in
+lemma addHaarScalarFactor_smul_congr' (g : Gᵈᵐᵃ) :
+    addHaarScalarFactor (g • μ) μ = addHaarScalarFactor (g • ν) ν := by
+  rw [addHaarScalarFactor_eq_mul _ (g • ν), addHaarScalarFactor_domSMul,
+    mul_comm, ← addHaarScalarFactor_eq_mul]
+
+end DistribMulAction
+
+section DistribMulAction
 variable {G A : Type*} [Group G] [AddCommGroup A] [DistribMulAction G A] [MeasurableSpace A]
   [TopologicalSpace A] [BorelSpace A] [IsTopologicalAddGroup A] [LocallyCompactSpace A]
   [ContinuousConstSMul G A] {μ ν : Measure A} [μ.IsAddHaarMeasure] [ν.IsAddHaarMeasure] {g : G}
