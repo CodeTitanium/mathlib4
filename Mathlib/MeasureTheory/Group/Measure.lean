@@ -863,12 +863,13 @@ instance (priority := 100) IsHaarMeasure.noAtoms [IsTopologicalGroup G] [BorelSp
     exact absurd (K_inf.meas_eq_top ⟨_, h, fun x _ ↦ (haar_singleton _ _).ge⟩)
       K_compact.measure_lt_top.ne
 
-@[to_additive]
-instance IsHaarMeasure.domSMul {G A : Type*} [Group G] [Group A] [MulAction G A]
+-- TODO
+-- @[to_additive]
+instance IsHaarMeasure.domSMul {G A : Type*} [Group G] [Group A] [MulDistribMulAction G A]
     [MeasurableSpace A] [TopologicalSpace A] [BorelSpace A] [IsTopologicalGroup A]
     [ContinuousConstSMul G A] {μ : Measure A} [μ.IsHaarMeasure] (g : Gᵈᵐᵃ) :
     (g • μ).IsHaarMeasure :=
-  (DistribMulAction.toAddEquiv _ (DomMulAct.mk.symm g⁻¹)).isAddHaarMeasure_map _
+  (MulDistribMulAction.toMulEquiv _ (DomMulAct.mk.symm g⁻¹)).isHaarMeasure_map _
     (continuous_const_smul _) (continuous_const_smul _)
 
 instance IsAddHaarMeasure.domSMul {G A : Type*} [Group G] [AddCommGroup A] [DistribMulAction G A]
