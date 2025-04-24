@@ -156,7 +156,7 @@ lemma preimage_inter_subset : preimage R (t₁ ∩ t₂) ⊆ preimage R t₁ ∩
 variable (R s₁ s₂) in
 lemma image_union : image R (s₁ ∪ s₂) = image R s₁ ∪ image R s₂ := by aesop
 
-variable (R s₁ s₂) in
+variable (R t₁ t₂) in
 lemma preimage_union : preimage R (t₁ ∪ t₂) = preimage R t₁ ∪ preimage R t₂ := by aesop
 
 variable (s) in
@@ -228,6 +228,36 @@ lemma image_core_gc : GaloisConnection R.image R.core := fun _ _ ↦ image_subse
 variable (R s) in
 /-- Restrict the domain of a relation to a subtype. -/
 def restrictDomain : Rel s β := {(a, b) | ↑a ~[R] b}
+
+variable {R : Rel α α} {S : Rel β β} {a b c : α}
+
+variable (R) in
+/-- A relation `R` is transitive if `a ~[R] b` and `b ~[R] c` together imply `a ~[R] c`. -/
+protected abbrev IsTrans : Prop := IsTrans α (· ~[R] ·)
+
+variable (R) in
+protected lemma trans [R.IsTrans] (hab : a ~[R] b) (hbc : b ~[R] c) : a ~[R] c :=
+  trans_of (· ~[R] ·) hab hbc
+
+instance {R : α → α → Prop} [IsTrans α R] : Rel.IsTrans {(a, b) | R a b} := ‹_›
+
+variable (R) in
+/-- A relation `R` is irreflexive if `¬ a ~[R] a`. -/
+protected abbrev IsIrrefl : Prop := IsIrrefl α (· ~[R] ·)
+
+variable (R a) in
+protected lemma irrefl [R.IsIrrefl] : ¬ a ~[R] a := irrefl_of (· ~[R] ·) _
+
+instance {R : α → α → Prop} [IsIrrefl α R] : Rel.IsIrrefl {(a, b) | R a b} := ‹_›
+
+/-- A relation `R` on a type `α` is well-founded if all elements of `α` are accessible within `R`.
+-/
+abbrev IsWellFounded : Prop := WellFounded (· ~[R] ·)
+
+variable (R S) in
+/-- A relation homomorphism with respect to a given pair of relations `R` and `S` s is a function
+`f : α → β` such that `a ~[R] b → f a ~[s] f b`. -/
+abbrev Hom := (· ~[R] ·) →r (· ~[S] ·)
 
 end Rel
 
