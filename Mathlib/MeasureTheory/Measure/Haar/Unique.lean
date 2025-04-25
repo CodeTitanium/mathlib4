@@ -1001,7 +1001,7 @@ variable {G A : Type*} [Group G] [CommGroup A] [MulAction G A] [MeasurableSpace 
 
 variable (μ ν) in
 @[to_additive]
-lemma haarScalarFactor_domSMul (g : Gᵈᵐᵃ) : 
+lemma haarScalarFactor_domSMul (g : Gᵈᵐᵃ) :
     haarScalarFactor (g • μ) (g • ν) = haarScalarFactor μ ν := by
   obtain ⟨⟨f, f_cont⟩, f_comp, f_nonneg, f_zero⟩ :
     ∃ f : C(A, ℝ), HasCompactSupport f ∧ 0 ≤ f ∧ f 0 ≠ 0 := exists_continuous_nonneg_pos 0
