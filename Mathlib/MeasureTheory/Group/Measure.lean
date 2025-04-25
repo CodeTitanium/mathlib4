@@ -863,7 +863,7 @@ instance (priority := 100) IsHaarMeasure.noAtoms [IsTopologicalGroup G] [BorelSp
     exact absurd (K_inf.meas_eq_top ⟨_, h, fun x _ ↦ (haar_singleton _ _).ge⟩)
       K_compact.measure_lt_top.ne
 
--- TODO
+-- TODO: Additivise `MulDistribMulAction`
 -- @[to_additive]
 instance IsHaarMeasure.domSMul {G A : Type*} [Group G] [Group A] [MulDistribMulAction G A]
     [MeasurableSpace A] [TopologicalSpace A] [BorelSpace A] [IsTopologicalGroup A]
