@@ -196,9 +196,9 @@ def toLpLinearEquiv [Semiring K] [AddCommGroup V] [Module K V] : V ≃ₗ[K] Wit
 
 /-- `WithLp.equiv` as a linear equivalence. -/
 @[simps -fullyApplied]
-protected def linearEquiv [Semiring K] [AddCommGroup V] [Module K V] : WithLp p V ≃ₗ[K] V :=
-  { LinearEquiv.refl _ _ with
-    toFun := WithLp.equiv _ _
-    invFun := (WithLp.equiv _ _).symm }
+protected def linearEquiv [Semiring K] [AddCommGroup V] [Module K V] : WithLp p V ≃ₗ[K] V where
+  __ := LinearEquiv.refl _ _
+  toFun := WithLp.equiv _ _
+  invFun := (WithLp.equiv _ _).symm
 
 end WithLp
