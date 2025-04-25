@@ -386,86 +386,27 @@ abbrev prodPseudoMetricAux [PseudoMetricSpace α] [PseudoMetricSpace β] :
 
 attribute [local instance] WithLp.prodPseudoMetricAux
 
-theorem prod_lipschitzWith_equiv_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
-    LipschitzWith 1 (WithLp.equiv p (α × β)) := by
-  intro x y
-  rcases p.dichotomy with (rfl | h)
-  · simp [edist]
-  · have cancel : p.toReal * (1 / p.toReal) = 1 := mul_div_cancel₀ 1 (zero_lt_one.trans_le h).ne'
-    rw [prod_edist_eq_add (zero_lt_one.trans_le h)]
-    simp only [edist, forall_prop_of_true, one_mul, ENNReal.coe_one, sup_le_iff]
-    constructor
-    · calc
-        edist x.fst y.fst ≤ (edist x.fst y.fst ^ p.toReal) ^ (1 / p.toReal) := by
-          simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
-        _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
-          gcongr
-          simp only [self_le_add_right]
-    · calc
-        edist x.snd y.snd ≤ (edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
-          simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
-        _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
-          gcongr
-          simp only [self_le_add_left]
-
-theorem prod_antilipschitzWith_equiv_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
-    AntilipschitzWith ((2 : ℝ≥0) ^ (1 / p).toReal) (WithLp.equiv p (α × β)) := by
-  intro x y
-  rcases p.dichotomy with (rfl | h)
-  · simp [edist]
-  · have pos : 0 < p.toReal := by positivity
-    have nonneg : 0 ≤ 1 / p.toReal := by positivity
-    have cancel : p.toReal * (1 / p.toReal) = 1 := mul_div_cancel₀ 1 (ne_of_gt pos)
-    rw [prod_edist_eq_add pos, ENNReal.toReal_div 1 p]
-    simp only [edist, ← one_div, ENNReal.toReal_one]
-    calc
-      (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) ≤
-          (edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) ^ p.toReal +
-          edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) ^ p.toReal) ^ (1 / p.toReal) := by
-        gcongr <;> simp [edist]
-      _ = (2 ^ (1 / p.toReal) : ℝ≥0) * edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) := by
-        simp only [← two_mul, ENNReal.mul_rpow_of_nonneg _ _ nonneg, ← ENNReal.rpow_mul, cancel,
-          ENNReal.rpow_one, ENNReal.coe_rpow_of_nonneg _ nonneg, coe_ofNat]
-
-theorem prod_aux_uniformity_eq [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
-    𝓤 (WithLp p (α × β)) = 𝓤[instUniformSpaceProd] := by
-  have A : IsUniformInducing (@WithLp.ofLp p (α × β)) :=
-    (prod_antilipschitzWith_equiv_aux p α β).isUniformInducing
-      (prod_lipschitzWith_equiv_aux p α β).uniformContinuous
-  have : (fun x : WithLp p (α × β) × WithLp p (α × β) =>
-    (WithLp.ofLp x.fst, WithLp.ofLp x.snd)) = id := by
-    ext i <;> rfl
-  rw [← A.comap_uniformity, this, comap_id]
-
-theorem prod_aux_cobounded_eq [PseudoMetricSpace α] [PseudoMetricSpace β] :
-    cobounded (WithLp p (α × β)) = @cobounded _ Prod.instBornology :=
-  calc
-    cobounded (WithLp p (α × β)) = comap (WithLp.equiv p (α × β)) (cobounded _) :=
-      le_antisymm (prod_antilipschitzWith_equiv_aux p α β).tendsto_cobounded.le_comap
-        (prod_lipschitzWith_equiv_aux p α β).comap_cobounded_le
-    _ = _ := comap_id
-
 theorem prod_lipschitzWith_ofLp_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
     LipschitzWith 1 (@WithLp.ofLp p (α × β)) := by
   intro x y
   rcases p.dichotomy with (rfl | h)
   · simp [edist]
-  · have cancel : p.toReal * (1 / p.toReal) = 1 := mul_div_cancel₀ 1 (zero_lt_one.trans_le h).ne'
-    rw [prod_edist_eq_add (zero_lt_one.trans_le h)]
-    simp only [edist, forall_prop_of_true, one_mul, ENNReal.coe_one, sup_le_iff]
-    constructor
-    · calc
-        edist x.fst y.fst ≤ (edist x.fst y.fst ^ p.toReal) ^ (1 / p.toReal) := by
-          simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
-        _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
-          gcongr
-          simp only [self_le_add_right]
-    · calc
-        edist x.snd y.snd ≤ (edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
-          simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
-        _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
-          gcongr
-          simp only [self_le_add_left]
+  have cancel : p.toReal * (1 / p.toReal) = 1 := mul_div_cancel₀ 1 (zero_lt_one.trans_le h).ne'
+  rw [prod_edist_eq_add (zero_lt_one.trans_le h)]
+  simp only [edist, forall_prop_of_true, one_mul, ENNReal.coe_one, sup_le_iff]
+  constructor
+  · calc
+      edist x.fst y.fst ≤ (edist x.fst y.fst ^ p.toReal) ^ (1 / p.toReal) := by
+        simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
+      _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
+        gcongr
+        simp only [self_le_add_right]
+  · calc
+      edist x.snd y.snd ≤ (edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
+        simp only [← ENNReal.rpow_mul, cancel, ENNReal.rpow_one, le_refl]
+      _ ≤ (edist x.fst y.fst ^ p.toReal + edist x.snd y.snd ^ p.toReal) ^ (1 / p.toReal) := by
+        gcongr
+        simp only [self_le_add_left]
 
 theorem prod_antilipschitzWith_ofLp_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
     AntilipschitzWith ((2 : ℝ≥0) ^ (1 / p).toReal) (@WithLp.ofLp p (α × β)) := by
@@ -485,6 +426,33 @@ theorem prod_antilipschitzWith_ofLp_aux [PseudoEMetricSpace α] [PseudoEMetricSp
       _ = (2 ^ (1 / p.toReal) : ℝ≥0) * edist (WithLp.equiv p _ x) (WithLp.equiv p _ y) := by
         simp only [← two_mul, ENNReal.mul_rpow_of_nonneg _ _ nonneg, ← ENNReal.rpow_mul, cancel,
           ENNReal.rpow_one, ENNReal.coe_rpow_of_nonneg _ nonneg, coe_ofNat]
+
+theorem prod_aux_cobounded_eq [PseudoMetricSpace α] [PseudoMetricSpace β] :
+    cobounded (WithLp p (α × β)) = @cobounded _ Prod.instBornology :=
+  calc
+    cobounded (WithLp p (α × β)) = comap (WithLp.equiv p (α × β)) (cobounded _) :=
+      le_antisymm (prod_antilipschitzWith_ofLp_aux p α β).tendsto_cobounded.le_comap
+        (prod_lipschitzWith_ofLp_aux p α β).comap_cobounded_le
+    _ = _ := comap_id
+
+theorem prod_lipschitzWith_equiv_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    LipschitzWith 1 (WithLp.equiv p (α × β)) :=
+  prod_lipschitzWith_ofLp_aux p α β
+
+theorem prod_antilipschitzWith_equiv_aux [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    AntilipschitzWith ((2 : ℝ≥0) ^ (1 / p).toReal) (WithLp.equiv p (α × β)) :=
+  prod_antilipschitzWith_ofLp_aux p α β
+
+lemma isUniformInducing_ofLp [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    IsUniformInducing (@WithLp.ofLp p (α × β)) :=
+  (prod_antilipschitzWith_ofLp_aux p α β).isUniformInducing
+    (prod_lipschitzWith_ofLp_aux p α β).uniformContinuous
+
+theorem prod_aux_uniformity_eq [PseudoEMetricSpace α] [PseudoEMetricSpace β] :
+    𝓤 (WithLp p (α × β)) = 𝓤[instUniformSpaceProd] := by
+  have : (fun x : WithLp p (α × β) × WithLp p (α × β) =>
+    (WithLp.ofLp x.fst, WithLp.ofLp x.snd)) = id := rfl
+  rw [← (isUniformInducing_ofLp p α β).comap_uniformity, this, comap_id]
 
 end Aux
 

@@ -189,10 +189,10 @@ variable (K V)
 
 /-- `WithLp.toLp` as a linear equivalence. -/
 @[simps -fullyApplied]
-def toLpLinearEquiv [Semiring K] [AddCommGroup V] [Module K V] : V ≃ₗ[K] WithLp p V :=
-  { LinearEquiv.refl _ _ with
-    toFun := WithLp.toLp
-    invFun := WithLp.ofLp }
+def toLpLinearEquiv [Semiring K] [AddCommGroup V] [Module K V] : V ≃ₗ[K] WithLp p V where
+  __ := LinearEquiv.refl _ _
+  toFun := WithLp.toLp
+  invFun := WithLp.ofLp
 
 /-- `WithLp.equiv` as a linear equivalence. -/
 @[simps -fullyApplied]
