@@ -11,9 +11,11 @@ import Mathlib.RingTheory.Valuation.Basic
 # Discrete Valuations
 
 Given a linearly ordered commutative group with zero `Γ` such that `Γˣ` is nontrivial cyclic, a
-valuation `v : A → Γ` on a ring `A` is *discrete*, if `genLTOne Γˣ` belongs to the image. When
-`Γ := ℤₘ₀`, the latter is equivalent to asking that `ofAdd (-1 : ℤ)` belongs to the image, in turn
-equivalent to asking that `1 : ℤ` belongs to the image of the corresponding *additive* valuation.
+valuation `v : A → Γ` on a ring `A` is *discrete*, if `genLTOne Γˣ` belongs to the image, where
+`genLTOne Γˣ` is the generator of `Γˣ` that is `< 1`. When `Γ := ℤₘ₀` (defined in
+`Multiplicative.termℤₘ₀`), `genLTOne Γˣ = ofAdd (-1)` and the condition of being discrete is
+equivalent to asking that `ofAdd (-1 : ℤ)` belongs to the image, in turn equivalent to asking that
+`1 : ℤ` belongs to the image of the corresponding *additive* valuation.
 
 
 ## Main Definitions
