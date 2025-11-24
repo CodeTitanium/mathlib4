@@ -4997,6 +4997,7 @@ public import Mathlib.ModelTheory.Algebra.Ring.Basic
 public import Mathlib.ModelTheory.Algebra.Ring.Definability
 public import Mathlib.ModelTheory.Algebra.Ring.FreeCommRing
 public import Mathlib.ModelTheory.Arithmetic.Presburger.Basic
+public import Mathlib.ModelTheory.Arithmetic.Presburger.Semilinear.Basic
 public import Mathlib.ModelTheory.Arithmetic.Presburger.Semilinear.Defs
 public import Mathlib.ModelTheory.Basic
 public import Mathlib.ModelTheory.Bundled
@@ -5811,6 +5812,7 @@ public import Mathlib.RingTheory.GradedAlgebra.Radical
 public import Mathlib.RingTheory.Grassmannian
 public import Mathlib.RingTheory.HahnSeries.Addition
 public import Mathlib.RingTheory.HahnSeries.Basic
+public import Mathlib.RingTheory.HahnSeries.Binomial
 public import Mathlib.RingTheory.HahnSeries.HEval
 public import Mathlib.RingTheory.HahnSeries.HahnEmbedding
 public import Mathlib.RingTheory.HahnSeries.Lex
